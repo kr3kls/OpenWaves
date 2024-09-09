@@ -40,8 +40,19 @@
 
         <div class="hero-body">
             <div class="container has-text-centered">
-               {% block content %}
-               {% endblock %}
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="notification is-danger">
+                            {% for category, message in messages %}
+                                <p class="is-size-5">{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}
+                {% endblock %}
             </div>
         </div>
     </section>

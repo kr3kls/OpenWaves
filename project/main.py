@@ -9,4 +9,5 @@ def index():
 
 @main.route('/profile')
 def profile():
+    # TODO add logic to show user-specific data in the profile
     return render_template('profile.html')
