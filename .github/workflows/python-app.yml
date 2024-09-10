@@ -30,7 +30,10 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-flask
 
+    # Set the PYTHONPATH environment variable to include the openwaves directory
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/openwaves" >> $GITHUB_ENV
+
     # Run tests
     - name: Run tests
-      run: |
-        pytest
+      run: pytest
