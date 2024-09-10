@@ -14,10 +14,12 @@ login_manager = LoginManager()
 login_manager.login_message = "Please log in to access this page."
 
 def create_app():
-    app = Flask(__name__)
+    # Explicitly set the template_folder path
+    app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
 
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+    # Load config from environment variables, with default fallbacks
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///default.db')
 
     # Initialize extensions with the app
     db.init_app(app)
