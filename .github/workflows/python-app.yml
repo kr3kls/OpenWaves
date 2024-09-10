@@ -18,26 +18,22 @@ jobs:
       # Check out the repository
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       # Set up Python
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-      
+
       # Install dependencies (tox)
       - name: Install tox and other packages
         run: pip install tox
 
-      # Set PYTHONPATH and ensure it persists
-      - name: Set PYTHONPATH
-        run: |
-          echo "PYTHONPATH=$(pwd)/openwaves" >> $GITHUB_ENV
-
-      # Run tox (tests and coverage)
+      # Run tox with PYTHONPATH set in the same command
       - name: Run tox
-        run: tox -e py
-      
+        run: |
+          PYTHONPATH=$(pwd)/openwaves tox -e py
+
       # SonarCloud Scan
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -62,8 +58,6 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-flask
 
-    - name: Set PYTHONPATH
-      run: echo "PYTHONPATH=$(pwd)/openwaves" >> $GITHUB_ENV
-
     - name: Run tests
-      run: pytest
+      run: |
+        PYTHONPATH=$(pwd)/openwaves pytest
