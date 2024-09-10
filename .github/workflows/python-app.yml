@@ -57,6 +57,9 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-flask
 
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/openwaves" >> $GITHUB_ENV
+
     - name: Run tests
       run: |
         pytest
