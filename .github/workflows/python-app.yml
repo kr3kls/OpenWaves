@@ -24,6 +24,8 @@ jobs:
           python-version: 3.8
       - name: Install tox and any other packages
         run: pip install tox
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/openwaves" >> $GITHUB_ENV
       - name: Run tox
         run: tox -e py
       - name: SonarCloud Scan
@@ -51,7 +53,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-flask
-
+    - name: Set PYTHONPATH
+      run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)/openwaves" >> $GITHUB_ENV
     # Run tests
     - name: Run tests
       run: |
