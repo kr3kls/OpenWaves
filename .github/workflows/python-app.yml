@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - week3
   pull_request:
     branches:
       - main
+      - week3
 
 jobs:
   build:
