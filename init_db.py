@@ -1,6 +1,6 @@
 # This script initializes the database
 
-from project import db, create_app
+from openwaves import db, create_app
 
 # Create the app
 app = create_app()
