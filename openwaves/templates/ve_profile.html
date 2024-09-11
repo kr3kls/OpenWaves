@@ -5,7 +5,9 @@
     <h3 class="title has-text-centered">VE Account</h3>
     <div class="box">
         <form id="ve-account-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if config['WTF_CSRF_ENABLED'] %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
             <div class="field">
                 <label class="label" for="username">Callsign</label>
                 <div class="control">

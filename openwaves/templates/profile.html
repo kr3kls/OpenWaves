@@ -5,7 +5,9 @@
     <h3 class="title has-text-centered">Profile</h3>
     <div class="box">
         <form id="profile-form">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if config['WTF_CSRF_ENABLED'] %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
             <div class="field">
                 <label class="label" for="username">FCC FRN</label>
                 <div class="control">

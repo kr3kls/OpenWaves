@@ -21,7 +21,7 @@
                             <a href="{{ url_for('main.index') }}" class="navbar-item">
                                 Home
                             </a>
-
+                            {% if not config.TESTING %}  <!-- Disable navbar in test mode -->
                             <!-- Only show Profile link if user is authenticated -->
                             {% if current_user.is_authenticated and current_user.role == 1 %}
                                 <a href="{{ url_for('main.profile') }}" class="navbar-item">
@@ -53,6 +53,7 @@
                                 <a href="{{ url_for('auth.logout') }}" class="navbar-item">
                                     Logout
                                 </a>
+                            {% endif %}
                             {% endif %}
                         </div>
                     </div>
