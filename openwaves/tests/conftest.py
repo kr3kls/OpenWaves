@@ -20,8 +20,8 @@ def app():
     app.jinja_loader.searchpath = [os.path.join(app.root_path, 'templates')]
 
     # Print debugging info for the root path and template search paths
-    print(f"App root path: {app.root_path}")
-    print(f"Template search paths: {app.jinja_loader.searchpath}")
+    # print(f"App root path: {app.root_path}")
+    # print(f"Template search paths: {app.jinja_loader.searchpath}")
 
     app.config.update({
         "TESTING": True,

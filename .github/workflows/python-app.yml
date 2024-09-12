@@ -33,7 +33,7 @@ jobs:
 
       # Run tox (tests and coverage)
       - name: Run tox
-        run: tox -e py -vv
+        run: tox -e py
 
       # SonarCloud Scan
       - name: SonarCloud Scan
