@@ -1,8 +1,12 @@
 import pytest
 import os
+import sys
 from openwaves import create_app, db
 from openwaves.models import User
 from werkzeug.security import generate_password_hash
+
+# Add the project root directory to sys.path (this ensures Python can find openwaves)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 @pytest.fixture
 def app():
@@ -16,8 +20,8 @@ def app():
     app.jinja_loader.searchpath = [os.path.join(app.root_path, 'templates')]
 
     # Print debugging info for the root path and template search paths
-    print(f"App root path: {app.root_path}")
-    print(f"Template search paths: {app.jinja_loader.searchpath}")
+    # print(f"App root path: {app.root_path}")
+    # print(f"Template search paths: {app.jinja_loader.searchpath}")
 
     app.config.update({
         "TESTING": True,
