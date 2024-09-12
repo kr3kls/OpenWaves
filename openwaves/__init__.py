@@ -18,7 +18,7 @@ login_manager.login_message = "Please log in to access this page."
 def create_app():
     # Explicitly set the template_folder path
     app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
-    csrf = CSRFProtect(app)
+    _csrf = CSRFProtect(app)
 
     # Load config from environment variables, with default fallbacks
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')

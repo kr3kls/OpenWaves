@@ -75,7 +75,7 @@ def signup_post():
     return redirect(url_for("auth.login"))
 
 # VE signup route
-@auth.route('/ve_signup', methods=['GET', 'POST'])
+@auth.route('/ve_signup', methods=['POST'])
 @login_required
 def ve_signup():
     if request.method == 'POST':
