@@ -11,7 +11,7 @@ def login(client, username, password):
 def test_get_login(client):
     response = client.get('/auth/login')
     assert response.status_code == 200
-    assert b"login.html" in response.data 
+    assert b"OpenWaves Login" in response.data 
 
 def test_login_post_valid(client):
     response = login(client, 'testuser', 'testpassword')

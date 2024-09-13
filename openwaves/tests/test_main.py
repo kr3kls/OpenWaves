@@ -1,12 +1,7 @@
 from openwaves.models import User
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from openwaves import db
-
-def login(client, username, password):
-    return client.post('/login', data={
-        'username': username,
-        'password': password
-    }, follow_redirects=True)
+from openwaves.tests.test_auth import login
 
 def test_index(client):
     response = client.get('/')
@@ -17,14 +12,14 @@ def test_profile_access(client):
     # Access profile without logging in
     response = client.get('/profile', follow_redirects=True)
     assert response.status_code == 200
-    assert b"login.html" in response.data  # Should redirect to login page
+    assert b"OpenWaves Login" in response.data  # Should redirect to login page
 
     # Log in and access profile
     response = login(client, 'testuser', 'testpassword')
     assert response.status_code == 200
     response = client.get('/profile')
     assert response.status_code == 200
-    assert b"Profile" in response.data
+    assert b"OpenWaves Profile" in response.data
 
 def test_update_profile_success(client, app):
     # Log in as testuser
@@ -50,7 +45,7 @@ def test_update_profile_success(client, app):
         assert user.last_name == 'User'
         assert user.email == 'updated@example.com'
         # Verify password change
-        assert user.check_password('newpassword')
+        assert check_password_hash(user.password, 'newpassword')
 
 def test_update_profile_password_mismatch(client):
     # Log in as testuser
@@ -70,7 +65,7 @@ def test_update_profile_password_mismatch(client):
     # Verify that the password remains unchanged
     with client.application.app_context():
         user = User.query.filter_by(username='testuser').first()
-        assert user.check_password('testpassword')
+        assert check_password_hash(user.password, 'testpassword')
 
 def test_update_profile_no_password_change(client):
     # Log in as testuser
@@ -95,7 +90,7 @@ def test_update_profile_no_password_change(client):
         assert user.last_name == 'NewLastName'
         assert user.email == 'newemail@example.com'
         # Verify password remains unchanged
-        assert user.check_password('testpassword')
+        assert check_password_hash(user.password, 'testpassword')
 
 def test_ve_account_exists(client, app):
     # Create a VE account for testuser
@@ -117,7 +112,7 @@ def test_ve_account_exists(client, app):
     # Access ve_account
     response = client.get('/ve_account')
     assert response.status_code == 200
-    assert b"VE Profile" in response.data
+    assert b"OpenWaves VE Account" in response.data
 
 def test_ve_account_not_exists(client):
     # Log in as testuser
@@ -126,7 +121,7 @@ def test_ve_account_not_exists(client):
     # Access ve_account when VE account doesn't exist
     response = client.get('/ve_account', follow_redirects=True)
     assert response.status_code == 200
-    assert b"VE Signup" in response.data  # Should redirect to ve_signup page
+    assert b"VE Account Signup" in response.data  # Should redirect to ve_signup page
 
 def test_update_ve_account_success(client, app):
     # Create a VE account for testuser
@@ -158,7 +153,7 @@ def test_update_ve_account_success(client, app):
     with app.app_context():
         ve_user = User.query.filter_by(username='updated_ve_user', role=2).first()
         assert ve_user is not None
-        assert ve_user.check_password('newvepassword')
+        assert check_password_hash(ve_user.password, 'newvepassword')
 
 def test_update_ve_account_no_ve_account(client):
     # Log in as testuser
@@ -201,7 +196,7 @@ def test_update_ve_account_password_mismatch(client, app):
     # check if the password remains unchanged
     with app.app_context():
         ve_user = User.query.filter_by(username='ve_testuser', role=2).first()
-        assert ve_user.check_password('vepassword')
+        assert check_password_hash(ve_user.password, 'vepassword')
 
 def test_csp_violation_report_valid_json(client, capsys):
     violation_data = {
