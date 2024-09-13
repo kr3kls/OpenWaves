@@ -7,6 +7,7 @@
         <form method="POST" action="{{ url_for('auth.login') }}">
             {% if config['WTF_CSRF_ENABLED'] %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="test_token" value="login.html">
             {% endif %}
             <div class="field">
                 <div class="control">

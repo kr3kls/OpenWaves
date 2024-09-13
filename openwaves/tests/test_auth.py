@@ -11,13 +11,13 @@ def login(client, username, password):
 def test_get_login(client):
     response = client.get('/auth/login')
     assert response.status_code == 200
-    assert b"Login" in response.data  # Adjust based on your login.html content
+    assert b"login.html" in response.data 
 
 def test_login_post_valid(client):
     response = login(client, 'testuser', 'testpassword')
     assert response.status_code == 200
     # Since 'testuser' has role=1, should redirect to 'main.profile'
-    assert b"Profile" in response.data  # Adjust based on your profile.html content
+    assert b"Profile" in response.data
 
 def test_login_post_valid_ve(client, app):
     # Create a VE user (role=2)
@@ -35,7 +35,7 @@ def test_login_post_valid_ve(client, app):
     response = login(client, 'veuser', 'vepassword')
     assert response.status_code == 200
     # Should redirect to 'main.ve_account'
-    assert b"VE Account" in response.data  # Adjust based on your ve_account.html content
+    assert b"VE Account" in response.data
 
 def test_login_post_invalid_password(client):
     response = login(client, 'testuser', 'wrongpassword')
@@ -50,7 +50,7 @@ def test_login_post_nonexistent_user(client):
 def test_get_signup(client):
     response = client.get('/auth/signup')
     assert response.status_code == 200
-    assert b"FCC FRN" in response.data  # Adjust based on your signup.html content
+    assert b"FCC FRN" in response.data
 
 def test_signup_post_valid(client, app):
     response = client.post('/auth/signup', data={
