@@ -3,13 +3,13 @@ from werkzeug.security import generate_password_hash
 from openwaves import db
 
 def login(client, username, password):
-    return client.post('/login', data={
+    return client.post('/auth/login', data={
         'username': username,
         'password': password
     }, follow_redirects=True)
 
 def test_get_login(client):
-    response = client.get('/login')
+    response = client.get('/auth/login')
     assert response.status_code == 200
     assert b"Login" in response.data  # Adjust based on your login.html content
 
@@ -48,12 +48,12 @@ def test_login_post_nonexistent_user(client):
     assert b"Please check your login details and try again." in response.data
 
 def test_get_signup(client):
-    response = client.get('/signup')
+    response = client.get('/auth/signup')
     assert response.status_code == 200
-    assert b"Signup" in response.data  # Adjust based on your signup.html content
+    assert b"FCC FRN" in response.data  # Adjust based on your signup.html content
 
 def test_signup_post_valid(client, app):
-    response = client.post('/signup', data={
+    response = client.post('/auth/signup', data={
         'username': 'newuser',
         'first_name': 'New',
         'last_name': 'User',
@@ -70,7 +70,7 @@ def test_signup_post_valid(client, app):
         assert user is not None
 
 def test_signup_post_password_mismatch(client):
-    response = client.post('/signup', data={
+    response = client.post('/auth/signup', data={
         'username': 'anotheruser',
         'first_name': 'Another',
         'last_name': 'User',
@@ -95,7 +95,7 @@ def test_signup_post_existing_username(client, app):
         db.session.add(existing_user)
         db.session.commit()
 
-    response = client.post('/signup', data={
+    response = client.post('/auth/signup', data={
         'username': 'existinguser',  # Username already exists
         'first_name': 'Existing',
         'last_name': 'User',
@@ -109,7 +109,7 @@ def test_signup_post_existing_username(client, app):
 def test_ve_signup_post_valid(client, app):
     # First, log in as 'testuser'
     login(client, 'testuser', 'testpassword')
-    response = client.post('/ve_signup', data={
+    response = client.post('/auth/ve_signup', data={
         'username': 'veuser',
         'password': 'vepassword',
         'confirm_password': 'vepassword'
@@ -125,7 +125,7 @@ def test_ve_signup_post_valid(client, app):
 def test_ve_signup_password_mismatch(client):
     # Log in as 'testuser'
     login(client, 'testuser', 'testpassword')
-    response = client.post('/ve_signup', data={
+    response = client.post('/auth/ve_signup', data={
         'username': 'veuser2',
         'password': 'password1',
         'confirm_password': 'password2'
@@ -149,7 +149,7 @@ def test_ve_signup_existing_username(client, app):
 
     # Log in as 'testuser'
     login(client, 'testuser', 'testpassword')
-    response = client.post('/ve_signup', data={
+    response = client.post('/auth/ve_signup', data={
         'username': 'veuser3',
         'password': 'vepassword',
         'confirm_password': 'vepassword'
@@ -160,7 +160,7 @@ def test_ve_signup_existing_username(client, app):
 def test_logout(client):
     # Log in as 'testuser'
     login(client, 'testuser', 'testpassword')
-    response = client.get('/logout', follow_redirects=True)
+    response = client.get('/auth/logout', follow_redirects=True)
     assert response.status_code == 200
     assert b"You have been logged out." in response.data
     # Verify that the user is logged out
