@@ -35,9 +35,6 @@ jobs:
       - name: Run tox
         run: tox -e py
 
-      # Print coverage report for debugging
-      - name: Print coverage report (for debugging)
-        run: cat coverage.xml
       # SonarCloud Scan
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
