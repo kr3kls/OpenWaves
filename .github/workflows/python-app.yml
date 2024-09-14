@@ -11,33 +11,60 @@ on:
       - week3
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          pip install pylint
+
+      - name: Run pylint
+        run: |
+          pylint openwaves > pylint-report.txt
+        continue-on-error: true  # Linting errors should not stop the workflow
+
+      - name: Archive pylint results
+        uses: actions/upload-artifact@v2
+        with:
+          name: pylint-report
+          path: pylint-report.txt
+
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    needs: lint
+
     steps:
-      # Check out the repository
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0  # Fetch full history
 
-      # Set up Python
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.11
 
-      # Install dependencies (tox)
       - name: Install tox and other packages
         run: pip install tox
 
-      # Run tox (tests and coverage)
-      - name: Run tox
+      - name: Run tox (tests and coverage)
         run: tox -e py
 
-      # SonarCloud Scan
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.python.pylint.reportPaths=pylint-report.txt

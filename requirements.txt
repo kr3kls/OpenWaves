@@ -6,3 +6,4 @@ Werkzeug
 pytest
 pytest-flask
 python-dotenv
+pylint
