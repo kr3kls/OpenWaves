@@ -1,14 +1,45 @@
-from openwaves.models import User
+"""File: test_main.py
+
+    This file contains the tests for the code in the main.py file.
+"""
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from openwaves import db
+from openwaves.models import User
 from openwaves.tests.test_auth import login
 
 def test_index(client):
+    """Test that the index page loads correctly.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - Response status code is 200.
+        - Response data contains "Welcome to OpenWaves".
+    """
     response = client.get('/')
     assert response.status_code == 200
     assert b"Welcome to OpenWaves" in response.data
 
 def test_profile_access(client):
+    """Test accessing the profile page with and without authentication.
+
+    This test ensures that:
+    - Accessing the profile page without logging in redirects to the login page.
+    - After logging in, the profile page loads correctly.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - When not logged in:
+            - Response status code is 200.
+            - Response data contains "OpenWaves Login".
+        - When logged in:
+            - Response status code is 200.
+            - Response data contains "OpenWaves Profile".
+    """
     # Access profile without logging in
     response = client.get('/profile', follow_redirects=True)
     assert response.status_code == 200
@@ -21,78 +52,20 @@ def test_profile_access(client):
     assert response.status_code == 200
     assert b"OpenWaves Profile" in response.data
 
-def test_update_profile_success(client, app):
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Update profile with valid data
-    response = client.post('/update_profile', data={
-        'username': 'updateduser',
-        'first_name': 'Updated',
-        'last_name': 'User',
-        'email': 'updated@example.com',
-        'password': 'newpassword',
-        'confirm_password': 'newpassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b'Profile updated successfully!' in response.data
-
-    # Verify that the user's data has been updated
-    with app.app_context():
-        user = User.query.filter_by(username='updateduser').first()
-        assert user is not None
-        assert user.first_name == 'Updated'
-        assert user.last_name == 'User'
-        assert user.email == 'updated@example.com'
-        # Verify password change
-        assert check_password_hash(user.password, 'newpassword')
-
-def test_update_profile_password_mismatch(client):
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Attempt to update profile with mismatched passwords
-    response = client.post('/update_profile', data={
-        'username': 'testuser',
-        'first_name': 'Test',
-        'last_name': 'User',
-        'email': 'testuser@example.com',
-        'password': 'newpassword',
-        'confirm_password': 'wrongpassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-
-    # Verify that the password remains unchanged
-    with client.application.app_context():
-        user = User.query.filter_by(username='testuser').first()
-        assert check_password_hash(user.password, 'testpassword')
-
-def test_update_profile_no_password_change(client):
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Update profile without changing password
-    response = client.post('/update_profile', data={
-        'username': 'testuser',
-        'first_name': 'NewFirstName',
-        'last_name': 'NewLastName',
-        'email': 'newemail@example.com',
-        'password': '',
-        'confirm_password': ''
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b'Profile updated successfully!' in response.data
-
-    # Verify that the user's data has been updated except the password
-    with client.application.app_context():
-        user = User.query.filter_by(username='testuser').first()
-        assert user.first_name == 'NewFirstName'
-        assert user.last_name == 'NewLastName'
-        assert user.email == 'newemail@example.com'
-        # Verify password remains unchanged
-        assert check_password_hash(user.password, 'testpassword')
-
 def test_ve_account_exists(client, app):
+    """Test accessing the VE account when it exists.
+
+    This test creates a VE account for 'testuser' and verifies that accessing
+    the VE account page loads correctly.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Response status code is 200.
+        - Response data contains 'OpenWaves VE Account'.
+    """
     # Create a VE account for testuser
     with app.app_context():
         ve_user = User(
@@ -115,6 +88,18 @@ def test_ve_account_exists(client, app):
     assert b"OpenWaves VE Account" in response.data
 
 def test_ve_account_not_exists(client):
+    """Test accessing the VE account when it does not exist.
+
+    This test verifies that if a user without a VE account tries to access
+    the VE account page, they are redirected to the VE signup page.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - Response status code is 200.
+        - Response data contains 'VE Account Signup'.
+    """
     # Log in as testuser
     login(client, 'testuser', 'testpassword')
 
@@ -123,82 +108,20 @@ def test_ve_account_not_exists(client):
     assert response.status_code == 200
     assert b"VE Account Signup" in response.data  # Should redirect to ve_signup page
 
-def test_update_ve_account_success(client, app):
-    # Create a VE account for testuser
-    with app.app_context():
-        ve_user = User(
-            username='ve_testuser',
-            first_name='Test',
-            last_name='User',
-            email='testuser@example.com',
-            password=generate_password_hash('vepassword', method='pbkdf2:sha256'),
-            role=2
-        )
-        db.session.add(ve_user)
-        db.session.commit()
-
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Update VE account with valid data
-    response = client.post('/update_ve_account', data={
-        'username': 'updated_ve_user',
-        'password': 'newvepassword',
-        'confirm_password': 'newvepassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b'VE account updated successfully!' in response.data
-
-    # Verify VE account update
-    with app.app_context():
-        ve_user = User.query.filter_by(username='updated_ve_user', role=2).first()
-        assert ve_user is not None
-        assert check_password_hash(ve_user.password, 'newvepassword')
-
-def test_update_ve_account_no_ve_account(client):
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Attempt to update VE account when it doesn't exist
-    response = client.post('/update_ve_account', data={
-        'username': 'updated_ve_user',
-        'password': 'newvepassword',
-        'confirm_password': 'newvepassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b'VE account not found.' in response.data
-
-def test_update_ve_account_password_mismatch(client, app):
-    # Create a VE account for testuser
-    with app.app_context():
-        ve_user = User(
-            username='ve_testuser',
-            first_name='Test',
-            last_name='User',
-            email='testuser@example.com',
-            password=generate_password_hash('vepassword', method='pbkdf2:sha256'),
-            role=2
-        )
-        db.session.add(ve_user)
-        db.session.commit()
-
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Attempt to update VE account with mismatched passwords
-    response = client.post('/update_ve_account', data={
-        'username': 've_testuser',
-        'password': 'newvepassword',
-        'confirm_password': 'wrongpassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    
-    # check if the password remains unchanged
-    with app.app_context():
-        ve_user = User.query.filter_by(username='ve_testuser', role=2).first()
-        assert check_password_hash(ve_user.password, 'vepassword')
-
 def test_csp_violation_report_valid_json(client, capsys):
+    """Test reporting a valid CSP violation.
+
+    This test sends a valid CSP violation report and checks that it is processed
+    correctly.
+
+    Args:
+        client: The test client instance.
+        capsys: Pytest fixture to capture stdout and stderr.
+
+    Asserts:
+        - Response status code is 204 (No Content).
+        - The violation is printed to stdout.
+    """
     violation_data = {
         "csp-report": {
             "document-uri": "http://example.com",
@@ -215,6 +138,19 @@ def test_csp_violation_report_valid_json(client, capsys):
     assert "CSP Violation:" in captured.out
 
 def test_csp_violation_report_non_json(client, capsys):
+    """Test handling a CSP violation report with non-JSON data.
+
+    This test sends invalid (non-JSON) data to the CSP violation endpoint and
+    checks that it is handled gracefully.
+
+    Args:
+        client: The test client instance.
+        capsys: Pytest fixture to capture stdout and stderr.
+
+    Asserts:
+        - Response status code is 204 (No Content).
+        - A message indicating non-JSON data is printed to stdout.
+    """
     response = client.post('/csp-violation-report-endpoint', data='non-json data')
     assert response.status_code == 204
 

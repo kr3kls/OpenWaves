@@ -1,27 +1,35 @@
-import pytest
+"""File: conftest.py
+
+    This file contains the base configuration for application testing using pytest and tox.
+"""
+
 import os
 import sys
+import pytest
+from werkzeug.security import generate_password_hash
 from openwaves import create_app, db
 from openwaves.models import User
-from werkzeug.security import generate_password_hash
 
 # Add the project root directory to sys.path (this ensures Python can find openwaves)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 @pytest.fixture
 def app():
+    """Create and configure a new Flask application instance for each test.
+
+    This fixture sets up the Flask app with testing configurations, initializes the database,
+    and creates a test user. It yields the app instance for use in tests and cleans up the
+    database after each test is done.
+    """
+
     # Set the correct root directory to openwaves/ (the application root)
-    app = create_app()
+    app = create_app() # pylint: disable=W0621
 
     # Set the correct root path and template folder for testing
     app.root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
     # Force Flask to use the correct template folder (this might be redundant but ensures no issues)
     app.jinja_loader.searchpath = [os.path.join(app.root_path, 'templates')]
-
-    # Print debugging info for the root path and template search paths
-    # print(f"App root path: {app.root_path}") TODO Delete this when troubleshooting is complete
-    # print(f"Template search paths: {app.jinja_loader.searchpath}") TODO Delete this when troubleshooting is complete
 
     app.config.update({
         "TESTING": True,
@@ -51,9 +59,19 @@ def app():
         db.drop_all()
 
 @pytest.fixture
-def client(app):
+def client(app): # pylint: disable=W0621
+    """Provide a test client for the Flask application.
+
+    This fixture returns a Flask test client that can be used to simulate HTTP requests to the app
+    without running a server.
+    """
     return app.test_client()
 
 @pytest.fixture
-def runner(app):
+def runner(app): # pylint: disable=W0621
+    """Provide a CLI runner for the Flask application.
+
+    This fixture returns a Click runner that can invoke commands registered with the Flask app's 
+    CLI.
+    """
     return app.test_cli_runner()
