@@ -1,7 +1,10 @@
-# This script initializes the database
+"""File: init_db.py
 
-from openwaves import db, create_app
+    This script initializes the database.
+"""
+
 from werkzeug.security import generate_password_hash
+from openwaves import db, create_app
 from openwaves.models import User
 
 # Create the app
