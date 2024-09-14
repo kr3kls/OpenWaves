@@ -3,6 +3,7 @@
     This file contains the tests for the code in the auth.py file.
 """
 
+from flask_login import current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from openwaves import db
 from openwaves.models import User
@@ -163,7 +164,7 @@ def test_update_profile_success(client, app):
     # Log in as testuser
     login(client, 'testuser', 'testpassword')
 
-    # Update profile with valid data
+    # Update profile with valid data (user role=1)
     response = client.post('/auth/update_profile', data={
         'username': 'updateduser',
         'first_name': 'Updated',
@@ -184,6 +185,88 @@ def test_update_profile_success(client, app):
         assert user.email == 'updated@example.com'
         # Verify password change
         assert check_password_hash(user.password, 'newpassword')
+
+def test_update_ve_profile_success(client, app):
+    """Test updating the user profile successfully.
+
+    This test logs in as 'testveuser' and updates the profile with valid data,
+    including changing the password.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Response status code is 200.
+        - Response data contains 'Profile updated successfully!'.
+        - User data in the database is updated accordingly.
+    """
+    # Log in as testuser
+    login(client, 'testveuser', 'testvepassword')
+
+    # Update profile with valid data (user role=1)
+    response = client.post('/auth/update_profile', data={
+        'username': 'updatedveuser',
+        'first_name': 'Updatedve',
+        'last_name': 'Userve',
+        'email': 'updatedve@example.com',
+        'password': 'newvepassword',
+        'confirm_password': 'newvepassword'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Profile updated successfully!' in response.data
+
+    # Verify that the user's data has been updated
+    with app.app_context():
+        user = User.query.filter_by(username='updatedveuser').first()
+        assert user is not None
+        assert user.first_name == 'Updatedve'
+        assert user.last_name == 'Userve'
+        assert user.email == 'updatedve@example.com'
+        # Verify password change
+        assert check_password_hash(user.password, 'newvepassword')
+
+def test_update_profile_invalid_role(client, app):
+    """Test updating the user profile with an invalid user role.
+
+    This test logs in as 'testuser' and changes the current_user role to 3. 
+    It then attempts to update the profile.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Response status code is 200.
+        - Response data contains 'Profile updated successfully!'.
+        - User data in the database is updated accordingly.
+    """
+    # Log in as testuser
+    login(client, 'testveuser', 'testvepassword')
+
+    current_user.role = 3
+
+    # Update profile with valid data (user role=1)
+    response = client.post('/auth/update_profile', data={
+        'username': 'updatedveuser',
+        'first_name': 'Updatedve',
+        'last_name': 'Userve',
+        'email': 'updatedve@example.com',
+        'password': 'newvepassword',
+        'confirm_password': 'newvepassword'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"You have been logged out." in response.data
+
+    # Verify that the user's data has been updated
+    with app.app_context():
+        user = User.query.filter_by(username='updatedveuser').first()
+        assert user is not None
+        assert user.first_name == 'Updatedve'
+        assert user.last_name == 'Userve'
+        assert user.email == 'updatedve@example.com'
+        # Verify password change
+        assert check_password_hash(user.password, 'newvepassword')
 
 def test_update_profile_password_mismatch(client):
     """Test updating the profile with mismatched passwords.

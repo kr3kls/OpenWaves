@@ -51,6 +51,15 @@ def app():
             role=1
         )
         db.session.add(test_user)
+        test_ve_user = User(
+            username="testveuser",
+            first_name="first_test",
+            last_name="last_test",
+            email="testveuser@example.com",
+            password=generate_password_hash("testvepassword", method="pbkdf2:sha256"),
+            role=2
+        )
+        db.session.add(test_ve_user)
         db.session.commit()
 
     yield app

@@ -22,6 +22,20 @@ def test_index(client):
     assert response.status_code == 200
     assert b"Welcome to OpenWaves" in response.data
 
+def test_account_select(client):
+    """Test that the account select page loads correctly.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - Response status code is 200.
+        - Response data contains "Choose Your Role".
+    """
+    response = client.get('/account_select')
+    assert response.status_code == 200
+    assert b"Choose Your Role" in response.data
+
 def test_profile_access(client):
     """Test accessing the profile page with and without authentication.
 
@@ -107,7 +121,7 @@ def test_ve_account_not_exists(client):
     response = client.get('/ve_account', follow_redirects=True)
     assert response.status_code == 200
     assert b"You have been logged out." in response.data
-    
+
 def test_csp_violation_report_valid_json(client, capsys):
     """Test reporting a valid CSP violation.
 
