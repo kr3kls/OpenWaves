@@ -78,4 +78,4 @@ def create_app():
 def load_user(user_id):
     """Method to avoid circular import for User"""
     from .models import User # pylint: disable=C0415
-    return User.query.get(int(user_id))
+    return db.session.get(User,int(user_id))

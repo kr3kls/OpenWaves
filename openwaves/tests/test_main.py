@@ -3,7 +3,7 @@
     This file contains the tests for the code in the main.py file.
 """
 
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash
 from openwaves import db
 from openwaves.models import User
 from openwaves.tests.test_auth import login
