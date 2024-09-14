@@ -12,6 +12,8 @@ from . import db
 
 auth = Blueprint('auth', __name__)
 
+PAGE_VE_ACCOUNT = 'main.ve_account'
+
 @auth.route('/login')
 def login():
     """Render the login page.
@@ -46,7 +48,7 @@ def login_post():
         login_user(user)
 
         if current_user.role == 2:
-            return redirect(url_for('main.ve_account'))
+            return redirect(url_for(PAGE_VE_ACCOUNT))
         return redirect(url_for('main.profile'))
 
     # if the above check did not pass, we have an issue
@@ -193,7 +195,7 @@ def ve_signup():
         db.session.commit()
 
         flash('VE account created successfully!', 'success')
-        return redirect(url_for('main.ve_account'))
+        return redirect(url_for(PAGE_VE_ACCOUNT))
 
     return render_template('ve_signup.html')
 
@@ -213,7 +215,7 @@ def update_ve_account():
 
     if not ve_user:
         flash('VE account not found.', 'danger')
-        return redirect(url_for('main.ve_account'))
+        return redirect(url_for(PAGE_VE_ACCOUNT))
 
     # Update user data from form
     username = request.form.get('username')
@@ -229,7 +231,7 @@ def update_ve_account():
 
     db.session.commit()
     flash('VE account updated successfully!', 'success')
-    return redirect(url_for('main.ve_account'))
+    return redirect(url_for(PAGE_VE_ACCOUNT))
 
 @auth.route('/logout')
 @login_required

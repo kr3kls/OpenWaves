@@ -51,9 +51,9 @@ def ve_account():
     if ve_user:
         # If a VE account exists, redirect to the VE profile page
         return render_template('ve_profile.html', ve_user=ve_user)
-    else:
-        # If no VE account exists, redirect to the VE signup page
-        return redirect(url_for('auth.ve_signup'))
+
+    # If no VE account exists, redirect to the VE signup page
+    return redirect(url_for('auth.ve_signup'))
 
 # Route to handle CSP violations
 @main.route('/csp-violation-report-endpoint', methods=['POST'])
