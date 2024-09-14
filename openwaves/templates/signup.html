@@ -2,8 +2,8 @@
 
 {% block content %}
 <div class="column is-6 is-offset-3">
-    <h3 class="title has-text-centered">Sign Up</h3>
     <div class="box">
+        <h3 class="title has-text-centered has-text-dark">Sign Up</h3>
         <form method="POST" action="{{ url_for('auth.signup') }}">
             {% if config['WTF_CSRF_ENABLED'] %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -14,41 +14,7 @@
                 </div>
             </div>
 
-            <div class="columns">
-                <div class="column">
-                    <div class="field">
-                        <div class="control">
-                            <input class="input is-large" type="text" name="first_name" placeholder="First Name">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="column">
-                    <div class="field">
-                        <div class="control">
-                            <input class="input is-large" type="text" name="last_name" placeholder="Last Name">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="field">
-                <div class="control">
-                    <input class="input is-large" type="email" name="email" placeholder="Email">
-                </div>
-            </div>
-
-            <div class="field">
-                <div class="control">
-                    <input class="input is-large" type="password" name="password" placeholder="Password">
-                </div>
-            </div>
-
-            <div class="field">
-                <div class="control">
-                    <input class="input is-large" type="password" name="confirm_password" placeholder="Confirm Password">
-                </div>
-            </div>
+            {% include 'form_registration_data.html' %}
 
             <div class="field is-grouped is-grouped-centered">
                 <button class="button is-info is-large">Register</button>

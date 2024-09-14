@@ -12,6 +12,7 @@ from . import db
 
 auth = Blueprint('auth', __name__)
 
+PAGE_ACCOUNT = 'main.profile'
 PAGE_VE_ACCOUNT = 'main.ve_account'
 
 @auth.route('/login')
@@ -146,11 +147,14 @@ def update_profile():
     db.session.commit()
 
     flash('Profile updated successfully!', 'success')
-    return redirect(url_for('main.profile'))
+    if current_user.role == 1:
+        return redirect(url_for(PAGE_ACCOUNT))
+    if current_user.role == 2:
+        return redirect(url_for(PAGE_VE_ACCOUNT))
+    return redirect(url_for('auth.logout'))
 
 # VE signup route
 @auth.route('/ve_signup', methods=['GET', 'POST'])
-@login_required
 def ve_signup():
     """Render the VE signup page and process VE account creation.
 
@@ -165,6 +169,9 @@ def ve_signup():
     if request.method == 'POST':
         # Get form data
         username = request.form.get('username')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
         password = request.form.get("password")
         confirm_password = request.form.get("confirm_password")
 
@@ -183,9 +190,9 @@ def ve_signup():
         hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
         # Create a new VE account (role 2)
         ve_user = User(
-            email=current_user.email,
-            first_name=current_user.first_name,
-            last_name=current_user.last_name,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
             username=username,
             password=hashed_password,
             role=2  # Set role to 2 (VE account)
@@ -198,40 +205,6 @@ def ve_signup():
         return redirect(url_for(PAGE_VE_ACCOUNT))
 
     return render_template('ve_signup.html')
-
-@auth.route('/update_ve_account', methods=['POST'])
-@login_required
-def update_ve_account():
-    """Handle the form submission to update the VE account.
-
-    Retrieves data from the form, updates the VE user's information,
-    updates the password if provided and confirmed, commits changes to the database,
-    and redirects back to the VE account page with a success message.
-
-    Returns:
-        Response: A redirect to the VE account page.
-    """
-    ve_user = User.query.filter_by(email=current_user.email, role=2).first()
-
-    if not ve_user:
-        flash('VE account not found.', 'danger')
-        return redirect(url_for(PAGE_VE_ACCOUNT))
-
-    # Update user data from form
-    username = request.form.get('username')
-    password = request.form.get('password')
-    confirm_password = request.form.get('confirm_password')
-
-    # Update VE user details
-    ve_user.username = username
-
-    # If password is provided, update it
-    if password and password == confirm_password:
-        update_user_password(ve_user, password)
-
-    db.session.commit()
-    flash('VE account updated successfully!', 'success')
-    return redirect(url_for(PAGE_VE_ACCOUNT))
 
 @auth.route('/logout')
 @login_required

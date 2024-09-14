@@ -2,8 +2,8 @@
 
 {% block content %}
 <div class="column is-6 is-offset-3">
-    <h3 class="title has-text-centered">VE Account Signup</h3>
     <div class="box">
+        <h3 class="title has-text-centered has-text-dark">VE Account Signup</h3>
         <form method="POST" action="{{ url_for('auth.ve_signup') }}">
             {% if config['WTF_CSRF_ENABLED'] %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -15,17 +15,7 @@
                 </div>
             </div>
 
-            <div class="field">
-                <div class="control">
-                    <input class="input is-large" type="password" name="password" placeholder="Password">
-                </div>
-            </div>
-
-            <div class="field">
-                <div class="control">
-                    <input class="input is-large" type="password" name="confirm_password" placeholder="Confirm Password">
-                </div>
-            </div>
+            {% include 'form_registration_data.html' %}
 
             <div class="field is-grouped is-grouped-centered">
                 <button type="submit" class="button is-success is-large">Create VE Account</button>

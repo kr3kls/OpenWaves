@@ -15,32 +15,7 @@
                 </div>
             </div>
 
-            <div class="columns">
-                <div class="column">
-                    <div class="field">
-                        <label class="label" for="first_name">First Name</label>
-                        <div class="control">
-                            <input class="input is-large" type="text" name="first_name" id="first_name" value="{{ current_user.first_name }}" readonly>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="column">
-                    <div class="field">
-                        <label class="label" for="last_name">Last Name</label>
-                        <div class="control">
-                            <input class="input is-large" type="text" name="last_name" id="last_name" value="{{ current_user.last_name }}" readonly>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="field">
-                <label class="label" for="email">Email</label>
-                <div class="control">
-                    <input class="input is-large" type="email" name="email" id="email" value="{{ current_user.email }}" readonly>
-                </div>
-            </div>
+            {% include 'form_profile.html' %}
 
             {% include 'form_passwords.html' %}
         </form>
@@ -68,7 +43,7 @@
         var formData = new FormData(this);
 
         // Send the updated data to the server via AJAX
-        const response = await fetch('/update_profile', {
+        const response = await fetch('/auth/update_profile', {
             method: 'POST',
             body: formData,
         });

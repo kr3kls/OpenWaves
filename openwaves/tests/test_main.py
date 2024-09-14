@@ -53,7 +53,7 @@ def test_profile_access(client):
     assert b"OpenWaves Profile" in response.data
 
 def test_ve_account_exists(client, app):
-    """Test accessing the VE account when it exists.
+    """Test accessing the VE profile when it exists.
 
     This test creates a VE account for 'testuser' and verifies that accessing
     the VE account page loads correctly.
@@ -64,7 +64,7 @@ def test_ve_account_exists(client, app):
 
     Asserts:
         - Response status code is 200.
-        - Response data contains 'OpenWaves VE Account'.
+        - Response data contains 'OpenWaves VE Profile'.
     """
     # Create a VE account for testuser
     with app.app_context():
@@ -80,12 +80,12 @@ def test_ve_account_exists(client, app):
         db.session.commit()
 
     # Log in as testuser
-    login(client, 'testuser', 'testpassword')
+    response = login(client, 've_testuser', 'vepassword')
 
     # Access ve_account
-    response = client.get('/ve_account')
     assert response.status_code == 200
-    assert b"OpenWaves VE Account" in response.data
+    # Should redirect to 'main.ve_account'
+    assert b"OpenWaves VE Profile" in response.data
 
 def test_ve_account_not_exists(client):
     """Test accessing the VE account when it does not exist.
@@ -106,8 +106,8 @@ def test_ve_account_not_exists(client):
     # Access ve_account when VE account doesn't exist
     response = client.get('/ve_account', follow_redirects=True)
     assert response.status_code == 200
-    assert b"VE Account Signup" in response.data  # Should redirect to ve_signup page
-
+    assert b"You have been logged out." in response.data
+    
 def test_csp_violation_report_valid_json(client, capsys):
     """Test reporting a valid CSP violation.
 

@@ -5,7 +5,6 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
-from .models import User
 
 main = Blueprint('main', __name__)
 
@@ -18,6 +17,16 @@ def index():
         Response: The rendered 'index.html' template.
     """
     return render_template('index.html')
+
+# Default Route
+@main.route('/account_select')
+def account_select():
+    """Render the account select page of the application.
+
+    Returns:
+        Response: The rendered 'account_select.html' template.
+    """
+    return render_template('account_select.html')
 
 # User Profile
 @main.route('/profile')
@@ -38,22 +47,20 @@ def profile():
 def ve_account():
     """Display the VE (Volunteer Examiner) account page or redirect to VE signup.
 
-    Checks if a VE account associated with the current user's email exists.
-    If it does, renders the VE profile page.
-    If not, redirects to the VE signup page.
+    Checks if the current user is a VE account.
+    If it is, renders the VE profile page.
+    If not, redirects to logout.
 
     Returns:
-        Response: The rendered 've_profile.html' template or a redirect to VE signup.
+        Response: The rendered 've_profile.html' template or a redirect to logout.
     """
-    # Query for the VE account using the current user's email and role 2
-    ve_user = User.query.filter_by(email=current_user.email, role=2).first()
-
-    if ve_user:
+    # Check if the current user has role 2
+    if current_user.role == 2:
         # If a VE account exists, redirect to the VE profile page
-        return render_template('ve_profile.html', ve_user=ve_user)
+        return render_template('ve_profile.html', ve_user=current_user)
 
-    # If no VE account exists, redirect to the VE signup page
-    return redirect(url_for('auth.ve_signup'))
+    # If no VE account exists, redirect to the logout page
+    return redirect(url_for('auth.logout'))
 
 # Route to handle CSP violations
 @main.route('/csp-violation-report-endpoint', methods=['POST'])

@@ -58,7 +58,7 @@ def test_login_post_valid_ve(client, app):
     response = login(client, 'veuser', 'vepassword')
     assert response.status_code == 200
     # Should redirect to 'main.ve_account'
-    assert b"VE Account" in response.data
+    assert b"OpenWaves VE Profile" in response.data
 
 def test_login_post_invalid_password(client):
     """Test logging in with an invalid password shows an error message."""
@@ -263,20 +263,21 @@ def test_ve_signup_post_valid(client, app):
         client: The test client.
         app: The Flask application instance.
     """
-    # First, log in as 'testuser'
-    login(client, 'testuser', 'testpassword')
     response = client.post('/auth/ve_signup', data={
-        'username': 'veuser',
-        'password': 'vepassword',
-        'confirm_password': 'vepassword'
+        'username': 'newveuser',
+        'first_name': 'New',
+        'last_name': 'User',
+        'email': 'newveuser@example.com',
+        'password': 'newpassword',
+        'confirm_password': 'newpassword'
     }, follow_redirects=True)
     assert response.status_code == 200
-    # Verify VE account creation
+    # Should redirect to login page
+    assert b"Login" in response.data
+    # Verify user creation
     with app.app_context():
-        ve_user = User.query.filter_by(username='veuser').first()
-        assert ve_user is not None
-        assert ve_user.role == 2  # VE role
-    assert b"VE account created successfully!" in response.data
+        user = User.query.filter_by(username='newveuser').first()
+        assert user is not None
 
 def test_ve_signup_password_mismatch(client):
     """Test that VE signup with mismatched passwords shows an error message."""
@@ -319,119 +320,6 @@ def test_ve_signup_existing_username(client, app):
     }, follow_redirects=True)
     assert response.status_code == 200
     assert b"Error 42, Please contact a VE." in response.data
-
-def test_update_ve_account_success(client, app):
-    """Test updating the VE account successfully.
-
-    This test creates a VE account and then updates it with new credentials.
-
-    Args:
-        client: The test client instance.
-        app: The Flask application instance.
-
-    Asserts:
-        - Response status code is 200.
-        - Response data contains 'VE account updated successfully!'.
-        - VE user's data in the database is updated accordingly.
-    """
-    # Create a VE account for testuser
-    with app.app_context():
-        ve_user = User(
-            username='ve_testuser',
-            first_name='Test',
-            last_name='User',
-            email='testuser@example.com',
-            password=generate_password_hash('vepassword', method='pbkdf2:sha256'),
-            role=2
-        )
-        db.session.add(ve_user)
-        db.session.commit()
-
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Update VE account with valid data
-    response = client.post('/auth/update_ve_account', data={
-        'username': 'updated_ve_user',
-        'password': 'newvepassword',
-        'confirm_password': 'newvepassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b'VE account updated successfully!' in response.data
-
-    # Verify VE account update
-    with app.app_context():
-        ve_user = User.query.filter_by(username='updated_ve_user', role=2).first()
-        assert ve_user is not None
-        assert check_password_hash(ve_user.password, 'newvepassword')
-
-def test_update_ve_account_no_ve_account(client):
-    """Test updating the VE account when it does not exist.
-
-    This test attempts to update a VE account that hasn't been created,
-    expecting an appropriate error message.
-
-    Args:
-        client: The test client instance.
-
-    Asserts:
-        - Response status code is 200.
-        - Response data contains 'VE account not found.'.
-    """
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Attempt to update VE account when it doesn't exist
-    response = client.post('/auth/update_ve_account', data={
-        'username': 'updated_ve_user',
-        'password': 'newvepassword',
-        'confirm_password': 'newvepassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b'VE account not found.' in response.data
-
-def test_update_ve_account_password_mismatch(client, app):
-    """Test updating the VE account with mismatched passwords.
-
-    This test ensures that when the new password and confirm password fields
-    do not match during VE account update, the password remains unchanged.
-
-    Args:
-        client: The test client instance.
-        app: The Flask application instance.
-
-    Asserts:
-        - Response status code is 200.
-        - VE user's password remains unchanged in the database.
-    """
-    # Create a VE account for testuser
-    with app.app_context():
-        ve_user = User(
-            username='ve_testuser',
-            first_name='Test',
-            last_name='User',
-            email='testuser@example.com',
-            password=generate_password_hash('vepassword', method='pbkdf2:sha256'),
-            role=2
-        )
-        db.session.add(ve_user)
-        db.session.commit()
-
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Attempt to update VE account with mismatched passwords
-    response = client.post('/auth/update_ve_account', data={
-        'username': 've_testuser',
-        'password': 'newvepassword',
-        'confirm_password': 'wrongpassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-
-    # check if the password remains unchanged
-    with app.app_context():
-        ve_user = User.query.filter_by(username='ve_testuser', role=2).first()
-        assert check_password_hash(ve_user.password, 'vepassword')
 
 def test_logout(client):
     """Test that a logged-in user can log out successfully."""
