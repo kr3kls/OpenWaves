@@ -32,12 +32,6 @@ jobs:
           pylint openwaves > pylint-report.txt
         continue-on-error: true  # Linting errors should not stop the workflow
 
-      - name: Archive pylint results
-        uses: actions/upload-artifact@v2
-        with:
-          name: pylint-report
-          path: pylint-report.txt
-
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
