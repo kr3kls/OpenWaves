@@ -9,7 +9,8 @@ from openwaves.models import User
 from openwaves.tests.test_auth import login
 
 def test_index(client):
-    """Test that the index page loads correctly.
+    """Test ID: UT-23
+    Test that the index page loads correctly.
 
     Args:
         client: The test client instance.
@@ -23,7 +24,8 @@ def test_index(client):
     assert b"Welcome to OpenWaves" in response.data
 
 def test_account_select(client):
-    """Test that the account select page loads correctly.
+    """Test ID: UT-24
+    Test that the account select page loads correctly.
 
     Args:
         client: The test client instance.
@@ -37,7 +39,8 @@ def test_account_select(client):
     assert b"Choose Your Role" in response.data
 
 def test_profile_access(client):
-    """Test accessing the profile page with and without authentication.
+    """Test ID: UT-25
+    Test accessing the profile page with and without authentication.
 
     This test ensures that:
     - Accessing the profile page without logging in redirects to the login page.
@@ -67,7 +70,8 @@ def test_profile_access(client):
     assert b"OpenWaves Profile" in response.data
 
 def test_ve_account_exists(client, app):
-    """Test accessing the VE profile when it exists.
+    """Test ID: UT-26
+    Test accessing the VE profile when it exists.
 
     This test creates a VE account for 'testuser' and verifies that accessing
     the VE account page loads correctly.
@@ -102,10 +106,11 @@ def test_ve_account_exists(client, app):
     assert b"OpenWaves VE Profile" in response.data
 
 def test_ve_account_not_exists(client):
-    """Test accessing the VE account when it does not exist.
+    """Test ID: UT-27
+    Test accessing the VE account when logged in as role 1.
 
-    This test verifies that if a user without a VE account tries to access
-    the VE account page, they are redirected to the VE signup page.
+    This test verifies that if a role 1 user tries to access
+    the VE account page, they are logged out.
 
     Args:
         client: The test client instance.
@@ -117,13 +122,14 @@ def test_ve_account_not_exists(client):
     # Log in as testuser
     login(client, 'testuser', 'testpassword')
 
-    # Access ve_account when VE account doesn't exist
+    # Access ve_account when VE account as role 1
     response = client.get('/ve_account', follow_redirects=True)
     assert response.status_code == 200
     assert b"You have been logged out." in response.data
 
 def test_csp_violation_report_valid_json(client, capsys):
-    """Test reporting a valid CSP violation.
+    """Test ID: UT-28 
+    Test reporting a valid CSP violation.
 
     This test sends a valid CSP violation report and checks that it is processed
     correctly.
@@ -152,7 +158,8 @@ def test_csp_violation_report_valid_json(client, capsys):
     assert "CSP Violation:" in captured.out
 
 def test_csp_violation_report_non_json(client, capsys):
-    """Test handling a CSP violation report with non-JSON data.
+    """Test ID: UT-29
+    Test handling a CSP violation report with non-JSON data.
 
     This test sends invalid (non-JSON) data to the CSP violation endpoint and
     checks that it is handled gracefully.
