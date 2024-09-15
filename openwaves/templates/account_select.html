@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-6 is-offset-3">
+    <div class="box">
+        <h3 class="title has-text-centered has-text-dark">Choose Your Role</h3>
+        <div class="columns is-centered">
+            <div class="column is-half">
+                <form method="GET" action="{{ url_for('auth.signup') }}">
+                    <button class="button is-info is-large is-fullwidth">HAM Candidate</button>
+                </form>
+            </div>
+            <div class="column is-half">
+                <form method="GET" action="{{ url_for('auth.ve_signup') }}">
+                    <button class="button is-success is-large is-fullwidth">Volunteer Examiner</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

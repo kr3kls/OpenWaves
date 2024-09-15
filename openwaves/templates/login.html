@@ -2,9 +2,12 @@
 
 {% block content %}
 <div class="column is-4 is-offset-4">
-    <h3 class="title">Login</h3>
     <div class="box">
+        <h3 class="title has-text-centered has-text-dark">OpenWaves Login</h3>
         <form method="POST" action="{{ url_for('auth.login') }}">
+            {% if config['WTF_CSRF_ENABLED'] %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
             <div class="field">
                 <div class="control">
                     <input class="input is-large" type="username" name="username" placeholder="Your Username" autofocus="">

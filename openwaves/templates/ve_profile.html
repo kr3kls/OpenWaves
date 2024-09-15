@@ -2,14 +2,14 @@
 
 {% block content %}
 <div class="column is-6 is-offset-3">
-    <h3 class="title has-text-centered">OpenWaves Profile</h3>
+    <h3 class="title has-text-centered">OpenWaves VE Profile</h3>
     <div class="box">
-        <form id="profile-form">
+        <form id="ve-profile-form">
             {% if config['WTF_CSRF_ENABLED'] %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             {% endif %}
             <div class="field">
-                <label class="label" for="username">FCC FRN</label>
+                <label class="label" for="username">Callsign</label>
                 <div class="control">
                     <input class="input is-large" type="text" name="username" id="username" value="{{ current_user.username }}" readonly>
                 </div>
@@ -30,7 +30,7 @@
 
 <script nonce="{{ g.csp_nonce }}">
     document.getElementById('edit-button').addEventListener('click', function() {
-        var inputs = document.querySelectorAll('#profile-form input');
+        var inputs = document.querySelectorAll('#ve-profile-form input');
         inputs.forEach(input => input.removeAttribute('readonly'));
         document.getElementById('save-button').style.display = 'inline';
         document.getElementById('new-password-field').style.display = 'block';
@@ -38,7 +38,7 @@
         this.style.display = 'none';
     });
 
-    document.getElementById('profile-form').addEventListener('submit', async function(e) {
+    document.getElementById('ve-profile-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         var formData = new FormData(this);
 
@@ -49,10 +49,10 @@
         });
 
         if (response.ok) {
-            alert('Profile updated successfully!');
+            alert('VE profile updated successfully!');
             location.reload();
         } else {
-            alert('There was an error updating the profile.');
+            alert('There was an error updating the VE profile.');
         }
     });
 </script>
