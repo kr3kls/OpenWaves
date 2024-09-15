@@ -19,6 +19,7 @@ class User(UserMixin, db.Model):
         email (str): The user's email address (max 120 characters).
         password (str): The hashed password for the user (max 60 characters).
         role (int): The role of the user (e.g., 1 for HAM Candidate, 2 for VE).
+        active (bool): Whether the user is active in the system (default True).
     """
 
     id = db.Column(db.Integer, primary_key=True)
@@ -28,6 +29,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), nullable=False)
     password = db.Column(db.String(60), nullable=False)
     role = db.Column(db.Integer, nullable=False)
+    active = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         """Return a string representation of the user.
@@ -36,6 +38,3 @@ class User(UserMixin, db.Model):
             str: A string showing the username and email of the user.
         """
         return f"User('{self.username}', '{self.email}')"
-
-if __name__ == "__main__":
-    pass

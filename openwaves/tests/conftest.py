@@ -43,7 +43,7 @@ def app():
 
         # Create a test user
         test_user = User(
-            username="testuser",
+            username="TESTUSER",
             first_name="first_test",
             last_name="last_test",
             email="testuser@example.com",
@@ -52,7 +52,7 @@ def app():
         )
         db.session.add(test_user)
         test_ve_user = User(
-            username="testveuser",
+            username="TESTVEUSER",
             first_name="first_test",
             last_name="last_test",
             email="testveuser@example.com",

@@ -15,6 +15,7 @@ auth = Blueprint('auth', __name__)
 PAGE_ACCOUNT = 'main.profile'
 PAGE_VE_ACCOUNT = 'main.ve_account'
 
+# Route to display login page
 @auth.route('/login')
 def login():
     """Render the login page.
@@ -24,6 +25,7 @@ def login():
     """
     return render_template('login.html')
 
+# Route to process login form submission
 @auth.route('/login', methods=["POST"])
 def login_post():
     """Process the login form submission.
@@ -39,7 +41,7 @@ def login_post():
     username = request.form.get('username')
     password = request.form.get('password')
 
-    user = User.query.filter_by(username=username).first()
+    user = User.query.filter_by(username=username.upper(), active=True).first()
 
     # check if the user actually exists
     # take the user-supplied password, hash it, and compare it to the hashed password in the
@@ -56,6 +58,7 @@ def login_post():
     flash('Please check your login details and try again.')
     return redirect(url_for('auth.login'))
 
+# Route to display signup page
 @auth.route('/signup')
 def signup():
     """Render the signup page for new users.
@@ -65,6 +68,7 @@ def signup():
     """
     return render_template('signup.html')
 
+# Route to process signup form submission
 @auth.route('/signup', methods=["POST"])
 def signup_post():
     """Process the signup form submission.
@@ -114,7 +118,88 @@ def signup_post():
     flash(f"Account created for {username}!", "success")
     return redirect(url_for("auth.login"))
 
-# Route to update user profiles
+# Route to display VE signup page
+@auth.route('/ve_signup')
+def ve_signup():
+    """Render the VE signup page.
+
+    If the request method is POST, processes the form data to create a new VE
+    (Volunteer Examiner) account. Validates input, checks for existing usernames,
+    hashes the password, and adds the new VE user to the database.
+
+    Returns:
+        Response: A redirect to the VE account page if successful, or back to the
+        VE signup page with an error message if there is a problem.
+    """
+    return render_template('ve_signup.html')
+
+# Route to process VE signup form submission
+@auth.route('/ve_signup', methods=['POST'])
+def ve_signup_post():
+    """Process VE account creation.
+
+    Processes the form data to create a new VE
+    (Volunteer Examiner) account. Validates input, checks for existing usernames,
+    hashes the password, and adds the new VE user to the database.
+
+    Returns:
+        Response: A redirect to the VE account page if successful, or back to the
+        VE signup page with an error message if there is a problem.
+    """
+    # Get form data
+    username = request.form.get('username')
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    email = request.form.get('email')
+    password = request.form.get("password")
+    confirm_password = request.form.get("confirm_password")
+
+    # Basic validation
+    if password != confirm_password:
+        flash("Passwords do not match", "danger")
+        return redirect(url_for("auth.ve_signup"))
+
+    # Check if the username already exists
+    user_exists = User.query.filter_by(username=username.upper()).first()
+    if user_exists:
+        flash("Error 42, Please contact the Lead VE.", "danger") # Intentionally vague error message
+        return redirect(url_for("auth.ve_signup"))
+
+    # Hash the password
+    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+    
+    # Check if a VE Account already exists
+    ve_user_exists = User.query.filter_by(role=2).first()
+
+    if not ve_user_exists:
+        # Create a new VE account (role 2) with active set to True
+        ve_user = User(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            username=username.upper(),
+            password=hashed_password,
+            role=2,  # Set role to 2 (VE account)
+            active=True  # Set active to True (This is the first VE Account)
+        )
+    else:
+        # Create a new VE account (role 2)
+        ve_user = User(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            username=username.upper(),
+            password=hashed_password,
+            role=2,  # Set role to 2 (VE account)
+            active=True  # Set active to False (must be approved by an existing VE)
+        )
+
+    db.session.add(ve_user)
+    db.session.commit()
+
+    flash(f'VE account for {username} created successfully!', 'success')
+    return redirect(url_for(PAGE_VE_ACCOUNT))
+
 @auth.route('/update_profile', methods=['POST'])
 @login_required
 def update_profile():
@@ -153,59 +238,6 @@ def update_profile():
         return redirect(url_for(PAGE_VE_ACCOUNT))
     return redirect(url_for('auth.logout'))
 
-# VE signup route
-@auth.route('/ve_signup', methods=['GET', 'POST'])
-def ve_signup():
-    """Render the VE signup page and process VE account creation.
-
-    If the request method is POST, processes the form data to create a new VE
-    (Volunteer Examiner) account. Validates input, checks for existing usernames,
-    hashes the password, and adds the new VE user to the database.
-
-    Returns:
-        Response: A redirect to the VE account page if successful, or back to the
-        VE signup page with an error message if there is a problem.
-    """
-    if request.method == 'POST':
-        # Get form data
-        username = request.form.get('username')
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        email = request.form.get('email')
-        password = request.form.get("password")
-        confirm_password = request.form.get("confirm_password")
-
-        # Basic validation
-        if password != confirm_password:
-            flash("Passwords do not match", "danger")
-            return redirect(url_for("auth.ve_signup"))
-
-        # Check if the username already exists
-        user_exists = User.query.filter_by(username=username).first()
-        if user_exists:
-            flash("Error 42, Please contact a VE.", "danger") # Intentionally vague error message
-            return redirect(url_for("auth.ve_signup"))
-
-        # Hash the password
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        # Create a new VE account (role 2)
-        ve_user = User(
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            username=username,
-            password=hashed_password,
-            role=2  # Set role to 2 (VE account)
-        )
-
-        db.session.add(ve_user)
-        db.session.commit()
-
-        flash('VE account created successfully!', 'success')
-        return redirect(url_for(PAGE_VE_ACCOUNT))
-
-    return render_template('ve_signup.html')
-
 @auth.route('/logout')
 @login_required
 def logout():
@@ -217,6 +249,3 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for('auth.login'))
-
-if __name__ == "__main__":
-    pass

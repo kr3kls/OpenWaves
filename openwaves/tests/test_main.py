@@ -83,7 +83,7 @@ def test_ve_account_exists(client, app):
     # Create a VE account for testuser
     with app.app_context():
         ve_user = User(
-            username='ve_testuser',
+            username='VE_TESTUSER',
             first_name='Test',
             last_name='User',
             email='testuser@example.com',  # Same email as current_user

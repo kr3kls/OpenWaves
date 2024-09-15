@@ -22,7 +22,7 @@ def test_update_user_password(app):
     """
     with app.app_context():
         # Retrieve the existing test user
-        user = User.query.filter_by(username="testuser").first()
+        user = User.query.filter_by(username="TESTUSER").first()
         original_password_hash = user.password # Store the original hash
 
         # Call the function to update the password
@@ -33,7 +33,7 @@ def test_update_user_password(app):
         db.session.flush()
 
         # Retrieve the user again to check if the password has been updated
-        updated_user = User.query.filter_by(username="testuser").first()
+        updated_user = User.query.filter_by(username="TESTUSER").first()
 
         # Assert that the password has changed
         assert updated_user.password != original_password_hash  # Hashes should be different

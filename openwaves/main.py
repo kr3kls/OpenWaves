@@ -79,6 +79,3 @@ def csp_violation_report():
     else:
         print("Received non-JSON CSP violation report")
     return '', 204  # Return 204 No Content
-
-if __name__ == "__main__":
-    pass

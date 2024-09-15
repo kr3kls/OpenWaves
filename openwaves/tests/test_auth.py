@@ -47,7 +47,7 @@ def test_login_post_valid_ve(client, app):
     # Create a VE user (role=2)
     with app.app_context():
         ve_user = User(
-            username='veuser',
+            username='VEUSER',
             first_name='VE',
             last_name='User',
             email='veuser@example.com',
@@ -359,15 +359,16 @@ def test_ve_signup_post_valid(client, app):
     assert b"Login" in response.data
     # Verify user creation
     with app.app_context():
-        user = User.query.filter_by(username='newveuser').first()
+        user = User.query.filter_by(username='NEWVEUSER').first()
         assert user is not None
 
 def test_ve_signup_password_mismatch(client):
     """Test that VE signup with mismatched passwords shows an error message."""
-    # Log in as 'testuser'
-    login(client, 'testuser', 'testpassword')
     response = client.post('/auth/ve_signup', data={
         'username': 'veuser2',
+        'first_name': 'New',
+        'last_name': 'User',
+        'email': 'newveuser@example.com',
         'password': 'password1',
         'confirm_password': 'password2'
     }, follow_redirects=True)
@@ -384,25 +385,26 @@ def test_ve_signup_existing_username(client, app):
     # Create an existing user
     with app.app_context():
         existing_user = User(
-            username='veuser3',
+            username='VEUSER3',
             first_name='VE',
             last_name='User',
             email='veuser3@example.com',
             password=generate_password_hash('somepassword', method='pbkdf2:sha256'),
-            role=1
+            role=2
         )
         db.session.add(existing_user)
         db.session.commit()
 
-    # Log in as 'testuser'
-    login(client, 'testuser', 'testpassword')
     response = client.post('/auth/ve_signup', data={
         'username': 'veuser3',
+        'first_name': 'New',
+        'last_name': 'User',
+        'email': 'newveuser@example.com',
         'password': 'vepassword',
         'confirm_password': 'vepassword'
     }, follow_redirects=True)
     assert response.status_code == 200
-    assert b"Error 42, Please contact a VE." in response.data
+    assert b"Error 42, Please contact the Lead VE." in response.data
 
 def test_logout(client):
     """Test that a logged-in user can log out successfully."""
