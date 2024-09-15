@@ -196,7 +196,7 @@ def ve_signup_post():
     db.session.commit()
 
     flash(f'VE account for {username} created successfully!', 'success')
-    return redirect(url_for(PAGE_VE_ACCOUNT))
+    return redirect(url_for('auth.login'))
 
 @auth.route('/update_profile', methods=['POST'])
 @login_required
