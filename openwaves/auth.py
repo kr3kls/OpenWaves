@@ -167,7 +167,7 @@ def ve_signup_post():
 
     # Hash the password
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-    
+
     # Check if a VE Account already exists
     ve_user_exists = User.query.filter_by(role=2).first()
 
@@ -191,7 +191,7 @@ def ve_signup_post():
             username=username.upper(),
             password=hashed_password,
             role=2,  # Set role to 2 (VE account)
-            active=True  # Set active to False (must be approved by an existing VE)
+            active=False  # Set active to False (must be approved by an existing VE)
         )
 
     db.session.add(ve_user)
@@ -212,26 +212,28 @@ def update_profile():
     Returns:
         Response: A redirect to the profile page.
     """
-    username = request.form.get('username')
-    first_name = request.form.get('first_name')
-    last_name = request.form.get('last_name')
-    email = request.form.get('email')
-    password = request.form.get('password')
-    confirm_password = request.form.get('confirm_password')
+    if current_user.role in [1, 2]:
+        username = request.form.get('username')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
 
-    # Update user data
-    current_user.username = username
-    current_user.first_name = first_name
-    current_user.last_name = last_name
-    current_user.email = email
+        # Update user data
+        current_user.username = username
+        current_user.first_name = first_name
+        current_user.last_name = last_name
+        current_user.email = email
 
-    # Update password if provided and confirmed
-    if password and password == confirm_password:
-        update_user_password(current_user, password)
+        # Update password if provided and confirmed
+        if password and password == confirm_password:
+            update_user_password(current_user, password)
 
-    db.session.commit()
+        db.session.commit()
 
-    flash('Profile updated successfully!', 'success')
+        flash('Profile updated successfully!', 'success')
+
     if current_user.role == 1:
         return redirect(url_for(PAGE_ACCOUNT))
     if current_user.role == 2:

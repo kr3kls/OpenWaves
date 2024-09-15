@@ -201,10 +201,21 @@ def test_update_ve_profile_success(client, app):
         - Response data contains 'Profile updated successfully!'.
         - User data in the database is updated accordingly.
     """
+    # Create a VE user
+    response = client.post('/auth/ve_signup', data={
+        'username': 'testveuser',
+        'first_name': 'New',
+        'last_name': 'User',
+        'email': 'newveuser@example.com',
+        'password': 'testvepassword',
+        'confirm_password': 'testvepassword'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+
     # Log in as testuser
     login(client, 'testveuser', 'testvepassword')
 
-    # Update profile with valid data (user role=1)
+    # Update profile with valid data (user role=2)
     response = client.post('/auth/update_profile', data={
         'username': 'updatedveuser',
         'first_name': 'Updatedve',
@@ -238,35 +249,35 @@ def test_update_profile_invalid_role(client, app):
 
     Asserts:
         - Response status code is 200.
-        - Response data contains 'Profile updated successfully!'.
-        - User data in the database is updated accordingly.
+        - Response data contains 'You have been logged out.'.
+        - User data in the database is not updated.
     """
     # Log in as testuser
-    login(client, 'testveuser', 'testvepassword')
+    login(client, 'testuser', 'testpassword')
 
     current_user.role = 3
 
     # Update profile with valid data (user role=1)
     response = client.post('/auth/update_profile', data={
-        'username': 'updatedveuser',
-        'first_name': 'Updatedve',
-        'last_name': 'Userve',
-        'email': 'updatedve@example.com',
-        'password': 'newvepassword',
-        'confirm_password': 'newvepassword'
+        'username': 'testuser',
+        'first_name': 'Updated',
+        'last_name': 'User',
+        'email': 'updated@example.com',
+        'password': 'newpassword',
+        'confirm_password': 'newpassword'
     }, follow_redirects=True)
     assert response.status_code == 200
     assert b"You have been logged out." in response.data
 
-    # Verify that the user's data has been updated
+    # Verify that the user's data has not been updated
     with app.app_context():
-        user = User.query.filter_by(username='updatedveuser').first()
+        user = User.query.filter_by(username='TESTUSER').first()
         assert user is not None
-        assert user.first_name == 'Updatedve'
-        assert user.last_name == 'Userve'
-        assert user.email == 'updatedve@example.com'
-        # Verify password change
-        assert check_password_hash(user.password, 'newvepassword')
+        assert user.first_name == 'first_test'
+        assert user.last_name == 'last_test'
+        assert user.email == 'testuser@example.com'
+        # Verify password did not change
+        assert check_password_hash(user.password, 'testpassword')
 
 def test_update_profile_password_mismatch(client):
     """Test updating the profile with mismatched passwords.
@@ -356,11 +367,54 @@ def test_ve_signup_post_valid(client, app):
     }, follow_redirects=True)
     assert response.status_code == 200
     # Should redirect to login page
-    assert b"Login" in response.data
+    response = login(client, 'newveuser', 'newpassword')
+    assert b"OpenWaves VE Profile" in response.data
     # Verify user creation
     with app.app_context():
         user = User.query.filter_by(username='NEWVEUSER').first()
         assert user is not None
+        assert user.active is True
+
+def test_ve_signup_post_valid_second(client, app):
+    """Test that a second VE account can be created successfully.
+
+    Args:
+        client: The test client.
+        app: The Flask application instance.
+    """
+    response = client.post('/auth/ve_signup', data={
+        'username': 'newveuser1',
+        'first_name': 'New',
+        'last_name': 'User',
+        'email': 'newveuser@example.com',
+        'password': 'newpassword',
+        'confirm_password': 'newpassword'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    # Should redirect to login page
+    assert b"Login" in response.data
+    # Verify user creation
+    with app.app_context():
+        user = User.query.filter_by(username='NEWVEUSER1').first()
+        assert user is not None
+        assert user.active is True # First account should be active
+
+    response = client.post('/auth/ve_signup', data={
+        'username': 'newveuser2',
+        'first_name': 'New',
+        'last_name': 'User',
+        'email': 'newveuser@example.com',
+        'password': 'newpassword',
+        'confirm_password': 'newpassword'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    # Should redirect to login page
+    assert b"Login" in response.data
+    # Verify user creation
+    with app.app_context():
+        user = User.query.filter_by(username='NEWVEUSER2').first()
+        assert user is not None
+        assert user.active is False # Second account should be disabled
 
 def test_ve_signup_password_mismatch(client):
     """Test that VE signup with mismatched passwords shows an error message."""

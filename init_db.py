@@ -16,7 +16,7 @@ with app.app_context():
 
      #Create a test user
     test_user = User(
-        username="testuser1",
+        username="TESTUSER1",
         first_name="first_test",
         last_name="last_test",
         email="testuser@example.com",
