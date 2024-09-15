@@ -36,3 +36,6 @@ class User(UserMixin, db.Model):
             str: A string showing the username and email of the user.
         """
         return f"User('{self.username}', '{self.email}')"
+
+if __name__ == "__main__":
+    pass

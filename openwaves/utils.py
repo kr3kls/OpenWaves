@@ -22,3 +22,6 @@ def update_user_password(user, new_password):
     # Update the user's password
     user.password = hashed_password
     db.session.commit()
+
+if __name__ == "__main__":
+    pass

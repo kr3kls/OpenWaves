@@ -217,3 +217,6 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for('auth.login'))
+
+if __name__ == "__main__":
+    pass
