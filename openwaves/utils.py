@@ -4,7 +4,7 @@
 """
 
 from werkzeug.security import generate_password_hash
-from .imports import db
+from . import db
 
 def update_user_password(user, new_password):
     """Update the user's password with a new hashed password.
