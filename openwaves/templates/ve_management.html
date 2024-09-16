@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-8 is-offset-2">
+    <div class="box">
+        <h3 class="title has-text-centered has-text-dark">VE Account Management</h3>
+
+        <table class="table is-striped is-hoverable is-fullwidth">
+            <thead>
+                <tr>
+                    <th>Username</th> <!-- Changed from Email to Username -->
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in ve_accounts %}
+                <tr>
+                    <td>{{ account.username }}</td>  <!-- Displaying Username instead of Email -->
+                    <td>
+                        {% if account.active %}
+                            <span class="tag is-success">Active</span>
+                        {% else %}
+                            <span class="tag is-danger">Disabled</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('auth.toggle_account_status', account_id=account.id) }}" method="post">
+                            {% if config['WTF_CSRF_ENABLED'] %}
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            {% endif %}
+                            
+                            {% if account.username != current_user.username %}
+                            <button class="button is-small is-info is-light" type="submit">
+                                {% if account.active %}
+                                    Disable
+                                {% else %}
+                                    Enable
+                                {% endif %}
+                            </button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="field is-grouped is-grouped-centered">
+            <a href="{{ url_for('main.index') }}" class="button is-link">Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

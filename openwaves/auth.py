@@ -3,6 +3,8 @@
     This file contains the user authorization methods for the application.
 """
 
+import random
+import string
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -237,6 +239,103 @@ def update_profile():
     if current_user.role == 2:
         return redirect(url_for(PAGE_VE_ACCOUNT))
     return redirect(url_for('auth.logout'))
+
+@auth.route('/ve_management')
+@login_required
+def ve_management():
+    """Handle management of VE accounts."""
+    if current_user.role != 2:  # Allow only VE users (role 2) to access this page
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.logout'))
+
+    ve_accounts = User.query.filter(User.role == 2)  # Query to fetch all VE accounts
+    return render_template('ve_management.html', ve_accounts=ve_accounts)
+
+@auth.route('/toggle_account_status/<int:account_id>', methods=['POST'])
+@login_required
+def toggle_account_status(account_id):
+    """
+    Toggles the active status of a user account.
+
+    This route is restricted to users with a VE role (role 2) and allows them to
+    change the active/inactive status of another user account. If the current user
+    does not have the necessary permissions, they are logged out. If the target
+    account is not found, an error is flashed to the user.
+
+    Args:
+        account_id (int): The ID of the account to toggle the status of.
+
+    Returns:
+        Response: A redirection to the VE management page with a success or error 
+        message flashed to the user.
+    """
+    if current_user.role != 2:  # Only VE users can change status
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.logout'))
+
+    account = User.query.get(account_id)
+    if not account:
+        flash("Account not found.", "danger")
+        return redirect(url_for('auth.ve_management'))
+
+    # Toggle active status
+    account.active = not account.active
+    db.session.commit()
+    flash(f"Account status updated to {'active' if account.active else 'disabled'}.", "success")
+    return redirect(url_for('auth.ve_management'))
+
+@auth.route('/password_resets')
+@login_required
+def password_resets():
+    """
+    Displays the password reset management page for VE users.
+
+    Returns:
+        Response: Rendered HTML page showing a list of accounts and the option to reset passwords.
+    """
+    if current_user.role != 2:  # Only VE users can view this page
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.logout'))
+
+    accounts = User.query.all()  # Fetch all user accounts
+    return render_template('password_resets.html', accounts=accounts)
+
+@auth.route('/reset_password/<int:account_id>', methods=['POST'])
+@login_required
+def reset_password(account_id):
+    """
+    Resets the password of a user account to a random 8-character string and flashes
+    it to the VE user.
+
+    Args:
+        account_id (int): The ID of the account whose password is being reset.
+
+    Returns:
+        Response: Redirects to the password reset page with a flash message showing
+        the new password.
+    """
+    print("Password reset requested")
+    if current_user.role != 2:  # Only VE users can reset passwords
+        flash("Access denied.", "danger")
+        return redirect(url_for('auth.logout'))
+
+    account = User.query.get(account_id)
+    if not account:
+        flash("Account not found.", "danger")
+        return redirect(url_for('auth.password_resets'))
+
+    # Generate a random 8-character password (upper, lower, digits)
+    new_password = ''.join(random.choices(string.ascii_uppercase +
+                                          string.ascii_lowercase +
+                                          string.digits, k=8))
+
+    # Update the account's password
+    account.password = generate_password_hash(new_password)
+    db.session.commit()
+
+    flash(f"Password for {account.username} has been reset. " +
+          f"New password: {new_password}", "success")
+    return redirect(url_for('auth.password_resets'))
 
 @auth.route('/logout')
 @login_required

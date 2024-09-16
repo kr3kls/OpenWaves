@@ -43,6 +43,7 @@ def create_app():
     @app.before_request
     def generate_nonce():
         g.csp_nonce = secrets.token_hex(16)  # 16-byte random nonce for each request
+        print(f"Generated nonce: {g.csp_nonce}")  # Debugging: Print the nonce
 
     # Set CSP headers after the request
     @app.after_request

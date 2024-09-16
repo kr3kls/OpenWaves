@@ -55,24 +55,26 @@
         <div class="container">
             <div id="navbarMenuHeroA" class="navbar-menu">
                 <div class="navbar-end">
-                    <!-- Home link is always displayed -->
                     <a href="{{ url_for('main.index') }}" class="navbar-item">
                         Home
                     </a>
-                    {% if not config.TESTING %}  <!-- Disable navbar in test mode -->
-                    <!-- Only show Profile link if user is authenticated -->
+                    {% if not config.TESTING %}
                     {% if current_user.is_authenticated and current_user.role == 1 %}
                         <a href="{{ url_for('main.profile') }}" class="navbar-item">
                             Profile
                         </a>
                     {% endif %}
-                    <!-- Only show VE Profile link to authenticated VE accounts -->
                     {% if current_user.is_authenticated and current_user.role == 2 %}
                         <a href="{{ url_for('main.ve_account') }}" class="navbar-item">
                             VE Profile
                         </a>
+                        <a href="{{ url_for('auth.ve_management') }}" class="navbar-item">
+                            VE Management
+                        </a>
+                        <a href="{{ url_for('auth.password_resets') }}" class="navbar-item">
+                            Password Resets
+                        </a>
                     {% endif %}
-                    <!-- Show Login and Signup links only if user is NOT authenticated -->
                     {% if not current_user.is_authenticated %}
                         <a href="{{ url_for('auth.login') }}" class="navbar-item">
                             Login
@@ -81,8 +83,6 @@
                             Sign Up
                         </a>
                     {% endif %}
-
-                    <!-- Show Logout link only if user is authenticated -->
                     {% if current_user.is_authenticated %}
                         <a href="{{ url_for('auth.logout') }}" class="navbar-item">
                             Logout
