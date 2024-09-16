@@ -22,12 +22,6 @@
     </div>
 </div>
 
-<style nonce="{{ g.csp_nonce }}">
-    #new-password-field, #confirm-password-field, #save-button {
-        display: none;
-    }
-</style>
-
 <script nonce="{{ g.csp_nonce }}">
     document.getElementById('edit-button').addEventListener('click', function() {
         var inputs = document.querySelectorAll('#ve-profile-form input');

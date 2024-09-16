@@ -7,47 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Flask Auth Example</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css" />
-    <style nonce="{{ g.csp_nonce }}">
-        .hero {
-            background-image: url("{{ url_for('static', filename='images/background.webp') }}");
-            background-size: cover;
-            background-position: center center;
-            background-repeat: no-repeat;
-            position: relative;
-            z-index: 1;
-        }
-
-        .navbar {
-            background-color: #1F2D38;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 10;
-        }
-
-        .navbar-item {
-            color: white;
-        }
-
-        footer {
-            background-color: #1F2D38;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            font-size: 0.9rem;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 10;
-        }
-
-        .hero-body {
-            padding-top: 4rem;  /* To prevent content from overlapping with navbar */
-            padding-bottom: 4rem; /* To prevent content from overlapping with footer */
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/openwaves.css') }}">
 </head>
 
 <body>
@@ -97,7 +57,7 @@
         </div>
     </nav>
 
-    <section class="hero is-primary is-fullheight">
+    <section class="hero is-fullheight">
         <div class="hero-body">
             <div class="container has-text-centered">
                 <!-- Flash messages -->

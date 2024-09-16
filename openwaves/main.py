@@ -5,9 +5,9 @@
 
 import csv
 from datetime import datetime
+from io import TextIOWrapper
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import login_required, current_user
-from io import TextIOWrapper
 from werkzeug.utils import secure_filename
 from .imports import db, Pool, Question
 
@@ -77,7 +77,7 @@ def pools():
         Response: The rendered 'pools.html' template.
     """
     # Get all question pools from the database
-    question_pools = Pool.query.all()
+    question_pools = Pool.query.order_by(Pool.element.asc(), Pool.start_date.asc()).all()
     for question_pool in question_pools:
         question_count = Question.query.filter_by(pool_id=question_pool.id).count()
         question_pool.question_count = question_count
@@ -161,6 +161,25 @@ def upload_questions(pool_id):
 
     # Add all questions to the database
     db.session.bulk_save_objects(questions)
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
+
+@main.route('/delete_pool/<int:pool_id>', methods=['DELETE'])
+@login_required
+def delete_pool(pool_id):
+    """Delete a question pool and all associated questions."""
+    
+    # Find the pool by ID
+    pool = Pool.query.get(pool_id)
+    if not pool:
+        return jsonify({"error": "Pool not found."}), 404
+    
+    # Delete all questions associated with the pool
+    Question.query.filter_by(pool_id=pool_id).delete()
+
+    # Delete the pool itself
+    db.session.delete(pool)
     db.session.commit()
 
     return jsonify({"success": True}), 200

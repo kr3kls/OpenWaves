@@ -31,7 +31,7 @@
                             {% endif %}
                             
                             {% if account.username != current_user.username %}
-                            <button class="button is-small is-info is-light" type="submit">
+                            <button class="button is-small is-light-button-color" type="submit">
                                 {% if account.active %}
                                     Disable
                                 {% else %}
@@ -47,7 +47,7 @@
         </table>
 
         <div class="field is-grouped is-grouped-centered">
-            <a href="{{ url_for('main.index') }}" class="button is-link">Back to Home</a>
+            <a href="{{ url_for('main.index') }}" class="button is-button-color">Back to Home</a>
         </div>
     </div>
 </div>

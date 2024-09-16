@@ -4,8 +4,6 @@
 <div class="column is-8 is-offset-2">
     <div class="box">
         <h3 class="title has-text-centered has-text-dark">Question Pools</h3>
-
-        <!-- Center the table using Bulma classes -->
         <div class="table-container has-text-centered">
             <table class="table is-striped is-hoverable is-fullwidth">
             {% if question_pools|length > 0 %}
@@ -63,6 +61,9 @@
                             </div>
                         {% endif %}
                     </td>
+                    <td>
+                        <button class="button is-small is-danger delete-pool-button" data-name="{{ pool.name }}" data-id="{{ pool.id }}">Delete</button>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -71,7 +72,7 @@
 
         <!-- Button to create a new pool -->
         <div class="has-text-centered">
-            <button class="button is-primary" id="create-pool-button">Create New Pool</button>
+            <button class="button is-button-color" id="create-pool-button">Create New Pool</button>
         </div>
 
         <!-- Modal for creating a new question pool -->
@@ -118,91 +119,13 @@
                     </form>
                 </section>
                 <footer class="modal-card-foot">
-                    <button class="button is-success" id="submit-pool-form">Save</button>
-                    <button class="button is-light" id="cancel-pool-form">Cancel</button>
+                    <button class="button is-button-color" id="submit-pool-form">Save</button>
+                    <button class="button is-light-button-color" id="cancel-pool-form">Cancel</button>
                 </footer>
             </div>
         </div>
     </div>
 </div>
 
-<script nonce="{{ g.csp_nonce }}">
-    // Toggle the modal
-    document.querySelectorAll('[id^=upload-button]').forEach(button => {
-        button.addEventListener('click', function() {
-            const poolId = this.id.split('-')[2];
-            document.getElementById('upload-modal-' + poolId).classList.add('is-active');
-        });
-    });
-
-    // Close modal on clicking the 'Cancel' button or 'X'
-    document.querySelectorAll('.delete').forEach(button => {
-        button.addEventListener('click', function() {
-            const modalId = this.closest('.modal').id;
-            document.getElementById(modalId).classList.remove('is-active');
-        });
-    });
-
-    document.querySelectorAll('[id^=submit-upload]').forEach(button => {
-        button.addEventListener('click', async function(e) {
-            e.preventDefault();
-            const poolId = this.id.split('-')[2];
-            const form = document.getElementById('upload-form-' + poolId);
-            const formData = new FormData(form);
-
-            // Submit the form data via AJAX to the server
-            const response = await fetch(`/upload_questions/${poolId}`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (response.ok) {
-                alert('Questions uploaded successfully!');
-                location.reload();  // Reload the page to show the new questions
-            } else {
-                alert('There was an error uploading the questions.');
-            }
-
-            // Close the modal after form submission
-            document.getElementById('upload-modal-' + poolId).classList.remove('is-active');
-        });
-    });
-    
-    // Toggle the modal
-    document.getElementById('create-pool-button').addEventListener('click', function() {
-        document.getElementById('create-pool-modal').classList.add('is-active');
-    });
-
-    // Close modal on clicking the 'Cancel' button or 'X'
-    document.querySelector('.delete').addEventListener('click', function() {
-        document.getElementById('create-pool-modal').classList.remove('is-active');
-    });
-
-    document.getElementById('cancel-pool-form').addEventListener('click', function() {
-        document.getElementById('create-pool-modal').classList.remove('is-active');
-    });
-
-    // Handle form submission
-    document.getElementById('submit-pool-form').addEventListener('click', async function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(document.getElementById('create-pool-form'));
-
-        // Submit the form data via AJAX to the server
-        const response = await fetch('/create_pool', {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (response.ok) {
-            alert('Pool created successfully!');
-            location.reload();  // Reload the page to show the new pool
-        } else {
-            alert('There was an error creating the pool.');
-        }
-
-        // Close the modal after form submission
-        document.getElementById('create-pool-modal').classList.remove('is-active');
-    });
-</script>
+<script src="{{ url_for('static', filename='js/pools.js') }}" nonce="{{ g.csp_nonce }}"></script>
 {% endblock %}
