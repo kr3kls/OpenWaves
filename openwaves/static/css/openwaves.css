@@ -1,3 +1,30 @@
+/* Navbar background */
+.navbar {
+    background-color: #1F2D38;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+/* Navbar items default text color */
+.navbar-item {
+    color: white !important;  /* Ensure white text */
+}
+
+/* Hover state for navbar items */
+.navbar-item:hover {
+    background-color: white !important;  /* White background on hover */
+    color: #1F2D38 !important;  /* Dark text on hover */
+}
+
+/* Navbar menu background when expanded */
+.navbar-menu {
+    background-color: #1F2D38;
+}
+
+/* Hero background */
 .hero {
     background-color: #1F2D38;
     background-image: url('../images/background.webp');
@@ -8,19 +35,7 @@
     z-index: 1;
 }
 
-.navbar {
-    background-color: #1F2D38;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-}
-
-.navbar-item {
-    color: white;
-}
-
+/* Footer styling */
 footer {
     background-color: #1F2D38;
     color: white;
@@ -34,11 +49,13 @@ footer {
     z-index: 10;
 }
 
+/* Ensure padding to prevent content overlap with navbar */
 .hero-body {
-    padding-top: 4rem;  /* To prevent content from overlapping with navbar */
-    padding-bottom: 4rem; /* To prevent content from overlapping with footer */
+    padding-top: 4rem;
+    padding-bottom: 4rem;
 }
 
+/* Button colors */
 .is-button-color {
     background-color: #8297A4;
     color: white;
@@ -59,6 +76,7 @@ footer {
     background-color: #262C37;
 }
 
+/* Hide password fields initially */
 #new-password-field, #confirm-password-field, #save-button {
     display: none;
 }

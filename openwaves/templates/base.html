@@ -11,14 +11,23 @@
 </head>
 
 <body>
-    <nav class="navbar">
+    {% if not config.TESTING %}
+    <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="container">
+            <div class="navbar-brand">
+                <!-- Burger menu button -->
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenuHeroA">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+    
             <div id="navbarMenuHeroA" class="navbar-menu">
                 <div class="navbar-end">
                     <a href="{{ url_for('main.index') }}" class="navbar-item">
                         Home
                     </a>
-                    {% if not config.TESTING %}
                     {% if current_user.is_authenticated and current_user.role == 1 %}
                         <a href="{{ url_for('main.profile') }}" class="navbar-item">
                             Profile
@@ -51,11 +60,11 @@
                             Logout
                         </a>
                     {% endif %}
-                    {% endif %}
                 </div>
             </div>
         </div>
     </nav>
+    {% endif %}
 
     <section class="hero is-fullheight">
         <div class="hero-body">
@@ -80,5 +89,7 @@
     <footer>
         Image credit: DALL-E
     </footer>
+
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
 </body>
 </html>
