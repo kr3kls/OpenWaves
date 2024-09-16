@@ -65,6 +65,9 @@
                         </a>
                     {% endif %}
                     {% if current_user.is_authenticated and current_user.role == 2 %}
+                        <a href="{{ url_for('main.pools') }}" class="navbar-item">
+                            Test Pools
+                        </a>
                         <a href="{{ url_for('main.ve_account') }}" class="navbar-item">
                             VE Profile
                         </a>

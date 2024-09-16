@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-8 is-offset-2">
+    <div class="box">
+        <h3 class="title has-text-centered has-text-dark">Question Pools</h3>
+
+        <!-- Center the table using Bulma classes -->
+        <div class="table-container has-text-centered">
+            <table class="table is-striped is-hoverable is-fullwidth">
+            {% if question_pools|length > 0 %}
+            <thead>
+                <tr>
+                    <th>Pool Name</th>
+                    <th>Element</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Questions</th>
+                </tr>
+            </thead>
+            {% endif %}
+            <tbody>
+                {% for pool in question_pools %}
+                <tr>
+                    <td>{{ pool.name }}</td>
+                    <td>{{ pool.element }}</td>
+                    <td>{{ pool.start_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ pool.end_date.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        {% if pool.question_count > 0 %}
+                            {{ pool.question_count }} questions
+                        {% else %}
+                            <!-- Display upload button when there are no questions -->
+                            <button class="button is-small is-primary" id="upload-button-{{ pool.id }}">Upload Questions</button>
+            
+                            <!-- Modal for CSV upload -->
+                            <div class="modal" id="upload-modal-{{ pool.id }}">
+                                <div class="modal-background"></div>
+                                <div class="modal-card">
+                                    <header class="modal-card-head">
+                                        <p class="modal-card-title">Upload Questions for {{ pool.name }}</p>
+                                        <button class="delete" aria-label="close"></button>
+                                    </header>
+                                    <section class="modal-card-body">
+                                        <form id="upload-form-{{ pool.id }}" enctype="multipart/form-data">
+                                            {% if config['WTF_CSRF_ENABLED'] %}
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            {% endif %}
+                                            
+                                            <div class="field">
+                                                <label class="label">Upload CSV File</label>
+                                                <div class="control">
+                                                    <input class="input" type="file" name="file" accept=".csv" required>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </section>
+                                    <footer class="modal-card-foot">
+                                        <button class="button is-success" id="submit-upload-{{ pool.id }}">Upload</button>
+                                        <button class="button is-light">Cancel</button>
+                                    </footer>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+
+        <!-- Button to create a new pool -->
+        <div class="has-text-centered">
+            <button class="button is-primary" id="create-pool-button">Create New Pool</button>
+        </div>
+
+        <!-- Modal for creating a new question pool -->
+        <div class="modal" id="create-pool-modal">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Create Question Pool</p>
+                    <button class="delete" aria-label="close"></button>
+                </header>
+                <section class="modal-card-body">
+                    <form id="create-pool-form">
+                        {% if config['WTF_CSRF_ENABLED'] %}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% endif %}
+                        
+                        <div class="field">
+                            <label class="label">Pool Name</label>
+                            <div class="control">
+                                <input class="input" type="text" name="pool_name" placeholder="Enter pool name" required>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Exam Element</label>
+                            <div class="control">
+                                <input class="input" type="number" name="exam_element" placeholder="Enter exam element" required>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Start Date</label>
+                            <div class="control">
+                                <input class="input" type="date" name="start_date" required>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">End Date</label>
+                            <div class="control">
+                                <input class="input" type="date" name="end_date" required>
+                            </div>
+                        </div>
+                    </form>
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="button is-success" id="submit-pool-form">Save</button>
+                    <button class="button is-light" id="cancel-pool-form">Cancel</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script nonce="{{ g.csp_nonce }}">
+    // Toggle the modal
+    document.querySelectorAll('[id^=upload-button]').forEach(button => {
+        button.addEventListener('click', function() {
+            const poolId = this.id.split('-')[2];
+            document.getElementById('upload-modal-' + poolId).classList.add('is-active');
+        });
+    });
+
+    // Close modal on clicking the 'Cancel' button or 'X'
+    document.querySelectorAll('.delete').forEach(button => {
+        button.addEventListener('click', function() {
+            const modalId = this.closest('.modal').id;
+            document.getElementById(modalId).classList.remove('is-active');
+        });
+    });
+
+    document.querySelectorAll('[id^=submit-upload]').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const poolId = this.id.split('-')[2];
+            const form = document.getElementById('upload-form-' + poolId);
+            const formData = new FormData(form);
+
+            // Submit the form data via AJAX to the server
+            const response = await fetch(`/upload_questions/${poolId}`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                alert('Questions uploaded successfully!');
+                location.reload();  // Reload the page to show the new questions
+            } else {
+                alert('There was an error uploading the questions.');
+            }
+
+            // Close the modal after form submission
+            document.getElementById('upload-modal-' + poolId).classList.remove('is-active');
+        });
+    });
+    
+    // Toggle the modal
+    document.getElementById('create-pool-button').addEventListener('click', function() {
+        document.getElementById('create-pool-modal').classList.add('is-active');
+    });
+
+    // Close modal on clicking the 'Cancel' button or 'X'
+    document.querySelector('.delete').addEventListener('click', function() {
+        document.getElementById('create-pool-modal').classList.remove('is-active');
+    });
+
+    document.getElementById('cancel-pool-form').addEventListener('click', function() {
+        document.getElementById('create-pool-modal').classList.remove('is-active');
+    });
+
+    // Handle form submission
+    document.getElementById('submit-pool-form').addEventListener('click', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(document.getElementById('create-pool-form'));
+
+        // Submit the form data via AJAX to the server
+        const response = await fetch('/create_pool', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (response.ok) {
+            alert('Pool created successfully!');
+            location.reload();  // Reload the page to show the new pool
+        } else {
+            alert('There was an error creating the pool.');
+        }
+
+        // Close the modal after form submission
+        document.getElementById('create-pool-modal').classList.remove('is-active');
+    });
+</script>
+{% endblock %}

@@ -3,8 +3,13 @@
     This file contains the main routes and view functions for the application.
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for
+import csv
+from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import login_required, current_user
+from io import TextIOWrapper
+from werkzeug.utils import secure_filename
+from .imports import db, Pool, Question
 
 main = Blueprint('main', __name__)
 
@@ -61,6 +66,104 @@ def ve_account():
 
     # If no VE account exists, redirect to the logout page
     return redirect(url_for('auth.logout'))
+
+# Route to show pools page
+@main.route('/pools')
+@login_required
+def pools():
+    """Render the pools page of the application.
+
+    Returns:
+        Response: The rendered 'pools.html' template.
+    """
+    # Get all question pools from the database
+    question_pools = Pool.query.all()
+    for question_pool in question_pools:
+        question_count = Question.query.filter_by(pool_id=question_pool.id).count()
+        question_pool.question_count = question_count
+    return render_template('pools.html', question_pools=question_pools)
+
+# Route to create question pools
+@main.route('/create_pool', methods=['POST'])
+@login_required
+def create_pool():
+    """
+    Creates a new question pool and stores it in the database.
+
+    This route handles the creation of a question pool by accepting form data
+    through a POST request. The form data should include the pool name, exam element,
+    start date, and end date. If any of the required fields are missing, a 400 error 
+    is returned with a message indicating that all fields are required.
+
+    On successful creation of the question pool, the pool is added to the database
+    and a JSON response with success status is returned.
+
+    Returns:
+        Response: A JSON response with a success message and a 200 status code on
+        successful creation, or a 400 status code with an error message if any field
+        is missing.
+    """
+
+    # Get the form data
+    pool_name = request.form.get('pool_name')
+    exam_element = request.form.get('exam_element')
+    start_date = request.form.get('start_date')
+    end_date = request.form.get('end_date')
+
+    # Validate the form data
+    if not pool_name or not exam_element or not start_date or not end_date:
+        return jsonify({"error": "All fields are required."}), 400
+
+    # Create a new question pool entry in the database
+    new_pool = Pool(
+        name=pool_name,
+        element=exam_element,
+        start_date=datetime.strptime(start_date, '%Y-%m-%d'),
+        end_date=datetime.strptime(end_date, '%Y-%m-%d'),
+    )
+    db.session.add(new_pool)
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
+
+@main.route('/upload_questions/<int:pool_id>', methods=['POST'])
+@login_required
+def upload_questions(pool_id):
+    """Handle the CSV upload for questions and associate them with the given pool_id."""
+    file = request.files.get('file')
+
+    if not file:
+        return jsonify({"error": "No file provided."}), 400
+
+    filename = secure_filename(file.filename)
+    if not filename.endswith('.csv'):
+        return jsonify({"error": "Invalid file type. Only CSV files are allowed."}), 400
+
+    # Parse the CSV file
+    file_stream = TextIOWrapper(file.stream, encoding='utf-8')
+    csv_reader = csv.DictReader(file_stream)
+
+    questions = []
+    for row in csv_reader:
+        # Assuming the CSV has the fields: id, correct, question, a, b, c, d, refs
+        new_question = Question(
+            number=row['id'],
+            pool_id=pool_id,  # Associate with the correct pool
+            correct_answer=row['correct'],
+            question=row['question'],
+            option_a=row['a'],
+            option_b=row['b'],
+            option_c=row['c'],
+            option_d=row['d'],
+            refs=row['refs']
+        )
+        questions.append(new_question)
+
+    # Add all questions to the database
+    db.session.bulk_save_objects(questions)
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
 
 # Route to handle CSP violations
 @main.route('/csp-violation-report-endpoint', methods=['POST'])
