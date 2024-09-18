@@ -121,3 +121,36 @@ class TLI(db.Model): # pylint: disable=R0903
 
     def __repr__(self):
         return f"Pool: {self.pool_id}, TLI: {self.tli}, Quantity: {self.quantity}"
+
+class TestSession(db.Model): # pylint: disable=R0903
+    """Database model for test sessions.
+    
+    Represents a test session for users taking exams.
+    
+    Attributes:
+        id (int): The primary key for the test session.
+        session_date (datetime): The date of the test session.
+        start_time (datetime): The start time for the test session.
+        end_time (datetime): The end time for the test session.
+        tech_pool_id (int): The pool ID for the Technician exam.
+        gen_pool_id (int): The pool ID for the General exam.
+        extra_pool_id (int): The pool ID for the Extra exam.
+        status (bool): Whether the test session is active (default False).
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_date = db.Column(db.DateTime, nullable=False)
+    start_time = db.Column(db.DateTime, nullable=True)
+    end_time = db.Column(db.DateTime, nullable=True)
+    tech_pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    gen_pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    extra_pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    status = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        """Return a string representation of the test session.
+
+        Returns:
+            str: A string showing the start and end times of the test session.
+        """
+        return f"TestSession('{self.session_date}')"

@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle deleting pools
     document.querySelectorAll('.delete-pool-button').forEach(button => {
         button.addEventListener('click', function() {
             const poolId = this.getAttribute('data-id');
             const poolName = this.getAttribute('data-name');
             const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-    
+
             if (confirm("Are you sure you want to delete the " + poolName + " pool and all associated questions?")) {
                 fetch(`/delete_pool/${poolId}`, {
                     method: 'DELETE',
@@ -28,9 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
-    
-    
+
     // Toggle the upload modal
     document.querySelectorAll('[id^=upload-button]').forEach(button => {
         button.addEventListener('click', function() {
@@ -71,19 +70,55 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('upload-modal-' + poolId).classList.remove('is-active');
         });
     });
-    
+
+    // Handle creating a new pool
+    const createPoolButton = document.getElementById('create-pool-button');
+    const createPoolModal = document.getElementById('create-pool-modal');
+    const poolNameDropdown = document.getElementById('pool-name');
+    const examElementField = document.getElementById('exam-element');
+    const startDateField = document.getElementById('start-date');
+    const endDateField = document.getElementById('end-date');
+
     // Toggle the create pool modal
-    document.getElementById('create-pool-button').addEventListener('click', function() {
-        document.getElementById('create-pool-modal').classList.add('is-active');
+    createPoolButton.addEventListener('click', function() {
+        // Set default start and end dates
+        const currentYear = new Date().getFullYear();
+        startDateField.value = `${currentYear}-07-01`;
+        endDateField.value = `${currentYear + 4}-06-30`;
+
+        // Open the modal
+        createPoolModal.classList.add('is-active');
     });
 
     // Close modal on clicking the 'Cancel' button or 'X'
     document.querySelector('.delete').addEventListener('click', function() {
-        document.getElementById('create-pool-modal').classList.remove('is-active');
+        createPoolModal.classList.remove('is-active');
     });
 
     document.getElementById('cancel-pool-form').addEventListener('click', function() {
-        document.getElementById('create-pool-modal').classList.remove('is-active');
+        createPoolModal.classList.remove('is-active');
+    });
+
+    // Handle pool name change to update the exam element automatically
+    poolNameDropdown.addEventListener('change', function() {
+        const selectedPool = poolNameDropdown.value;
+        if (selectedPool === 'Technician') {
+            examElementField.value = 2;
+        } else if (selectedPool === 'General') {
+            examElementField.value = 3;
+        } else if (selectedPool === 'Extra') {
+            examElementField.value = 4;
+        }
+    });
+
+    // Automatically update end date based on start date
+    startDateField.addEventListener('change', function() {
+        const startDate = new Date(startDateField.value);
+        if (startDate) {
+            const endDate = new Date(startDate);
+            endDate.setFullYear(startDate.getFullYear() + 4);  // Add 4 years
+            endDateField.value = `${endDate.getFullYear()}-06-30`;  // Always set end date to June 30
+        }
     });
 
     // Handle form submission
@@ -106,6 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Close the modal after form submission
-        document.getElementById('create-pool-modal').classList.remove('is-active');
+        createPoolModal.classList.remove('is-active');
     });
 });

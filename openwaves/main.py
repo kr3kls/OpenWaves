@@ -9,7 +9,7 @@ from io import TextIOWrapper
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from .imports import db, Pool, Question, TLI
+from .imports import db, Pool, Question, TLI, TestSession
 
 main = Blueprint('main', __name__)
 
@@ -183,18 +183,131 @@ def upload_questions(pool_id):
 @login_required
 def delete_pool(pool_id):
     """Delete a question pool and all associated questions."""
-    
+
     # Find the pool by ID
     pool = Pool.query.get(pool_id)
     if not pool:
         return jsonify({"error": "Pool not found."}), 404
-    
+
     # Delete all questions associated with the pool
     Question.query.filter_by(pool_id=pool_id).delete()
     TLI.query.filter_by(pool_id=pool_id).delete()
 
     # Delete the pool itself
     db.session.delete(pool)
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
+
+# Route to show pools page
+@main.route('/sessions')
+@login_required
+def sessions():
+    """Render the sessions page of the application.
+
+    Returns:
+        Response: The rendered 'sessions.html' template.
+    """
+    # Get all test sessions from the database
+    test_sessions = \
+        TestSession.query.order_by(TestSession.session_date.desc()).all()
+    question_pools=Pool.query.all()
+
+    tech_pool_options={}
+    general_pool_options={}
+    extra_pool_options={}
+
+    for pool in question_pools:
+        if pool.element == 2:
+            tech_pool_options[pool.id] = \
+                f"{pool.name} {pool.start_date.strftime('%Y')}-{pool.end_date.strftime('%Y')}"
+        elif pool.element == 3:
+            general_pool_options[pool.id] = \
+                f"{pool.name} {pool.start_date.strftime('%Y')}-{pool.end_date.strftime('%Y')}"
+        elif pool.element == 4:
+            extra_pool_options[pool.id] = \
+                f"{pool.name} {pool.start_date.strftime('%Y')}-{pool.end_date.strftime('%Y')}"
+
+    current_date = datetime.now().date()
+    return render_template('sessions.html',
+                           test_sessions=test_sessions,
+                           tech_pool_options=tech_pool_options,
+                           general_pool_options=general_pool_options,
+                           extra_pool_options=extra_pool_options,
+                           current_date=current_date)
+
+# Route to create test sessions
+@main.route('/create_session', methods=['POST'])
+@login_required
+def create_session():
+    """
+    Creates a new test session and stores it in the database.
+
+    This route handles the creation of a test session by accepting form data
+    through a POST request. The form data should include the session date and three pool_id values,
+    one for each exam element. If any of the required fields are missing, a 400 error 
+    is returned with a message indicating that all fields are required.
+
+    On successful creation of the test session, the session is added to the database
+    and a JSON response with success status is returned.
+
+    Returns:
+        Response: A JSON response with a success message and a 200 status code on
+        successful creation, or a 400 status code with an error message if any field
+        is missing.
+    """
+
+    # Get the form data
+    start_date = request.form.get('start_date')
+    tech_pool_id = request.form.get('tech_pool')
+    general_pool_id = request.form.get('general_pool')
+    extra_pool_id = request.form.get('extra_pool')
+
+    # Validate the form data
+    if not start_date or not tech_pool_id or not general_pool_id or not extra_pool_id:
+        return jsonify({"error": "All fields are required."}), 400
+
+    # Convert the session_date to a Python datetime object
+    session_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+
+    # Create a new question pool entry in the database
+    new_session = TestSession(
+        session_date = session_date,
+        tech_pool_id = tech_pool_id,
+        gen_pool_id = general_pool_id,
+        extra_pool_id = extra_pool_id,
+    )
+    db.session.add(new_session)
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
+
+# Route to open a session
+@main.route('/open_session/<int:session_id>', methods=['POST'])
+@login_required
+def open_session(session_id):
+    """
+    Opens a test session by setting the current time as the start_time and updating the status.
+    """
+    session = TestSession.query.get_or_404(session_id)
+
+    # Set the start time to the current time and mark the session as open
+    session.start_time = datetime.now()
+    session.status = True
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
+
+# Route to close a session
+@main.route('/close_session/<int:session_id>', methods=['POST'])
+@login_required
+def close_session(session_id):
+    """Closes a test session by setting the current time as the end_time and updating the status."""
+    session = TestSession.query.get_or_404(session_id)
+
+    # Set the end time to the current time and mark the session as closed
+    session.end_time = datetime.now()
+    session.status = False
     db.session.commit()
 
     return jsonify({"success": True}), 200

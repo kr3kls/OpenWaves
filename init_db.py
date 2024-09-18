@@ -35,6 +35,7 @@ with app.app_context():
         password=generate_password_hash("testpass1", method="pbkdf2:sha256"),
         role=2
     )
+
     db.session.add(test_user)
     db.session.add(ve_user)
     db.session.commit()
