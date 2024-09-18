@@ -9,7 +9,7 @@ from io import TextIOWrapper
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from .imports import db, Pool, Question
+from .imports import db, Pool, Question, TLI
 
 main = Blueprint('main', __name__)
 
@@ -114,6 +114,7 @@ def create_pool():
     if not pool_name or not exam_element or not start_date or not end_date:
         return jsonify({"error": "All fields are required."}), 400
 
+
     # Create a new question pool entry in the database
     new_pool = Pool(
         name=pool_name,
@@ -143,8 +144,16 @@ def upload_questions(pool_id):
     file_stream = TextIOWrapper(file.stream, encoding='utf-8')
     csv_reader = csv.DictReader(file_stream)
 
+    tlis = {}
     questions = []
     for row in csv_reader:
+        # Get the TLI and count questions
+        tli = row['id'][:3]
+        if tli in tlis:
+            tlis[tli] += 1
+        else:
+            tlis[tli] = 1
+
         # Assuming the CSV has the fields: id, correct, question, a, b, c, d, refs
         new_question = Question(
             number=row['id'],
@@ -158,6 +167,11 @@ def upload_questions(pool_id):
             refs=row['refs']
         )
         questions.append(new_question)
+
+    for tli, count in tlis.items():
+        # Create a TLI count entry for each TLI code
+        new_tli = TLI(pool_id=pool_id, tli=tli, quantity=count)
+        db.session.add(new_tli)
 
     # Add all questions to the database
     db.session.bulk_save_objects(questions)
@@ -177,6 +191,7 @@ def delete_pool(pool_id):
     
     # Delete all questions associated with the pool
     Question.query.filter_by(pool_id=pool_id).delete()
+    TLI.query.filter_by(pool_id=pool_id).delete()
 
     # Delete the pool itself
     db.session.delete(pool)

@@ -102,3 +102,22 @@ class Question(db.Model): # pylint: disable=R0903
             str: A string showing the question text.
         """
         return f"Question('{self.question}')"
+
+class TLI(db.Model): # pylint: disable=R0903
+    """Database model for TLI counts.
+    
+    Represents the number of questions for each TLI code in a pool.
+
+    Attributes:
+        id (int): The primary key for the TLI count.
+        pool_id (int): The pool ID for the TLI count.
+        tli (str): The TLI code for the count.
+        quantity (int): The quantity of questions for the TLI code.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    tli = db.Column(db.String(3), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f"Pool: {self.pool_id}, TLI: {self.tli}, Quantity: {self.quantity}"
