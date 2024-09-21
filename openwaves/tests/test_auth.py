@@ -187,6 +187,9 @@ def test_signup_post_existing_username(client, app):
 def test_ve_signup_get(client):
     """Test ID: UT-31
     Test that the ve signup page loads correctly.
+
+    Args:
+        client: The test client.
     """
     response = client.get('/auth/ve_signup')
     assert response.status_code == 200
@@ -543,20 +546,36 @@ def test_logout(client):
 ###############################
 
 def test_ve_management_access_as_ve_user(client, ve_user):
-    """Functional test: VE user can access VE management page."""
+    """Test ID: UT-32
+    Functional test: VE user can access VE management page.
+    
+    Args:
+        client: The test client.
+        ve_user: The VE user fixture.
+    """
     login(client, ve_user.username, 'vepassword')
     response = client.get('/auth/ve_management')
     assert response.status_code == 200
     assert b'VE Account Management' in response.data
 
 def test_ve_management_access_as_regular_user(client):
-    """Negative test: Regular user cannot access VE management page."""
+    """Test ID: UT-33
+    Negative test: Regular user cannot access VE management page.
+    
+    Args:
+        client: The test client.
+    """
     login(client, 'TESTUSER', 'testpassword')
     response = client.get('/auth/ve_management', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_ve_management_access_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot access VE management page."""
+    """Test ID: UT-34
+    Negative test: Unauthenticated user cannot access VE management page.
+    
+    Args:
+        client: The test client.
+    """
     response = client.get('/auth/ve_management', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
@@ -567,7 +586,14 @@ def test_ve_management_access_not_logged_in(client):
 ################################
 
 def test_toggle_account_status_as_ve_user(client, ve_user, user_to_toggle):
-    """Functional test: VE user can toggle account status."""
+    """Test ID: UT-35
+    Functional test: VE user can toggle account status.
+    
+    Args:
+        client: The test client.
+        ve_user: The VE user fixture.
+        user_to_toggle: The user fixture whose status will be toggled.
+    """
     login(client, ve_user.username, 'vepassword')
     with client.application.app_context():
         user = db.session.get(User, user_to_toggle.id)
@@ -581,20 +607,38 @@ def test_toggle_account_status_as_ve_user(client, ve_user, user_to_toggle):
         assert updated_user.active == (not original_status)
 
 def test_toggle_account_status_as_regular_user(client, user_to_toggle):
-    """Negative test: Regular user cannot toggle account status."""
+    """Test ID: UT-36
+    Negative test: Regular user cannot toggle account status.
+    
+    Args:
+        client: The test client.
+        user_to_toggle: The user fixture whose status will be toggled.
+    """
     login(client, 'TESTUSER', 'testpassword')
     response = client.post(f'/auth/toggle_account_status/{user_to_toggle.id}',
                            follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_toggle_account_status_nonexistent_user(client, ve_user):
-    """Negative test: Toggling status of non-existent user."""
+    """Test ID: UT-37
+    Negative test: Toggling status of non-existent user.
+    
+    Args:
+        client: The test client.
+        user_to_toggle: The user fixture whose status will be toggled.
+    """
     login(client, ve_user.username, 'vepassword')
     response = client.post('/auth/toggle_account_status/9999', follow_redirects=True)
     assert b'Account not found.' in response.data
 
 def test_toggle_account_status_not_logged_in(client, user_to_toggle):
-    """Negative test: Unauthenticated user cannot toggle account status."""
+    """Test ID: UT-38
+    Negative test: Unauthenticated user cannot toggle account status.
+    
+    Args:
+        client: The test client.
+        user_to_toggle: The user fixture whose status will be toggled.
+    """
     response = client.post(f'/auth/toggle_account_status/{user_to_toggle.id}',
                            follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
@@ -606,25 +650,48 @@ def test_toggle_account_status_not_logged_in(client, user_to_toggle):
 ################################
 
 def test_password_resets_access_as_ve_user(client, ve_user):
-    """Functional test: VE user can access password resets page."""
+    """Test ID: UT-39
+    Functional test: VE user can access password resets page.
+    
+     Args:
+        client: The test client.
+        ve_user: The VE user fixture.
+    """
     login(client, ve_user.username, 'vepassword')
     response = client.get('/auth/password_resets')
     assert response.status_code == 200
     assert b'Password Resets' in response.data
 
 def test_password_resets_access_as_regular_user(client):
-    """Negative test: Regular user cannot access password resets page."""
+    """Test ID: UT-40
+    Negative test: Regular user cannot access password resets page.
+    
+     Args:
+        client: The test client.
+    """
     login(client, 'TESTUSER', 'testpassword')
     response = client.get('/auth/password_resets', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_password_resets_access_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot access password resets page."""
+    """Test ID: UT-41
+    Negative test: Unauthenticated user cannot access password resets page.
+    
+     Args:
+        client: The test client.
+    """
     response = client.get('/auth/password_resets', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 def test_reset_password_as_ve_user(client, ve_user, user_to_toggle):
-    """Functional test: VE user can reset a user's password."""
+    """Test ID: UT-42
+    Functional test: VE user can reset a user's password.
+    
+     Args:
+        client: The test client.
+        ve_user: The VE user fixture.
+        user_to_toggle: The user fixture whose password will be reset.
+    """
     login(client, ve_user.username, 'vepassword')
     response = client.post(f'/auth/reset_password/{user_to_toggle.id}', follow_redirects=True)
     data = response.get_data(as_text=True)
@@ -640,18 +707,36 @@ def test_reset_password_as_ve_user(client, ve_user, user_to_toggle):
     assert b'OpenWaves Profile' in response.data
 
 def test_reset_password_as_regular_user(client, user_to_toggle):
-    """Negative test: Regular user cannot reset another user's password."""
+    """Test ID: UT-43
+    Negative test: Regular user cannot reset another user's password.
+    
+    Args:
+        client: The test client.
+        user_to_toggle: The user fixture whose status will be toggled.
+    """
     login(client, 'TESTUSER', 'testpassword')
     response = client.post(f'/auth/reset_password/{user_to_toggle.id}', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_reset_password_nonexistent_user(client, ve_user):
-    """Negative test: Resetting password of non-existent user."""
+    """Test ID: UT-44
+    Negative test: Resetting password of non-existent user.
+    
+    Args:
+        client: The test client.
+        ve_user: The VE user fixture.
+    """
     login(client, ve_user.username, 'vepassword')
     response = client.post('/auth/reset_password/9999', follow_redirects=True)
     assert b'Account not found.' in response.data
 
 def test_reset_password_not_logged_in(client, user_to_toggle):
-    """Negative test: Unauthenticated user cannot reset passwords."""
+    """Test ID: UT-45
+    Negative test: Unauthenticated user cannot reset passwords.
+    
+    Args:
+        client: The test client.
+        user_to_toggle: The user fixture whose status will be toggled.
+    """
     response = client.post(f'/auth/reset_password/{user_to_toggle.id}', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
