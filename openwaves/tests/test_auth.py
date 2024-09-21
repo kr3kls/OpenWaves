@@ -547,8 +547,7 @@ def test_ve_management_access_as_ve_user(client, ve_user):
     login(client, ve_user.username, 'vepassword')
     response = client.get('/auth/ve_management')
     assert response.status_code == 200
-    # Check for specific content in the response
-    assert b'VE Management' in response.data  # Adjust based on your template content
+    assert b'VE Account Management' in response.data
 
 def test_ve_management_access_as_regular_user(client):
     """Negative test: Regular user cannot access VE management page."""
@@ -610,7 +609,7 @@ def test_password_resets_access_as_ve_user(client, ve_user):
     login(client, ve_user.username, 'vepassword')
     response = client.get('/auth/password_resets')
     assert response.status_code == 200
-    assert b'Password Resets' in response.data  # Adjust based on your template content
+    assert b'Password Resets' in response.data
 
 def test_password_resets_access_as_regular_user(client):
     """Negative test: Regular user cannot access password resets page."""
@@ -627,6 +626,7 @@ def test_reset_password_as_ve_user(client, ve_user, user_to_toggle):
     """Functional test: VE user can reset a user's password."""
     login(client, ve_user.username, 'vepassword')
     response = client.post(f'/auth/reset_password/{user_to_toggle.id}', follow_redirects=True)
+    print(response.data)
     data = response.get_data(as_text=True)
     assert f'Password for {user_to_toggle.username} has been reset.' in data
     # Extract the new password from the flash message
@@ -636,8 +636,11 @@ def test_reset_password_as_ve_user(client, ve_user, user_to_toggle):
     # Log out VE user
     logout(client)
     # Log in as the user with the new password
+    print(match)
+    print(new_password)
     response = login(client, user_to_toggle.username, new_password)
-    assert b'Welcome' in response.data  # Adjust based on your application
+    print(response.data)
+    assert b'OpenWaves Profile' in response.data
 
 def test_reset_password_as_regular_user(client, user_to_toggle):
     """Negative test: Regular user cannot reset another user's password."""

@@ -38,6 +38,10 @@ def app():
         "SECRET_KEY": "test_secret_key"
     })
 
+    # Push the app context before the test
+    ctx = app.app_context()
+    ctx.push()
+
     with app.app_context():
         db.create_all()
 
@@ -55,8 +59,9 @@ def app():
 
     yield app
 
-    with app.app_context():
-        db.drop_all()
+    db.session.remove()
+    db.drop_all()
+    ctx.pop()
 
 @pytest.fixture
 def client(app): # pylint: disable=W0621
@@ -77,8 +82,9 @@ def runner(app): # pylint: disable=W0621
     return app.test_cli_runner()
 
 @pytest.fixture
-def ve_user(app):
+def ve_user(app): # pylint: disable=W0621
     """Create a VE user with role=2 for testing."""
+
     new_ve_user = User(
         username="TESTVEUSER",
         first_name="VE",
@@ -88,14 +94,14 @@ def ve_user(app):
         role=2,
         active=True
     )
-    with app.app_context():
-        db.session.add(ve_user)
-        db.session.commit()
-    return new_ve_user
+    db.session.add(new_ve_user)
+    db.session.commit()
+    return User.query.get(new_ve_user.id)
 
 @pytest.fixture
-def user_to_toggle(app):
+def user_to_toggle(app): # pylint: disable=W0621
     """Create a user whose status can be toggled and password reset."""
+    
     user = User(
         username="usertotoggle",
         first_name="User",
@@ -105,7 +111,6 @@ def user_to_toggle(app):
         role=1,
         active=True
     )
-    with app.app_context():
-        db.session.add(user)
-        db.session.commit()
-    return user
+    db.session.add(user)
+    db.session.commit()
+    return User.query.get(user.id)
