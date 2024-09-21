@@ -103,7 +103,7 @@ def user_to_toggle(app): # pylint: disable=W0621
     """Create a user whose status can be toggled and password reset."""
     
     user = User(
-        username="usertotoggle",
+        username="USERTOTOGGLE",
         first_name="User",
         last_name="ToToggle",
         email="usertotoggle@example.com",
