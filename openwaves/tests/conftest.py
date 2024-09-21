@@ -51,15 +51,6 @@ def app():
             role=1
         )
         db.session.add(test_user)
-        # test_ve_user = User(
-        #     username="TESTVEUSER",
-        #     first_name="first_test",
-        #     last_name="last_test",
-        #     email="testveuser@example.com",
-        #     password=generate_password_hash("testvepassword", method="pbkdf2:sha256"),
-        #     role=2
-        # )
-        # db.session.add(test_ve_user)
         db.session.commit()
 
     yield app
@@ -84,3 +75,37 @@ def runner(app): # pylint: disable=W0621
     CLI.
     """
     return app.test_cli_runner()
+
+@pytest.fixture
+def ve_user(app):
+    """Create a VE user with role=2 for testing."""
+    new_ve_user = User(
+        username="TESTVEUSER",
+        first_name="VE",
+        last_name="User",
+        email="veuser@example.com",
+        password=generate_password_hash("vepassword", method="pbkdf2:sha256"),
+        role=2,
+        active=True
+    )
+    with app.app_context():
+        db.session.add(ve_user)
+        db.session.commit()
+    return new_ve_user
+
+@pytest.fixture
+def user_to_toggle(app):
+    """Create a user whose status can be toggled and password reset."""
+    user = User(
+        username="usertotoggle",
+        first_name="User",
+        last_name="ToToggle",
+        email="usertotoggle@example.com",
+        password=generate_password_hash("password", method="pbkdf2:sha256"),
+        role=1,
+        active=True
+    )
+    with app.app_context():
+        db.session.add(user)
+        db.session.commit()
+    return user
