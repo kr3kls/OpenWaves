@@ -570,14 +570,15 @@ def test_toggle_account_status_as_ve_user(client, ve_user, user_to_toggle):
     """Functional test: VE user can toggle account status."""
     login(client, ve_user.username, 'vepassword')
     with client.application.app_context():
-        original_status = user_to_toggle.active
+        user = db.session.get(User, user_to_toggle.id)
+        original_status = user.active
     response = client.post(f'/auth/toggle_account_status/{user_to_toggle.id}',
                            follow_redirects=True)
     expected_status = 'active' if not original_status else 'disabled'
     assert f'Account status updated to {expected_status}.' in response.get_data(as_text=True)
     with client.application.app_context():
-        db.session.refresh(user_to_toggle)
-        assert user_to_toggle.active == (not original_status)
+        updated_user = db.session.get(User, user_to_toggle.id)
+        assert updated_user.active == (not original_status)
 
 def test_toggle_account_status_as_regular_user(client, user_to_toggle):
     """Negative test: Regular user cannot toggle account status."""
@@ -626,7 +627,6 @@ def test_reset_password_as_ve_user(client, ve_user, user_to_toggle):
     """Functional test: VE user can reset a user's password."""
     login(client, ve_user.username, 'vepassword')
     response = client.post(f'/auth/reset_password/{user_to_toggle.id}', follow_redirects=True)
-    print(response.data)
     data = response.get_data(as_text=True)
     assert f'Password for {user_to_toggle.username} has been reset.' in data
     # Extract the new password from the flash message
@@ -636,10 +636,7 @@ def test_reset_password_as_ve_user(client, ve_user, user_to_toggle):
     # Log out VE user
     logout(client)
     # Log in as the user with the new password
-    print(match)
-    print(new_password)
     response = login(client, user_to_toggle.username, new_password)
-    print(response.data)
     assert b'OpenWaves Profile' in response.data
 
 def test_reset_password_as_regular_user(client, user_to_toggle):

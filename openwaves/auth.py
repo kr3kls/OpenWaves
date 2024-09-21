@@ -273,7 +273,7 @@ def toggle_account_status(account_id):
         flash("Access denied.", "danger")
         return redirect(url_for('auth.logout'))
 
-    account = User.query.get(account_id)
+    account = db.session.get(User, account_id)
     if not account:
         flash("Account not found.", "danger")
         return redirect(url_for('auth.ve_management'))
@@ -319,7 +319,7 @@ def reset_password(account_id):
         flash("Access denied.", "danger")
         return redirect(url_for('auth.logout'))
 
-    account = User.query.get(account_id)
+    account = db.session.get(User, account_id)
     if not account:
         flash("Account not found.", "danger")
         return redirect(url_for('auth.password_resets'))
@@ -330,7 +330,7 @@ def reset_password(account_id):
                                           string.digits, k=8))
 
     # Update the account's password
-    account.password = generate_password_hash(new_password)
+    account.password = generate_password_hash(new_password, method='pbkdf2:sha256')
     db.session.commit()
 
     flash(f"Password for {account.username} has been reset. " +

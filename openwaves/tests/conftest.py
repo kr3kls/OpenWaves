@@ -96,7 +96,7 @@ def ve_user(app): # pylint: disable=W0621
     )
     db.session.add(new_ve_user)
     db.session.commit()
-    return User.query.get(new_ve_user.id)
+    return db.session.get(User, new_ve_user.id)
 
 @pytest.fixture
 def user_to_toggle(app): # pylint: disable=W0621
@@ -113,4 +113,4 @@ def user_to_toggle(app): # pylint: disable=W0621
     )
     db.session.add(user)
     db.session.commit()
-    return User.query.get(user.id)
+    return db.session.get(User, user.id)
