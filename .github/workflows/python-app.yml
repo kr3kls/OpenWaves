@@ -4,11 +4,10 @@ on:
   push:
     branches:
       - main
-      - week3
+      - week4
   pull_request:
     branches:
       - main
-      - week3
 
 jobs:
   sonarcloud:

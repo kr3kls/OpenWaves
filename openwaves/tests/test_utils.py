@@ -8,7 +8,8 @@ from openwaves.models import User
 from openwaves.utils import update_user_password
 
 def test_update_user_password(app):
-    """Test the update_user_password utility function.
+    """Test ID: UT-30
+    Test the update_user_password utility function.
 
     This test ensures that the user's password is successfully updated in the database
     when using the update_user_password function.

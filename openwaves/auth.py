@@ -3,17 +3,21 @@
     This file contains the user authorization methods for the application.
 """
 
+import secrets
+import string
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from .models import User
-from .utils import update_user_password
-from . import db
+from .imports import User, update_user_password, db
 
 auth = Blueprint('auth', __name__)
 
 PAGE_ACCOUNT = 'main.profile'
 PAGE_VE_ACCOUNT = 'main.ve_account'
+PAGE_LOGIN = 'auth.login'
+PAGE_LOGOUT = 'auth.logout'
+PASS_ENCRYPTION = 'pbkdf2:sha256'
+MSG_ACCESS_DENIED = 'Access denied.'
 
 # Route to display login page
 @auth.route('/login')
@@ -56,7 +60,7 @@ def login_post():
 
     # if the above check did not pass, we have an issue
     flash('Please check your login details and try again.')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for(PAGE_LOGIN))
 
 # Route to display signup page
 @auth.route('/signup')
@@ -101,7 +105,7 @@ def signup_post():
         return redirect(url_for("auth.signup"))
 
     # Hash the password
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+    hashed_password = generate_password_hash(password, method=PASS_ENCRYPTION)
 
     # Create and add the user
     new_user = User(
@@ -166,7 +170,7 @@ def ve_signup_post():
         return redirect(url_for("auth.ve_signup"))
 
     # Hash the password
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+    hashed_password = generate_password_hash(password, method=PASS_ENCRYPTION)
 
     # Check if a VE Account already exists
     ve_user_exists = User.query.filter_by(role=2).first()
@@ -198,7 +202,7 @@ def ve_signup_post():
     db.session.commit()
 
     flash(f'VE account for {username} created successfully!', 'success')
-    return redirect(url_for(PAGE_VE_ACCOUNT))
+    return redirect(url_for(PAGE_LOGIN))
 
 @auth.route('/update_profile', methods=['POST'])
 @login_required
@@ -238,7 +242,103 @@ def update_profile():
         return redirect(url_for(PAGE_ACCOUNT))
     if current_user.role == 2:
         return redirect(url_for(PAGE_VE_ACCOUNT))
-    return redirect(url_for('auth.logout'))
+    return redirect(url_for(PAGE_LOGOUT))
+
+@auth.route('/ve_management')
+@login_required
+def ve_management():
+    """Handle management of VE accounts."""
+    if current_user.role != 2:  # Allow only VE users (role 2) to access this page
+        flash("Access denied.", "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    ve_accounts = User.query.filter(User.role == 2)  # Query to fetch all VE accounts
+    return render_template('ve_management.html', ve_accounts=ve_accounts)
+
+@auth.route('/toggle_account_status/<int:account_id>', methods=['POST'])
+@login_required
+def toggle_account_status(account_id):
+    """
+    Toggles the active status of a user account.
+
+    This route is restricted to users with a VE role (role 2) and allows them to
+    change the active/inactive status of another user account. If the current user
+    does not have the necessary permissions, they are logged out. If the target
+    account is not found, an error is flashed to the user.
+
+    Args:
+        account_id (int): The ID of the account to toggle the status of.
+
+    Returns:
+        Response: A redirection to the VE management page with a success or error 
+        message flashed to the user.
+    """
+    if current_user.role != 2:  # Only VE users can change status
+        flash("Access denied.", "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    account = db.session.get(User, account_id)
+    if not account:
+        flash("Account not found.", "danger")
+        return redirect(url_for('auth.ve_management'))
+
+    # Toggle active status
+    account.active = not account.active
+    db.session.commit()
+    flash(f"Account status updated to {'active' if account.active else 'disabled'}.", "success")
+    return redirect(url_for('auth.ve_management'))
+
+@auth.route('/password_resets')
+@login_required
+def password_resets():
+    """
+    Displays the password reset management page for VE users.
+
+    Returns:
+        Response: Rendered HTML page showing a list of accounts and the option to reset passwords.
+    """
+    if current_user.role != 2:  # Only VE users can view this page
+        flash("Access denied.", "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    accounts = User.query.all()  # Fetch all user accounts
+    return render_template('password_resets.html', accounts=accounts)
+
+@auth.route('/reset_password/<int:account_id>', methods=['POST'])
+@login_required
+def reset_password(account_id):
+    """
+    Resets the password of a user account to a secure 8-character string and flashes
+    it to the VE user.
+
+    Args:
+        account_id (int): The ID of the account whose password is being reset.
+
+    Returns:
+        Response: Redirects to the password reset page with a flash message showing
+        the new password.
+    """
+    print("Password reset requested")
+    if current_user.role != 2:  # Only VE users can reset passwords
+        flash("Access denied.", "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    account = db.session.get(User, account_id)
+    if not account:
+        flash("Account not found.", "danger")
+        return redirect(url_for('auth.password_resets'))
+
+    # Generate a secure 8-character password (upper, lower, digits)
+    alphabet = string.ascii_letters + string.digits  # Uppercase, lowercase, and digits
+    new_password = ''.join(secrets.choice(alphabet) for _ in range(8))
+
+    # Update the account's password
+    account.password = generate_password_hash(new_password, method=PASS_ENCRYPTION)
+    db.session.commit()
+
+    flash(f"Password for {account.username} has been reset. " +
+          f"New password: {new_password}", "success")
+    return redirect(url_for('auth.password_resets'))
 
 @auth.route('/logout')
 @login_required
@@ -250,4 +350,4 @@ def logout():
     """
     logout_user()
     flash("You have been logged out.", "info")
-    return redirect(url_for('auth.login'))
+    return redirect(url_for(PAGE_LOGIN))

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-8 is-offset-2">
+    <div class="box">
+        <h3 class="title has-text-centered has-text-dark">Test Sessions</h3>
+        <div class="table-container has-text-centered">
+            <table class="table is-striped is-hoverable is-fullwidth">
+            {% if test_sessions|length > 0 %}
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Tech Pool ID</th>
+                    <th>General Pool ID</th>
+                    <th>Extra Pool ID</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            {% endif %}
+            <tbody>
+                {% for test_session in test_sessions %}
+                <tr>
+                    <td>{{ test_session.session_date.strftime('%m/%d/%Y') }}</td>
+                    <td>
+                        {% if test_session.start_time %}
+                            {{ test_session.start_time.strftime('%I:%M %p') }}
+                        {% elif test_session.session_date.date() == current_date and test_session.start_time is none and not test_session.status %}
+                            <button class="button is-small is-light-button-color open-session-button" data-id="{{ test_session.id }}">Open</button>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if test_session.status and test_session.end_time is none %}
+                            <button class="button is-small is-light-button-color close-session-button" data-id="{{ test_session.id }}">Close</button>
+                        {% else %}
+                            {{ test_session.end_time.strftime('%I:%M %p') if test_session.end_time else '' }}
+                        {% endif %}
+                    </td>
+                    <td>{{ test_session.tech_pool_id }}</td>
+                    <td>{{ test_session.gen_pool_id }}</td>
+                    <td>{{ test_session.extra_pool_id }}</td>
+                    {% if test_session.status == true %}
+                    <td>Open</td>
+                    {% else %}
+                    <td>Closed</td>
+                    {% endif %}
+                    {% if not test_session.start_time %}
+                    <td>
+                        <button class="button is-small is-danger delete-session-button" data-id="{{ session.id }}">Delete</button>
+                    </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+            </table>
+        </div>
+
+        <!-- Button to create a new session -->
+        <div class="has-text-centered">
+            <button class="button is-button-color" id="create-session-button">Create New Session</button>
+        </div>
+
+        <!-- Modal for creating a new test session -->
+        <div class="modal" id="create-session-modal">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Create Test Session</p>
+                    <button class="delete" aria-label="close"></button>
+                </header>
+                <section class="modal-card-body">
+                    <form id="create-session-form">
+                        {% if config['WTF_CSRF_ENABLED'] %}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% endif %}
+                        
+                        <div class="field">
+                            <label class="label">Date</label>
+                            <div class="control">
+                                <input class="input" type="date" id="start-date" name="start_date" required>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown for Tech Pool Questions -->
+                        <div class="field">
+                            <label class="label">Tech Pool Questions</label>
+                            <div class="control">
+                                <div class="select">
+                                    <select name="tech_pool" required>
+                                        {% for pool_id, pool_text in tech_pool_options.items() %}
+                                            <option value="{{ pool_id }}">{{ pool_text }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown for General Pool Questions -->
+                        <div class="field">
+                            <label class="label">General Pool Questions</label>
+                            <div class="control">
+                                <div class="select">
+                                    <select name="general_pool" required>
+                                        {% for pool_id, pool_text in general_pool_options.items() %}
+                                            <option value="{{ pool_id }}">{{ pool_text }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown for Extra Pool Questions -->
+                        <div class="field">
+                            <label class="label">Extra Pool Questions</label>
+                            <div class="control">
+                                <div class="select">
+                                    <select name="extra_pool" required>
+                                        {% for pool_id, pool_text in extra_pool_options.items() %}
+                                            <option value="{{ pool_id }}">{{ pool_text }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </form>
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="button is-button-color" id="submit-session-form">Save</button>
+                    <button class="button is-light-button-color" id="cancel-session-form">Cancel</button>
+                </footer>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/sessions.js') }}" nonce="{{ g.csp_nonce }}"></script>
+{% endblock %}

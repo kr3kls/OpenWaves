@@ -38,6 +38,10 @@ def app():
         "SECRET_KEY": "test_secret_key"
     })
 
+    # Push the app context before the test
+    ctx = app.app_context()
+    ctx.push()
+
     with app.app_context():
         db.create_all()
 
@@ -51,21 +55,13 @@ def app():
             role=1
         )
         db.session.add(test_user)
-        # test_ve_user = User(
-        #     username="TESTVEUSER",
-        #     first_name="first_test",
-        #     last_name="last_test",
-        #     email="testveuser@example.com",
-        #     password=generate_password_hash("testvepassword", method="pbkdf2:sha256"),
-        #     role=2
-        # )
-        # db.session.add(test_ve_user)
         db.session.commit()
 
     yield app
 
-    with app.app_context():
-        db.drop_all()
+    db.session.remove()
+    db.drop_all()
+    ctx.pop()
 
 @pytest.fixture
 def client(app): # pylint: disable=W0621
@@ -84,3 +80,37 @@ def runner(app): # pylint: disable=W0621
     CLI.
     """
     return app.test_cli_runner()
+
+@pytest.fixture
+def ve_user(): # pylint: disable=W0621
+    """Create a VE user with role=2 for testing."""
+
+    new_ve_user = User(
+        username="TESTVEUSER",
+        first_name="VE",
+        last_name="User",
+        email="veuser@example.com",
+        password=generate_password_hash("vepassword", method="pbkdf2:sha256"),
+        role=2,
+        active=True
+    )
+    db.session.add(new_ve_user)
+    db.session.commit()
+    return db.session.get(User, new_ve_user.id)
+
+@pytest.fixture
+def user_to_toggle(): # pylint: disable=W0621
+    """Create a user whose status can be toggled and password reset."""
+
+    user = User(
+        username="USERTOTOGGLE",
+        first_name="User",
+        last_name="ToToggle",
+        email="usertotoggle@example.com",
+        password=generate_password_hash("password", method="pbkdf2:sha256"),
+        role=1,
+        active=True
+    )
+    db.session.add(user)
+    db.session.commit()
+    return db.session.get(User, user.id)
