@@ -130,7 +130,7 @@ def test_ve_account_not_exists(client):
     assert b"You have been logged out." in response.data
 
 def test_csp_violation_report_valid_json(client, capsys):
-    """Test ID: UT-28 
+    """Test ID: UT-28
     Test reporting a valid CSP violation.
 
     This test sends a valid CSP violation report and checks that it is processed
@@ -160,25 +160,29 @@ def test_csp_violation_report_valid_json(client, capsys):
     assert "CSP Violation:" in captured.out
 
 def test_pools_page_access(client, ve_user):
-    """Functional test: VE user can access the pools page."""
+    """Test ID: UT-46
+    Functional test: VE user can access the pools page."""
     login(client, ve_user.username, 'vepassword')
     response = client.get('/pools')
     assert response.status_code == 200
     assert b'Question Pools' in response.data
 
 def test_pools_page_access_as_regular_user(client):
-    """Negative test: Regular user cannot access the pools page."""
+    """Test ID: UT-47
+    Negative test: Regular user cannot access the pools page."""
     login(client, 'TESTUSER', 'testpassword')
     response = client.get('/pools', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_pools_page_access_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot access the pools page."""
+    """Test ID: UT-48
+    Negative test: Unauthenticated user cannot access the pools page."""
     response = client.get('/pools', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 def test_create_pool_success(client, ve_user):
-    """Functional test: VE user can create a new question pool."""
+    """Test ID: UT-49
+    Functional test: VE user can create a new question pool."""
     login(client, ve_user.username, 'vepassword')
     response = client.post('/create_pool', data={
         'pool_name': 'Test Pool',
@@ -196,7 +200,8 @@ def test_create_pool_success(client, ve_user):
         assert pool.element == 2
 
 def test_create_pool_missing_fields(client, ve_user):
-    """Negative test: Creating a pool with missing fields returns an error."""
+    """Test ID: UT-50
+    Negative test: Creating a pool with missing fields returns an error."""
     login(client, ve_user.username, 'vepassword')
     response = client.post('/create_pool', data={
         'pool_name': '',
@@ -209,7 +214,8 @@ def test_create_pool_missing_fields(client, ve_user):
     assert 'All fields are required.' in response.get_json()['error']
 
 def test_create_pool_access_as_regular_user(client):
-    """Negative test: Regular user cannot create a question pool."""
+    """Test ID: UT-51
+    Negative test: Regular user cannot create a question pool."""
     login(client, 'TESTUSER', 'testpassword')
     response = client.post('/create_pool', data={
         'pool_name': 'Unauthorized Pool',
@@ -220,7 +226,8 @@ def test_create_pool_access_as_regular_user(client):
     assert b'Access denied.' in response.data
 
 def test_create_pool_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot create a question pool."""
+    """Test ID: UT-52
+    Negative test: Unauthenticated user cannot create a question pool."""
     response = client.post('/create_pool', data={
         'pool_name': 'Unauthorized Pool',
         'exam_element': '2',
@@ -230,7 +237,8 @@ def test_create_pool_not_logged_in(client):
     assert b'Please log in to access this page.' in response.data
 
 def test_upload_questions_success(client, ve_user):
-    """Functional test: VE user can upload questions to a pool."""
+    """Test ID: UT-53
+    Functional test: VE user can upload questions to a pool."""
     # First, create a pool to upload questions to
     login(client, ve_user.username, 'vepassword')
     client.post('/create_pool', data={
@@ -267,7 +275,8 @@ T1A02,B,What is 2+2?,1,4,3,5,Reference2
         assert tli_count == 1  # Both questions have TLI starting with 'T1'
 
 def test_upload_questions_no_file(client, ve_user):
-    """Negative test: Uploading questions without a file returns an error."""
+    """Test ID: UT-54
+    Negative test: Uploading questions without a file returns an error."""
     login(client, ve_user.username, 'vepassword')
     # Assume there's a pool with ID 1
     response = client.post('/upload_questions/1', data={}, content_type='multipart/form-data')
@@ -276,7 +285,8 @@ def test_upload_questions_no_file(client, ve_user):
     assert 'No file provided.' in response.get_json()['error']
 
 def test_upload_questions_invalid_file_type(client, ve_user):
-    """Negative test: Uploading a non-CSV file returns an error."""
+    """Test ID: UT-55
+    Negative test: Uploading a non-CSV file returns an error."""
     login(client, ve_user.username, 'vepassword')
 
     # Create a pool first
@@ -305,7 +315,8 @@ def test_upload_questions_invalid_file_type(client, ve_user):
     assert b'Invalid file type. Only CSV files are allowed.' in response.data
 
 def test_upload_questions_access_as_regular_user(client):
-    """Negative test: Regular user cannot upload questions."""
+    """Test ID: UT-56
+    Negative test: Regular user cannot upload questions."""
     login(client, 'TESTUSER', 'testpassword')
     response = client.post('/upload_questions/1', data={}, content_type='multipart/form-data')
     assert response.status_code == 302  # Check for the redirect status
@@ -315,7 +326,8 @@ def test_upload_questions_access_as_regular_user(client):
         b'Please log in to access this page.' in follow_response.data
 
 def test_delete_pool_success(client, ve_user):
-    """Functional test: VE user can delete a question pool."""
+    """Test ID: UT-57
+    Functional test: VE user can delete a question pool."""
     login(client, ve_user.username, 'vepassword')
     # Create a pool to delete
     client.post('/create_pool', data={
@@ -338,7 +350,8 @@ def test_delete_pool_success(client, ve_user):
         assert pool is None
 
 def test_delete_pool_not_found(client, ve_user):
-    """Negative test: Deleting a non-existent pool returns an error."""
+    """Test ID: UT-58
+    Negative test: Deleting a non-existent pool returns an error."""
     login(client, ve_user.username, 'vepassword')
     response = client.delete('/delete_pool/9999')
     assert response.status_code == 404
@@ -346,7 +359,8 @@ def test_delete_pool_not_found(client, ve_user):
     assert 'Pool not found.' in response.get_json()['error']
 
 def test_delete_pool_access_as_regular_user(client):
-    """Negative test: Regular user cannot delete a pool."""
+    """Test ID: UT-59
+    Negative test: Regular user cannot delete a pool."""
     login(client, 'TESTUSER', 'testpassword')
     response = client.delete('/delete_pool/1')
     assert response.status_code == 302  # Check for the redirect status
@@ -356,7 +370,8 @@ def test_delete_pool_access_as_regular_user(client):
         b'Please log in to access this page.' in follow_response.data
 
 def test_delete_pool_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot delete a pool."""
+    """Test ID: UT-60
+    Negative test: Unauthenticated user cannot delete a pool."""
     response = client.delete('/delete_pool/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
@@ -367,25 +382,29 @@ def test_delete_pool_not_logged_in(client):
 ########################################
 
 def test_sessions_page_access(client, ve_user):
-    """Functional test: VE user can access the sessions page."""
+    """Test ID: UT-61
+    Functional test: VE user can access the sessions page."""
     login(client, ve_user.username, 'vepassword')
     response = client.get('/sessions')
     assert response.status_code == 200
     assert b'Test Sessions' in response.data
 
 def test_sessions_page_access_as_regular_user(client):
-    """Negative test: Regular user cannot access the sessions page."""
+    """Test ID: UT-62
+    Negative test: Regular user cannot access the sessions page."""
     login(client, 'TESTUSER', 'testpassword')
     response = client.get('/sessions', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_sessions_page_access_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot access the sessions page."""
+    """Test ID: UT-63
+    Negative test: Unauthenticated user cannot access the sessions page."""
     response = client.get('/sessions', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 def test_create_session_success(client, ve_user):
-    """Functional test: VE user can create a new test session."""
+    """Test ID: UT-64
+    Functional test: VE user can create a new test session."""
     login(client, ve_user.username, 'vepassword')
 
     # First, create pools to associate with the session
@@ -442,7 +461,8 @@ def test_create_session_success(client, ve_user):
         assert session.extra_pool_id == extra_pool.id
 
 def test_create_session_missing_fields(client, ve_user):
-    """Negative test: Creating a session with missing fields returns an error."""
+    """Test ID: UT-65
+    Negative test: Creating a session with missing fields returns an error."""
     login(client, ve_user.username, 'vepassword')
     response = client.post('/create_session', data={
         'start_date': '',
@@ -455,7 +475,8 @@ def test_create_session_missing_fields(client, ve_user):
     assert 'All fields are required.' in response.get_json()['error']
 
 def test_create_session_access_as_regular_user(client):
-    """Negative test: Regular user cannot create a test session."""
+    """Test ID: UT-66
+    Negative test: Regular user cannot create a test session."""
     login(client, 'TESTUSER', 'testpassword')  # Login as a regular user
     response = client.post('/create_session', data={
         'start_date': '2023-09-01',
@@ -469,7 +490,8 @@ def test_create_session_access_as_regular_user(client):
     assert '/auth/logout' in response.headers['Location']
 
 def test_create_session_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot create a test session."""
+    """Test ID: UT-67
+    Negative test: Unauthenticated user cannot create a test session."""
     response = client.post('/create_session', data={
         'start_date': '2023-09-01',
         'tech_pool': '1',
@@ -479,7 +501,8 @@ def test_create_session_not_logged_in(client):
     assert b'Please log in to access this page.' in response.data
 
 def test_open_session_success(client, ve_user):
-    """Functional test: VE user can open a test session."""
+    """Test ID: UT-68
+    Functional test: VE user can open a test session."""
     login(client, ve_user.username, 'vepassword')
 
     # First, create the necessary pools and session
@@ -538,7 +561,8 @@ def test_open_session_success(client, ve_user):
         assert session.start_time is not None
 
 def test_open_session_not_found(client, ve_user):
-    """Negative test: Opening a non-existent session returns a 404 error."""
+    """Test ID: UT-69
+    Negative test: Opening a non-existent session returns a 404 error."""
     login(client, ve_user.username, 'vepassword')
     response = client.post('/open_session/9999')
 
@@ -551,7 +575,8 @@ def test_open_session_not_found(client, ve_user):
     assert json_data['error'] == "Session not found."
 
 def test_close_session_success(client, ve_user):
-    """Functional test: VE user can close a test session."""
+    """Test ID: UT-70
+    Functional test: VE user can close a test session."""
     login(client, ve_user.username, 'vepassword')
 
     # First, create the necessary pools and session
@@ -619,7 +644,8 @@ def test_close_session_success(client, ve_user):
         assert closed_session.end_time is not None, "The session end_time was not set."
 
 def test_close_session_not_found(client, ve_user):
-    """Negative test: Closing a non-existent session returns a 404 error."""
+    """Test ID: UT-71
+    Negative test: Closing a non-existent session returns a 404 error."""
     login(client, ve_user.username, 'vepassword')
     response = client.post('/close_session/9999')
 
@@ -632,24 +658,28 @@ def test_close_session_not_found(client, ve_user):
     assert json_data['error'] == "Session not found."
 
 def test_open_session_access_as_regular_user(client):
-    """Negative test: Regular user cannot open a test session."""
+    """Test ID: UT-72
+    Negative test: Regular user cannot open a test session."""
     login(client, 'TESTUSER', 'testpassword')
     response = client.post('/open_session/1', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_close_session_access_as_regular_user(client):
-    """Negative test: Regular user cannot close a test session."""
+    """Test ID: UT-73
+    Negative test: Regular user cannot close a test session."""
     login(client, 'TESTUSER', 'testpassword')
     response = client.post('/close_session/1', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_open_session_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot open a test session."""
+    """Test ID: UT-74
+    Negative test: Unauthenticated user cannot open a test session."""
     response = client.post('/open_session/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 def test_close_session_not_logged_in(client):
-    """Negative test: Unauthenticated user cannot close a test session."""
+    """Test ID: UT-75
+    Negative test: Unauthenticated user cannot close a test session."""
     response = client.post('/close_session/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
