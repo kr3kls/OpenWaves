@@ -9,6 +9,11 @@ from openwaves import db
 from openwaves.models import User, Pool, Question, TLI, ExamSession
 from openwaves.tests.test_auth import login
 
+####################################
+#                                  #
+#     Account Navigation Tests     #
+#                                  #
+####################################
 
 def test_index(client):
     """Test ID: UT-23
@@ -158,6 +163,12 @@ def test_csp_violation_report_valid_json(client, capsys):
     # Capture the print output
     captured = capsys.readouterr()
     assert "CSP Violation:" in captured.out
+
+###############################
+#                             #
+#     Question Pool Tests     #
+#                             #
+###############################
 
 def test_pools_page_access(client, ve_user):
     """Test ID: UT-46
@@ -375,11 +386,11 @@ def test_delete_pool_not_logged_in(client):
     response = client.delete('/delete_pool/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
-########################################
-#                                      #
-#          Sessions Tests              #
-#                                      #
-########################################
+##########################
+#                        #
+#     Sessions Tests     #
+#                        #
+##########################
 
 def test_sessions_page_access(client, ve_user):
     """Test ID: UT-61
