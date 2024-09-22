@@ -4,6 +4,7 @@
 """
 
 import random
+import secrets
 import string
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
@@ -304,7 +305,7 @@ def password_resets():
 @login_required
 def reset_password(account_id):
     """
-    Resets the password of a user account to a random 8-character string and flashes
+    Resets the password of a user account to a secure 8-character string and flashes
     it to the VE user.
 
     Args:
@@ -324,10 +325,9 @@ def reset_password(account_id):
         flash("Account not found.", "danger")
         return redirect(url_for('auth.password_resets'))
 
-    # Generate a random 8-character password (upper, lower, digits)
-    new_password = ''.join(random.choices(string.ascii_uppercase +
-                                          string.ascii_lowercase +
-                                          string.digits, k=8))
+    # Generate a secure 8-character password (upper, lower, digits)
+    alphabet = string.ascii_letters + string.digits  # Uppercase, lowercase, and digits
+    new_password = ''.join(secrets.choice(alphabet) for _ in range(8))
 
     # Update the account's password
     account.password = generate_password_hash(new_password, method='pbkdf2:sha256')
