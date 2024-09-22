@@ -82,7 +82,7 @@ def runner(app): # pylint: disable=W0621
     return app.test_cli_runner()
 
 @pytest.fixture
-def ve_user(app): # pylint: disable=W0621
+def ve_user(): # pylint: disable=W0621
     """Create a VE user with role=2 for testing."""
 
     new_ve_user = User(
@@ -99,9 +99,9 @@ def ve_user(app): # pylint: disable=W0621
     return db.session.get(User, new_ve_user.id)
 
 @pytest.fixture
-def user_to_toggle(app): # pylint: disable=W0621
+def user_to_toggle(): # pylint: disable=W0621
     """Create a user whose status can be toggled and password reset."""
-    
+
     user = User(
         username="USERTOTOGGLE",
         first_name="User",

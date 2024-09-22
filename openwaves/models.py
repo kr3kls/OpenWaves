@@ -6,6 +6,8 @@
 from flask_login import UserMixin
 from . import db
 
+FK_POOL_ID = 'pool.id'
+
 class User(UserMixin, db.Model):
     """Database model for users.
 
@@ -85,7 +87,7 @@ class Question(db.Model): # pylint: disable=R0903
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
     number = db.Column(db.String(5), nullable=False)
     correct_answer = db.Column(db.String(1), nullable=False)
     question = db.Column(db.Text, nullable=False)
@@ -115,7 +117,7 @@ class TLI(db.Model): # pylint: disable=R0903
         quantity (int): The quantity of questions for the TLI code.
     """
     id = db.Column(db.Integer, primary_key=True)
-    pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
     tli = db.Column(db.String(3), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
 
@@ -142,9 +144,9 @@ class ExamSession(db.Model): # pylint: disable=R0903
     session_date = db.Column(db.DateTime, nullable=False)
     start_time = db.Column(db.DateTime, nullable=True)
     end_time = db.Column(db.DateTime, nullable=True)
-    tech_pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
-    gen_pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
-    extra_pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    tech_pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    gen_pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    extra_pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
     status = db.Column(db.Boolean, default=False)
 
     def __repr__(self):

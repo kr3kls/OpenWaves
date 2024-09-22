@@ -11,6 +11,9 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from .imports import db, Pool, Question, TLI, ExamSession
 
+PAGE_LOGOUT = 'auth.logout'
+MSG_ACCESS_DENIED = 'Access denied.'
+
 main = Blueprint('main', __name__)
 
 # Default Route
@@ -65,8 +68,8 @@ def ve_account():
         return render_template('ve_profile.html', ve_user=current_user)
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 # Route to show pools page
 @main.route('/pools')
@@ -89,8 +92,8 @@ def pools():
         return render_template('pools.html', question_pools=question_pools)
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 # Route to create question pools
 @main.route('/create_pool', methods=['POST'])
@@ -139,8 +142,8 @@ def create_pool():
         return jsonify({"success": True}), 200
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 @main.route('/upload_questions/<int:pool_id>', methods=['POST'])
 @login_required
@@ -198,8 +201,8 @@ def upload_questions(pool_id):
         return jsonify({"success": True}), 200
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 @main.route('/delete_pool/<int:pool_id>', methods=['DELETE'])
 @login_required
@@ -224,8 +227,8 @@ def delete_pool(pool_id):
         return jsonify({"success": True}), 200
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 # Route to show pools page
 @main.route('/sessions')
@@ -267,8 +270,8 @@ def sessions():
                             current_date=current_date)
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 # Route to create test sessions
 @main.route('/create_session', methods=['POST'])
@@ -301,7 +304,8 @@ def create_session():
         extra_pool_id = request.form.get('extra_pool')
 
         # Debugging the received form data
-        print(f"Form Data Received - Start Date: {start_date}, Tech Pool ID: {tech_pool_id}, General Pool ID: {general_pool_id}, Extra Pool ID: {extra_pool_id}")
+        print(f"Form Data Received - Start Date: {start_date}, Tech Pool ID: {tech_pool_id}, " + \
+              "General Pool ID: {general_pool_id}, Extra Pool ID: {extra_pool_id}")
 
         # Validate the form data
         if not start_date or not tech_pool_id or not general_pool_id or not extra_pool_id:
@@ -329,8 +333,8 @@ def create_session():
         return jsonify({"success": True}), 200
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 # Route to open a session
 @main.route('/open_session/<int:session_id>', methods=['POST'])
@@ -355,8 +359,8 @@ def open_session(session_id):
         return jsonify({"success": True}), 200
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 # Route to close a session
 @main.route('/close_session/<int:session_id>', methods=['POST'])
@@ -377,8 +381,8 @@ def close_session(session_id):
         return jsonify({"success": True}), 200
 
     # If no VE account exists, redirect to the logout page
-    flash("Access denied.", "danger")
-    return redirect(url_for('auth.logout'))
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
 
 # Route to handle CSP violations
 @main.route('/csp-violation-report-endpoint', methods=['POST'])

@@ -3,7 +3,6 @@
     This file contains the user authorization methods for the application.
 """
 
-import random
 import secrets
 import string
 from flask import Blueprint, render_template, redirect, url_for, request, flash
@@ -15,6 +14,10 @@ auth = Blueprint('auth', __name__)
 
 PAGE_ACCOUNT = 'main.profile'
 PAGE_VE_ACCOUNT = 'main.ve_account'
+PAGE_LOGIN = 'auth.login'
+PAGE_LOGOUT = 'auth.logout'
+PASS_ENCRYPTION = 'pbkdf2:sha256'
+MSG_ACCESS_DENIED = 'Access denied.'
 
 # Route to display login page
 @auth.route('/login')
@@ -57,7 +60,7 @@ def login_post():
 
     # if the above check did not pass, we have an issue
     flash('Please check your login details and try again.')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for(PAGE_LOGIN))
 
 # Route to display signup page
 @auth.route('/signup')
@@ -102,7 +105,7 @@ def signup_post():
         return redirect(url_for("auth.signup"))
 
     # Hash the password
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+    hashed_password = generate_password_hash(password, method=PASS_ENCRYPTION)
 
     # Create and add the user
     new_user = User(
@@ -167,7 +170,7 @@ def ve_signup_post():
         return redirect(url_for("auth.ve_signup"))
 
     # Hash the password
-    hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
+    hashed_password = generate_password_hash(password, method=PASS_ENCRYPTION)
 
     # Check if a VE Account already exists
     ve_user_exists = User.query.filter_by(role=2).first()
@@ -199,7 +202,7 @@ def ve_signup_post():
     db.session.commit()
 
     flash(f'VE account for {username} created successfully!', 'success')
-    return redirect(url_for('auth.login'))
+    return redirect(url_for(PAGE_LOGIN))
 
 @auth.route('/update_profile', methods=['POST'])
 @login_required
@@ -239,7 +242,7 @@ def update_profile():
         return redirect(url_for(PAGE_ACCOUNT))
     if current_user.role == 2:
         return redirect(url_for(PAGE_VE_ACCOUNT))
-    return redirect(url_for('auth.logout'))
+    return redirect(url_for(PAGE_LOGOUT))
 
 @auth.route('/ve_management')
 @login_required
@@ -247,7 +250,7 @@ def ve_management():
     """Handle management of VE accounts."""
     if current_user.role != 2:  # Allow only VE users (role 2) to access this page
         flash("Access denied.", "danger")
-        return redirect(url_for('auth.logout'))
+        return redirect(url_for(PAGE_LOGOUT))
 
     ve_accounts = User.query.filter(User.role == 2)  # Query to fetch all VE accounts
     return render_template('ve_management.html', ve_accounts=ve_accounts)
@@ -272,7 +275,7 @@ def toggle_account_status(account_id):
     """
     if current_user.role != 2:  # Only VE users can change status
         flash("Access denied.", "danger")
-        return redirect(url_for('auth.logout'))
+        return redirect(url_for(PAGE_LOGOUT))
 
     account = db.session.get(User, account_id)
     if not account:
@@ -296,7 +299,7 @@ def password_resets():
     """
     if current_user.role != 2:  # Only VE users can view this page
         flash("Access denied.", "danger")
-        return redirect(url_for('auth.logout'))
+        return redirect(url_for(PAGE_LOGOUT))
 
     accounts = User.query.all()  # Fetch all user accounts
     return render_template('password_resets.html', accounts=accounts)
@@ -318,7 +321,7 @@ def reset_password(account_id):
     print("Password reset requested")
     if current_user.role != 2:  # Only VE users can reset passwords
         flash("Access denied.", "danger")
-        return redirect(url_for('auth.logout'))
+        return redirect(url_for(PAGE_LOGOUT))
 
     account = db.session.get(User, account_id)
     if not account:
@@ -330,7 +333,7 @@ def reset_password(account_id):
     new_password = ''.join(secrets.choice(alphabet) for _ in range(8))
 
     # Update the account's password
-    account.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+    account.password = generate_password_hash(new_password, method=PASS_ENCRYPTION)
     db.session.commit()
 
     flash(f"Password for {account.username} has been reset. " +
@@ -347,4 +350,4 @@ def logout():
     """
     logout_user()
     flash("You have been logged out.", "info")
-    return redirect(url_for('auth.login'))
+    return redirect(url_for(PAGE_LOGIN))
