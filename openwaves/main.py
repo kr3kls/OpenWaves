@@ -50,9 +50,9 @@ def profile():
     return render_template('profile.html')
 
 # Route to check for VE account
-@main.route('/ve_account')
+@main.route('/ve/profile')
 @login_required
-def ve_account():
+def ve_profile():
     """Display the VE (Volunteer Examiner) account page or redirect to VE signup.
 
     Checks if the current user is a VE account.
@@ -72,7 +72,7 @@ def ve_account():
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to show pools page
-@main.route('/pools')
+@main.route('/ve/pools')
 @login_required
 def pools():
     """Render the pools page of the application.
@@ -96,7 +96,7 @@ def pools():
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to create question pools
-@main.route('/create_pool', methods=['POST'])
+@main.route('/ve/create_pool', methods=['POST'])
 @login_required
 def create_pool():
     """
@@ -145,7 +145,7 @@ def create_pool():
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-@main.route('/upload_questions/<int:pool_id>', methods=['POST'])
+@main.route('/ve/upload_questions/<int:pool_id>', methods=['POST'])
 @login_required
 def upload_questions(pool_id):
     """Handle the CSV upload for questions and associate them with the given pool_id."""
@@ -204,7 +204,7 @@ def upload_questions(pool_id):
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-@main.route('/delete_pool/<int:pool_id>', methods=['DELETE'])
+@main.route('/ve/delete_pool/<int:pool_id>', methods=['DELETE'])
 @login_required
 def delete_pool(pool_id):
     """Delete a question pool and all associated questions."""
@@ -230,8 +230,8 @@ def delete_pool(pool_id):
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-# Route to show pools page
-@main.route('/sessions')
+# Route to show exam sessions page
+@main.route('/ve/sessions')
 @login_required
 def sessions():
     """Render the sessions page of the application.
@@ -274,7 +274,7 @@ def sessions():
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to create test sessions
-@main.route('/create_session', methods=['POST'])
+@main.route('/ve/create_session', methods=['POST'])
 @login_required
 def create_session():
     """
@@ -337,7 +337,7 @@ def create_session():
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to open a session
-@main.route('/open_session/<int:session_id>', methods=['POST'])
+@main.route('/ve/open_session/<int:session_id>', methods=['POST'])
 @login_required
 def open_session(session_id):
     """
@@ -363,7 +363,7 @@ def open_session(session_id):
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to close a session
-@main.route('/close_session/<int:session_id>', methods=['POST'])
+@main.route('/ve/close_session/<int:session_id>', methods=['POST'])
 @login_required
 def close_session(session_id):
     """Closes a test session by setting the current time as the end_time and updating the status."""

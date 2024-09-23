@@ -76,7 +76,7 @@ def test_profile_access(client):
     assert response.status_code == 200
     assert b"OpenWaves Profile" in response.data
 
-def test_ve_account_exists(client, app):
+def test_ve_profile_exists(client, app):
     """Test ID: UT-26
     Test accessing the VE profile when it exists.
 
@@ -107,12 +107,12 @@ def test_ve_account_exists(client, app):
     # Log in as testuser
     response = login(client, 've_testuser', 'vepassword')
 
-    # Access ve_account
+    # Access ve_profile
     assert response.status_code == 200
-    # Should redirect to 'main.ve_account'
+    # Should redirect to 'main.ve_profile'
     assert b"OpenWaves VE Profile" in response.data
 
-def test_ve_account_not_exists(client):
+def test_ve_profile_not_exists(client):
     """Test ID: UT-27
     Test accessing the VE account when logged in as role 1.
 
@@ -129,8 +129,8 @@ def test_ve_account_not_exists(client):
     # Log in as testuser
     login(client, 'testuser', 'testpassword')
 
-    # Access ve_account when VE account as role 1
-    response = client.get('/ve_account', follow_redirects=True)
+    # Access ve_profile when VE account as role 1
+    response = client.get('/ve/profile', follow_redirects=True)
     assert response.status_code == 200
     assert b"You have been logged out." in response.data
 
@@ -183,7 +183,7 @@ def test_pools_page_access(client, ve_user):
         - The response contains the text "Question Pools".
     """
     login(client, ve_user.username, 'vepassword')
-    response = client.get('/pools')
+    response = client.get('/ve/pools')
     assert response.status_code == 200
     assert b'Question Pools' in response.data
 
@@ -198,7 +198,7 @@ def test_pools_page_access_as_regular_user(client):
         - The response data contains "Access denied.".
     """
     login(client, 'TESTUSER', 'testpassword')
-    response = client.get('/pools', follow_redirects=True)
+    response = client.get('/ve/pools', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_pools_page_access_not_logged_in(client):
@@ -211,7 +211,7 @@ def test_pools_page_access_not_logged_in(client):
     Asserts:
         - The response data contains "Please log in to access this page.".
     """
-    response = client.get('/pools', follow_redirects=True)
+    response = client.get('/ve/pools', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 def test_create_pool_success(client, ve_user):
@@ -228,7 +228,7 @@ def test_create_pool_success(client, ve_user):
         - The newly created pool is present in the database with the correct element number.
     """
     login(client, ve_user.username, 'vepassword')
-    response = client.post('/create_pool', data={
+    response = client.post('/ve/create_pool', data={
         'pool_name': 'Test Pool',
         'exam_element': '2',
         'start_date': '2023-01-01',
@@ -256,7 +256,7 @@ def test_create_pool_missing_fields(client, ve_user):
         - The response contains a JSON error message stating "All fields are required.".
     """
     login(client, ve_user.username, 'vepassword')
-    response = client.post('/create_pool', data={
+    response = client.post('/ve/create_pool', data={
         'pool_name': '',
         'exam_element': '',
         'start_date': '',
@@ -277,7 +277,7 @@ def test_create_pool_access_as_regular_user(client):
         - The response data contains "Access denied.".
     """
     login(client, 'TESTUSER', 'testpassword')
-    response = client.post('/create_pool', data={
+    response = client.post('/ve/create_pool', data={
         'pool_name': 'Unauthorized Pool',
         'exam_element': '2',
         'start_date': '2023-01-01',
@@ -295,7 +295,7 @@ def test_create_pool_not_logged_in(client):
     Asserts:
         - The response data contains "Please log in to access this page.".
     """
-    response = client.post('/create_pool', data={
+    response = client.post('/ve/create_pool', data={
         'pool_name': 'Unauthorized Pool',
         'exam_element': '2',
         'start_date': '2023-01-01',
@@ -318,7 +318,7 @@ def test_upload_questions_success(client, ve_user):
     """
     # First, create a pool to upload questions to
     login(client, ve_user.username, 'vepassword')
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Upload Test Pool',
         'exam_element': '2',
         'start_date': '2023-01-01',
@@ -338,7 +338,7 @@ T1A02,B,What is 2+2?,1,4,3,5,Reference2
         'file': (io.BytesIO(csv_content.encode('utf-8')), 'questions.csv')
     }
 
-    response = client.post(f'/upload_questions/{pool_id}',
+    response = client.post(f'/ve/upload_questions/{pool_id}',
                            data=data, content_type='multipart/form-data')
     assert response.status_code == 200
     assert response.is_json
@@ -365,7 +365,7 @@ def test_upload_questions_no_file(client, ve_user):
     """
     login(client, ve_user.username, 'vepassword')
     # Assume there's a pool with ID 1
-    response = client.post('/upload_questions/1', data={}, content_type='multipart/form-data')
+    response = client.post('/ve/upload_questions/1', data={}, content_type='multipart/form-data')
     assert response.status_code == 400
     assert response.is_json
     assert 'No file provided.' in response.get_json()['error']
@@ -385,7 +385,7 @@ def test_upload_questions_invalid_file_type(client, ve_user):
     login(client, ve_user.username, 'vepassword')
 
     # Create a pool first
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Invalid File Type Pool',
         'exam_element': '2',
         'start_date': '2023-01-01',
@@ -402,7 +402,7 @@ def test_upload_questions_invalid_file_type(client, ve_user):
         'file': (io.BytesIO(non_csv_content.encode('utf-8')), 'questions.txt')
     }
 
-    response = client.post(f'/upload_questions/{pool_id}',
+    response = client.post(f'/ve/upload_questions/{pool_id}',
                            data=data, content_type='multipart/form-data')
 
     # Check for the appropriate error response
@@ -421,7 +421,7 @@ def test_upload_questions_access_as_regular_user(client):
         - After following the redirect, the response data contains "Access denied".
     """
     login(client, 'TESTUSER', 'testpassword')
-    response = client.post('/upload_questions/1', data={}, content_type='multipart/form-data')
+    response = client.post('/ve/upload_questions/1', data={}, content_type='multipart/form-data')
     assert response.status_code == 302  # Check for the redirect status
     # Follow the redirect and check the final destination
     follow_response = client.get(response.headers["Location"], follow_redirects=True)
@@ -442,7 +442,7 @@ def test_delete_pool_success(client, ve_user):
     """
     login(client, ve_user.username, 'vepassword')
     # Create a pool to delete
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Pool to Delete',
         'exam_element': '2',
         'start_date': '2023-01-01',
@@ -452,7 +452,7 @@ def test_delete_pool_success(client, ve_user):
         pool = Pool.query.filter_by(name='Pool to Delete').first()
         pool_id = pool.id
 
-    response = client.delete(f'/delete_pool/{pool_id}')
+    response = client.delete(f'/ve/delete_pool/{pool_id}')
     assert response.status_code == 200
     assert response.is_json
     assert response.get_json()['success'] is True
@@ -474,7 +474,7 @@ def test_delete_pool_not_found(client, ve_user):
         - The response contains a JSON error message stating "Pool not found.".
     """
     login(client, ve_user.username, 'vepassword')
-    response = client.delete('/delete_pool/9999')
+    response = client.delete('/ve/delete_pool/9999')
     assert response.status_code == 404
     assert response.is_json
     assert 'Pool not found.' in response.get_json()['error']
@@ -491,7 +491,7 @@ def test_delete_pool_access_as_regular_user(client):
         - After following the redirect, the response data contains "Access denied.".
     """
     login(client, 'TESTUSER', 'testpassword')
-    response = client.delete('/delete_pool/1')
+    response = client.delete('/ve/delete_pool/1')
     assert response.status_code == 302  # Check for the redirect status
     # Follow the redirect and check the final destination
     follow_response = client.get(response.headers["Location"], follow_redirects=True)
@@ -509,7 +509,7 @@ def test_delete_pool_not_logged_in(client):
         - The response status code indicates a redirect, and the final destination contains 
             "Please log in to access this page.".
     """
-    response = client.delete('/delete_pool/1', follow_redirects=True)
+    response = client.delete('/ve/delete_pool/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 ##########################
@@ -531,7 +531,7 @@ def test_sessions_page_access(client, ve_user):
         - Response data contains "Test Sessions".
     """
     login(client, ve_user.username, 'vepassword')
-    response = client.get('/sessions')
+    response = client.get('/ve/sessions')
     assert response.status_code == 200
     assert b'Test Sessions' in response.data
 
@@ -546,7 +546,7 @@ def test_sessions_page_access_as_regular_user(client):
         - The response data contains "Access denied".
     """
     login(client, 'TESTUSER', 'testpassword')
-    response = client.get('/sessions', follow_redirects=True)
+    response = client.get('/ve/sessions', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_sessions_page_access_not_logged_in(client):
@@ -560,7 +560,7 @@ def test_sessions_page_access_not_logged_in(client):
         - The response data contains a message asking the user to log in.
         - The status code indicates a redirect to the login page.
     """
-    response = client.get('/sessions', follow_redirects=True)
+    response = client.get('/ve/sessions', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 def test_create_session_success(client, ve_user):
@@ -580,19 +580,19 @@ def test_create_session_success(client, ve_user):
     login(client, ve_user.username, 'vepassword')
 
     # First, create pools to associate with the session
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Tech Pool',
         'exam_element': '2',
         'start_date': '2023-01-01',
         'end_date': '2026-12-31'
     })
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'General Pool',
         'exam_element': '3',
         'start_date': '2023-01-01',
         'end_date': '2026-12-31'
     })
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Extra Pool',
         'exam_element': '4',
         'start_date': '2023-01-01',
@@ -611,7 +611,7 @@ def test_create_session_success(client, ve_user):
         assert extra_pool is not None
 
         # Create the test session
-        response = client.post('/create_session', data={
+        response = client.post('/ve/create_session', data={
             'start_date': '2023-09-01',
             'tech_pool': tech_pool.id,
             'general_pool': general_pool.id,
@@ -645,7 +645,7 @@ def test_create_session_missing_fields(client, ve_user):
         - The JSON response contains the error message 'All fields are required.'.
     """
     login(client, ve_user.username, 'vepassword')
-    response = client.post('/create_session', data={
+    response = client.post('/ve/create_session', data={
         'start_date': '',
         'tech_pool': '',
         'general_pool': '',
@@ -667,7 +667,7 @@ def test_create_session_access_as_regular_user(client):
         - The user is redirected to the logout page.
     """
     login(client, 'TESTUSER', 'testpassword')  # Login as a regular user
-    response = client.post('/create_session', data={
+    response = client.post('/ve/create_session', data={
         'start_date': '2023-09-01',
         'tech_pool': '1',
         'general_pool': '1',
@@ -689,7 +689,7 @@ def test_create_session_not_logged_in(client):
         - The response data contains a message asking the user to log in.
         - The status code indicates a redirect to the login page.
     """
-    response = client.post('/create_session', data={
+    response = client.post('/ve/create_session', data={
         'start_date': '2023-09-01',
         'tech_pool': '1',
         'general_pool': '1',
@@ -714,19 +714,19 @@ def test_open_session_success(client, ve_user):
     login(client, ve_user.username, 'vepassword')
 
     # First, create the necessary pools and session
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Tech Pool',
         'exam_element': '2',
         'start_date': '2023-01-01',
         'end_date': '2026-12-31'
     })
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'General Pool',
         'exam_element': '3',
         'start_date': '2023-01-01',
         'end_date': '2026-12-31'
     })
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Extra Pool',
         'exam_element': '4',
         'start_date': '2023-01-01',
@@ -739,7 +739,7 @@ def test_open_session_success(client, ve_user):
         extra_pool = Pool.query.filter_by(name='Extra Pool').first()
 
     # Create the test session
-    client.post('/create_session', data={
+    client.post('/ve/create_session', data={
         'start_date': '2023-09-01',
         'tech_pool': tech_pool.id,
         'general_pool': general_pool.id,
@@ -757,7 +757,7 @@ def test_open_session_success(client, ve_user):
 
     # Continue to open the session...
     session_id = session.id
-    response = client.post(f'/open_session/{session_id}', follow_redirects=True)
+    response = client.post(f'/ve/open_session/{session_id}', follow_redirects=True)
     assert response.status_code == 200
     assert response.is_json
     assert response.get_json()['success'] is True
@@ -781,7 +781,7 @@ def test_open_session_not_found(client, ve_user):
         - The JSON response contains the error message 'Session not found.'.
     """
     login(client, ve_user.username, 'vepassword')
-    response = client.post('/open_session/9999')
+    response = client.post('/ve/open_session/9999')
 
     # Check that the status code is 404
     assert response.status_code == 404
@@ -808,19 +808,19 @@ def test_close_session_success(client, ve_user):
     login(client, ve_user.username, 'vepassword')
 
     # First, create the necessary pools and session
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Tech Pool',
         'exam_element': '2',
         'start_date': '2023-01-01',
         'end_date': '2026-12-31'
     })
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'General Pool',
         'exam_element': '3',
         'start_date': '2023-01-01',
         'end_date': '2026-12-31'
     })
-    client.post('/create_pool', data={
+    client.post('/ve/create_pool', data={
         'pool_name': 'Extra Pool',
         'exam_element': '4',
         'start_date': '2023-01-01',
@@ -834,7 +834,7 @@ def test_close_session_success(client, ve_user):
         extra_pool = Pool.query.filter_by(name='Extra Pool').first()
 
     # Create the test session
-    client.post('/create_session', data={
+    client.post('/ve/create_session', data={
         'start_date': '2023-09-01',
         'tech_pool': tech_pool.id,
         'general_pool': general_pool.id,
@@ -853,13 +853,13 @@ def test_close_session_success(client, ve_user):
 
         # Proceed to open the session
         session_id = session.id
-        response = client.post(f'/open_session/{session_id}', follow_redirects=True)
+        response = client.post(f'/ve/open_session/{session_id}', follow_redirects=True)
 
         # Assert that the session was opened successfully
         assert response.status_code == 200
 
         # Now close the session
-        response = client.post(f'/close_session/{session_id}', follow_redirects=True)
+        response = client.post(f'/ve/close_session/{session_id}', follow_redirects=True)
 
         # Assert that the session was closed successfully
         assert response.status_code == 200
@@ -884,7 +884,7 @@ def test_close_session_not_found(client, ve_user):
         - The JSON response contains the error message 'Session not found.'.
     """
     login(client, ve_user.username, 'vepassword')
-    response = client.post('/close_session/9999')
+    response = client.post('/ve/close_session/9999')
 
     # Check that the status code is 404
     assert response.status_code == 404
@@ -905,7 +905,7 @@ def test_open_session_access_as_regular_user(client):
         - Response contains 'Access denied.' message.
     """
     login(client, 'TESTUSER', 'testpassword')
-    response = client.post('/open_session/1', follow_redirects=True)
+    response = client.post('/ve/open_session/1', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_close_session_access_as_regular_user(client):
@@ -919,7 +919,7 @@ def test_close_session_access_as_regular_user(client):
         - Response contains 'Access denied.' message.
     """
     login(client, 'TESTUSER', 'testpassword')
-    response = client.post('/close_session/1', follow_redirects=True)
+    response = client.post('/ve/close_session/1', follow_redirects=True)
     assert b'Access denied.' in response.data
 
 def test_open_session_not_logged_in(client):
@@ -932,7 +932,7 @@ def test_open_session_not_logged_in(client):
     Asserts:
         - Response contains 'Please log in to access this page.' message.
     """
-    response = client.post('/open_session/1', follow_redirects=True)
+    response = client.post('/ve/open_session/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 def test_close_session_not_logged_in(client):
@@ -945,7 +945,7 @@ def test_close_session_not_logged_in(client):
     Asserts:
         - Response contains 'Please log in to access this page.' message.
     """
-    response = client.post('/close_session/1', follow_redirects=True)
+    response = client.post('/ve/close_session/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
 def test_csp_violation_report_non_json(client, capsys):

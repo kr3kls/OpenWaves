@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitSessionForm.addEventListener('click', (e) => {
             e.preventDefault();
             const formData = new FormData(createSessionForm);
-            fetch('/create_session', { method: 'POST', body: formData })
+            fetch('/ve/create_session', { method: 'POST', body: formData })
             .then(response => response.json())
             .then(data => {
                 if (data.success) location.reload();
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (action === 'delete' && !confirm('Are you sure you want to delete this session?')) return;
 
-                makeRequest(`/${action}_session/${sessionId}`, method, { action }, csrfToken)
+                makeRequest(`/ve/${action}_session/${sessionId}`, method, { action }, csrfToken)
                 .then(data => {
                     if (data.success) location.reload();
                     else alert(`Error ${action} session: ${data.error}`);

@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
             if (confirm("Are you sure you want to delete the " + poolName + " pool and all associated questions?")) {
-                fetch(`/delete_pool/${poolId}`, {
+                fetch(`/ve/delete_pool/${poolId}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRFToken': csrfToken,
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(form);
 
             // Submit the form data via AJAX to the server
-            const response = await fetch(`/upload_questions/${poolId}`, {
+            const response = await fetch(`/ve/upload_questions/${poolId}`, {
                 method: 'POST',
                 body: formData,
             });
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(document.getElementById('create-pool-form'));
 
         // Submit the form data via AJAX to the server
-        const response = await fetch('/create_pool', {
+        const response = await fetch('/ve/create_pool', {
             method: 'POST',
             body: formData,
         });
