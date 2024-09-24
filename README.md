@@ -3,7 +3,7 @@
 *This software is currently under development and will be released later this year. It is not ready 
 for deployment at this time.*
 
-![OpenWaves Homepage](wiki/images/index.png | width=400)
+<img src="wiki/images/index.png" alt="OpenWaves Homepage" width="600">
 
 ## Features
 The application allows Ham Candidates and Volunteer Examiners to create accounts. These accounts 
