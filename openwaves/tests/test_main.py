@@ -4,10 +4,11 @@
 """
 import io
 from datetime import datetime
+from flask import url_for
 from werkzeug.security import generate_password_hash
 from openwaves import db
-from openwaves.models import User, Pool, Question, TLI, ExamSession
-from openwaves.tests.test_auth import login
+from openwaves.models import User, Pool, Question, TLI, ExamSession, ExamRegistration
+from openwaves.tests.test_auth import login, logout
 
 ####################################
 #                                  #
@@ -30,6 +31,7 @@ def test_index(client):
     assert response.status_code == 200
     assert b"Welcome to OpenWaves" in response.data
 
+
 def test_account_select(client):
     """Test ID: UT-24
     Test that the account select page loads correctly.
@@ -45,7 +47,8 @@ def test_account_select(client):
     assert response.status_code == 200
     assert b"Choose Your Role" in response.data
 
-def test_profile_access(client):
+
+def test_profile_access(client, app):
     """Test ID: UT-25
     Test accessing the profile page with and without authentication.
 
@@ -55,6 +58,7 @@ def test_profile_access(client):
 
     Args:
         client: The test client instance.
+        app: The Flask application instance.
 
     Asserts:
         - When not logged in:
@@ -75,6 +79,28 @@ def test_profile_access(client):
     response = client.get('/profile')
     assert response.status_code == 200
     assert b"OpenWaves Profile" in response.data
+    logout(client)
+
+    # Create a VE account for testuser
+    with app.app_context():
+        ve_user = User(
+            username='VE_TESTUSER',
+            first_name='Test',
+            last_name='User',
+            email='testuser@example.com',  # Same email as current_user
+            password=generate_password_hash('vepassword', method='pbkdf2:sha256'),
+            role=2
+        )
+        db.session.add(ve_user)
+        db.session.commit()
+
+    # Log in as testuser
+    response = login(client, 've_testuser', 'vepassword')
+    assert response.status_code == 200
+    response = client.get('/profile', follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Access denied." in response.data
+
 
 def test_ve_profile_exists(client, app):
     """Test ID: UT-26
@@ -112,6 +138,7 @@ def test_ve_profile_exists(client, app):
     # Should redirect to 'main.ve_profile'
     assert b"OpenWaves VE Profile" in response.data
 
+
 def test_ve_profile_not_exists(client):
     """Test ID: UT-27
     Test accessing the VE account when logged in as role 1.
@@ -133,6 +160,7 @@ def test_ve_profile_not_exists(client):
     response = client.get('/ve/profile', follow_redirects=True)
     assert response.status_code == 200
     assert b"You have been logged out." in response.data
+
 
 def test_csp_violation_report_valid_json(client, capsys):
     """Test ID: UT-28
@@ -187,6 +215,7 @@ def test_pools_page_access(client, ve_user):
     assert response.status_code == 200
     assert b'Question Pools' in response.data
 
+
 def test_pools_page_access_as_regular_user(client):
     """Test ID: UT-47
     Negative test: Ensures that a regular user cannot access the question pools page.
@@ -201,6 +230,7 @@ def test_pools_page_access_as_regular_user(client):
     response = client.get('/ve/pools', follow_redirects=True)
     assert b'Access denied.' in response.data
 
+
 def test_pools_page_access_not_logged_in(client):
     """Test ID: UT-48
     Negative test: Verifies that unauthenticated users cannot access the question pools page.
@@ -213,6 +243,7 @@ def test_pools_page_access_not_logged_in(client):
     """
     response = client.get('/ve/pools', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
+
 
 def test_create_pool_success(client, ve_user):
     """Test ID: UT-49
@@ -243,6 +274,7 @@ def test_create_pool_success(client, ve_user):
         assert pool is not None
         assert pool.element == 2
 
+
 def test_create_pool_missing_fields(client, ve_user):
     """Test ID: UT-50
     Negative test: Verifies that creating a question pool with missing fields returns an error.
@@ -266,6 +298,7 @@ def test_create_pool_missing_fields(client, ve_user):
     assert response.is_json
     assert 'All fields are required.' in response.get_json()['error']
 
+
 def test_create_pool_access_as_regular_user(client):
     """Test ID: UT-51
     Negative test: Ensures that a regular user cannot create a question pool.
@@ -285,6 +318,7 @@ def test_create_pool_access_as_regular_user(client):
     }, follow_redirects=True)
     assert b'Access denied.' in response.data
 
+
 def test_create_pool_not_logged_in(client):
     """Test ID: UT-52
     Negative test: Verifies that unauthenticated users cannot create a question pool.
@@ -302,6 +336,7 @@ def test_create_pool_not_logged_in(client):
         'end_date': '2026-12-31'
     }, follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
+
 
 def test_upload_questions_success(client, ve_user):
     """Test ID: UT-53
@@ -351,6 +386,7 @@ T1A02,B,What is 2+2?,1,4,3,5,Reference2
         tli_count = TLI.query.filter_by(pool_id=pool_id).count()
         assert tli_count == 1  # Both questions have TLI starting with 'T1'
 
+
 def test_upload_questions_no_file(client, ve_user):
     """Test ID: UT-54
     Negative test: Verifies that uploading questions without a file returns an error.
@@ -369,6 +405,7 @@ def test_upload_questions_no_file(client, ve_user):
     assert response.status_code == 400
     assert response.is_json
     assert 'No file provided.' in response.get_json()['error']
+
 
 def test_upload_questions_invalid_file_type(client, ve_user):
     """Test ID: UT-55
@@ -409,6 +446,7 @@ def test_upload_questions_invalid_file_type(client, ve_user):
     assert response.status_code == 400
     assert b'Invalid file type. Only CSV files are allowed.' in response.data
 
+
 def test_upload_questions_access_as_regular_user(client):
     """Test ID: UT-56
     Negative test: Ensures that a regular user cannot upload questions to a pool.
@@ -426,6 +464,7 @@ def test_upload_questions_access_as_regular_user(client):
     # Follow the redirect and check the final destination
     follow_response = client.get(response.headers["Location"], follow_redirects=True)
     assert b'Access denied' in follow_response.data
+
 
 def test_delete_pool_success(client, ve_user):
     """Test ID: UT-57
@@ -461,6 +500,7 @@ def test_delete_pool_success(client, ve_user):
         pool = db.session.get(Pool, pool_id)
         assert pool is None
 
+
 def test_delete_pool_not_found(client, ve_user):
     """Test ID: UT-58
     Negative test: Ensures that deleting a non-existent pool returns an error.
@@ -478,6 +518,7 @@ def test_delete_pool_not_found(client, ve_user):
     assert response.status_code == 404
     assert response.is_json
     assert 'Pool not found.' in response.get_json()['error']
+
 
 def test_delete_pool_access_as_regular_user(client):
     """Test ID: UT-59
@@ -497,6 +538,7 @@ def test_delete_pool_access_as_regular_user(client):
     follow_response = client.get(response.headers["Location"], follow_redirects=True)
     assert b'Access denied' in follow_response.data
 
+
 def test_delete_pool_not_logged_in(client):
     """Test ID: UT-60
     Negative test: Ensures that an unauthenticated user cannot delete a pool.
@@ -512,11 +554,12 @@ def test_delete_pool_not_logged_in(client):
     response = client.delete('/ve/delete_pool/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
-##########################
-#                        #
-#     Sessions Tests     #
-#                        #
-##########################
+
+#############################
+#                           #
+#     VE Sessions Tests     #
+#                           #
+#############################
 
 def test_sessions_page_access(client, ve_user):
     """Test ID: UT-61
@@ -535,6 +578,7 @@ def test_sessions_page_access(client, ve_user):
     assert response.status_code == 200
     assert b'Test Sessions' in response.data
 
+
 def test_sessions_page_access_as_regular_user(client):
     """Test ID: UT-62
     Negative test: Ensures that a regular user cannot access the sessions page.
@@ -549,6 +593,7 @@ def test_sessions_page_access_as_regular_user(client):
     response = client.get('/ve/sessions', follow_redirects=True)
     assert b'Access denied.' in response.data
 
+
 def test_sessions_page_access_not_logged_in(client):
     """Test ID: UT-63
     Negative test: Ensures that unauthenticated users cannot access the sessions page.
@@ -562,6 +607,7 @@ def test_sessions_page_access_not_logged_in(client):
     """
     response = client.get('/ve/sessions', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
+
 
 def test_create_session_success(client, ve_user):
     """Test ID: UT-64
@@ -632,6 +678,7 @@ def test_create_session_success(client, ve_user):
         assert session.gen_pool_id == general_pool.id
         assert session.extra_pool_id == extra_pool.id
 
+
 def test_create_session_missing_fields(client, ve_user):
     """Test ID: UT-65
     Negative test: Verifies that creating a session with missing fields returns an error.
@@ -654,6 +701,7 @@ def test_create_session_missing_fields(client, ve_user):
     assert response.status_code == 400
     assert response.is_json
     assert 'All fields are required.' in response.get_json()['error']
+
 
 def test_create_session_access_as_regular_user(client):
     """Test ID: UT-66
@@ -678,6 +726,7 @@ def test_create_session_access_as_regular_user(client):
     assert response.status_code == 302
     assert '/auth/logout' in response.headers['Location']
 
+
 def test_create_session_not_logged_in(client):
     """Test ID: UT-67
     Negative test: Ensures that unauthenticated users cannot create a test session.
@@ -696,6 +745,7 @@ def test_create_session_not_logged_in(client):
         'extra_pool': '1'
     }, follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
+
 
 def test_open_session_success(client, ve_user):
     """Test ID: UT-68
@@ -768,6 +818,7 @@ def test_open_session_success(client, ve_user):
         assert session.status is True
         assert session.start_time is not None
 
+
 def test_open_session_not_found(client, ve_user):
     """Test ID: UT-69
     Negative test: Ensures that trying to open a non-existent session returns a 404 error.
@@ -790,6 +841,7 @@ def test_open_session_not_found(client, ve_user):
     assert response.is_json
     json_data = response.get_json()
     assert json_data['error'] == "Session not found."
+
 
 def test_close_session_success(client, ve_user):
     """Test ID: UT-70
@@ -871,6 +923,7 @@ def test_close_session_success(client, ve_user):
         assert closed_session.status is False, "The session is still open."
         assert closed_session.end_time is not None, "The session end_time was not set."
 
+
 def test_close_session_not_found(client, ve_user):
     """Test ID: UT-71
     Negative test: Ensures that trying to close a non-existent session returns a 404 error.
@@ -894,6 +947,7 @@ def test_close_session_not_found(client, ve_user):
     json_data = response.get_json()
     assert json_data['error'] == "Session not found."
 
+
 def test_open_session_access_as_regular_user(client):
     """Test ID: UT-72
     Negative test: Ensures that a regular user cannot open a test session.
@@ -907,6 +961,7 @@ def test_open_session_access_as_regular_user(client):
     login(client, 'TESTUSER', 'testpassword')
     response = client.post('/ve/open_session/1', follow_redirects=True)
     assert b'Access denied.' in response.data
+
 
 def test_close_session_access_as_regular_user(client):
     """Test ID: UT-73
@@ -922,6 +977,7 @@ def test_close_session_access_as_regular_user(client):
     response = client.post('/ve/close_session/1', follow_redirects=True)
     assert b'Access denied.' in response.data
 
+
 def test_open_session_not_logged_in(client):
     """Test ID: UT-74
     Negative test: Ensures that an unauthenticated user cannot open a test session.
@@ -935,6 +991,7 @@ def test_open_session_not_logged_in(client):
     response = client.post('/ve/open_session/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
+
 def test_close_session_not_logged_in(client):
     """Test ID: UT-74
     Negative test: Ensures that an unauthenticated user cannot open a test session.
@@ -947,6 +1004,7 @@ def test_close_session_not_logged_in(client):
     """
     response = client.post('/ve/close_session/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
+
 
 def test_csp_violation_report_non_json(client, capsys):
     """Test ID: UT-29
@@ -969,3 +1027,429 @@ def test_csp_violation_report_non_json(client, capsys):
     # Capture the print output
     captured = capsys.readouterr()
     assert "Received non-JSON CSP violation report" in captured.out
+
+
+#############################
+#                           #
+#     HC Sessions Tests     #
+#                           #
+#############################
+
+def test_sessions_route_as_user(client, app):
+    """Test ID: UT-91
+    Test the sessions route for a logged-in user with role 1 (HAM Candidate).
+
+    This test ensures that a user with role 1 can access the sessions page and 
+    that the correct information is rendered.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The response status code is 200.
+        - The response contains the expected content.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        response = login(client, user.username, "testpassword")
+
+        # Create an exam session
+        pool = Pool(
+            name="Test Pool",
+            element=2,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        exam_session = ExamSession(
+            session_date=datetime.now(),
+            tech_pool_id=pool.id,
+            gen_pool_id=pool.id,
+            extra_pool_id=pool.id,
+            status=True
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Access the sessions page
+        response = client.get('/sessions')
+        assert response.status_code == 200
+        assert b'Exam Sessions' in response.data
+        assert bytes(exam_session.session_date.strftime('%m/%d/%Y'), 'utf-8') in response.data
+
+def test_sessions_route_as_unauthorized_user(client, app):
+    """Test ID: UT-92
+    Test the sessions route for an unauthorized user (not logged in or wrong role).
+
+    This test ensures that a user who is not logged in or does not have role 1 
+    cannot access the sessions page and is redirected appropriately.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The response status code is a redirect (302).
+        - The user is redirected to the login page.
+    """
+    # Attempt to access the sessions page without logging in
+    response = client.get('/sessions', follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b'Please log in to access this page.' in response.data
+
+    with app.app_context():
+        # Log in as a user with role 2 (VE)
+        ve_user = User(
+            username="VEUSER",
+            first_name="VE",
+            last_name="User",
+            email="veuser@example.com",
+            password="vepassword",
+            role=2,
+            active=True
+        )
+        db.session.add(ve_user)
+        db.session.commit()
+
+        response = login(client, ve_user.username, "vepassword")
+
+        # Attempt to access the sessions page
+        response = client.get('/sessions', follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Please log in to access this page.' in response.data
+
+def test_register_route_success(client, app):
+    """Test ID: UT-93
+    Test successful registration for an exam session.
+
+    This test ensures that a user with role 1 can successfully register for an exam element.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The registration is created in the database.
+        - The user receives a success message.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Create an exam session
+        pool = Pool(
+            name="Test Pool",
+            element=2,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        exam_session = ExamSession(
+            session_date=datetime.now(),
+            tech_pool_id=pool.id,
+            gen_pool_id=pool.id,
+            extra_pool_id=pool.id,
+            status=True
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Submit a registration request
+        response = client.post('/register', data={
+            'session_id': exam_session.id,
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Successfully registered for the Tech exam.' in response.data
+
+        # Verify registration in the database
+        registration = ExamRegistration.query.filter_by(
+            session_id=exam_session.id,
+            user_id=user.id
+        ).first()
+        assert registration is not None
+        assert registration.tech is True
+
+def test_register_route_already_registered(client, app):
+    """Test ID: UT-94
+    Test registration when the user is already registered for the exam element.
+
+    This test ensures that attempting to register again for the same exam element 
+    results in an appropriate error message.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The user receives an error message.
+        - No duplicate registrations are created.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Create an exam session and register the user
+        pool = Pool(
+            name="Test Pool",
+            element=2,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        exam_session = ExamSession(
+            session_date=datetime.now(),
+            tech_pool_id=pool.id,
+            gen_pool_id=pool.id,
+            extra_pool_id=pool.id,
+            status=True
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Initial registration
+        registration = ExamRegistration(
+            session_id=exam_session.id,
+            user_id=user.id,
+            tech=True
+        )
+        db.session.add(registration)
+        db.session.commit()
+
+        # Attempt to register again for the same exam element
+        response = client.post('/register', data={
+            'session_id': exam_session.id,
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'You are already registered for the Tech exam.' in response.data
+
+def test_register_route_missing_data(client, app):
+    """Test ID: UT-95
+    Test registration with missing form data.
+
+    This test ensures that attempting to register without providing required form data 
+    results in an appropriate error message.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The user receives an error message about missing information.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Attempt to register without session_id
+        response = client.post('/register', data={
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Invalid registration request. Missing required information.' in response.data
+
+def test_cancel_registration_success(client, app):
+    """Test ID: UT-96
+    Test successful cancellation of an exam registration.
+
+    This test ensures that a user with role 1 can successfully cancel their registration 
+    for an exam element.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The registration is updated in the database.
+        - The user receives a success message.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Create an exam session and register the user
+        pool = Pool(
+            name="Test Pool",
+            element=2,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        exam_session = ExamSession(
+            session_date=datetime.now(),
+            tech_pool_id=pool.id,
+            gen_pool_id=pool.id,
+            extra_pool_id=pool.id,
+            status=True
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Initial registration
+        registration = ExamRegistration(
+            session_id=exam_session.id,
+            user_id=user.id,
+            tech=True
+        )
+        db.session.add(registration)
+        db.session.commit()
+
+        # Submit a cancellation request
+        response = client.post('/cancel_registration', data={
+            'session_id': exam_session.id,
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Successfully canceled registration for the Tech exam.' in response.data
+
+        # Verify registration in the database
+        updated_registration = ExamRegistration.query.filter_by(
+            session_id=exam_session.id,
+            user_id=user.id
+        ).first()
+        assert updated_registration.tech is False
+
+def test_cancel_registration_not_registered(client, app):
+    """Test ID: UT-97
+    Test cancellation when the user is not registered for the exam element.
+
+    This test ensures that attempting to cancel a registration for an exam element 
+    the user is not registered for results in an appropriate error message.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The user receives an error message.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Create an exam session
+        pool = Pool(
+            name="Test Pool",
+            element=2,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        exam_session = ExamSession(
+            session_date=datetime.now(),
+            tech_pool_id=pool.id,
+            gen_pool_id=pool.id,
+            extra_pool_id=pool.id,
+            status=True
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Attempt to cancel registration without being registered
+        response = client.post('/cancel_registration', data={
+            'session_id': exam_session.id,
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'You are not registered for the Tech exam.' in response.data
+
+def test_register_route_invalid_role(client, app):
+    """Test ID: UT-98
+    Test registration with a user who does not have role 1.
+
+    This test ensures that a user with a role other than 1 cannot register for an exam.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The user is redirected with an access denied message.
+    """
+    with app.app_context():
+        # Create and log in as a user with role 2 (VE)
+        ve_user = User(
+            username="VEUSER2",
+            first_name="VE",
+            last_name="User",
+            email="veuser2@example.com",
+            password="vepassword",
+            role=2,
+            active=True
+        )
+        db.session.add(ve_user)
+        db.session.commit()
+
+        login(client, ve_user.username, "vepassword")
+
+        # Attempt to register
+        response = client.post('/register', data={
+            'session_id': '1',
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Please log in to access this page.' in response.data
+
+def test_cancel_registration_invalid_role(client, app):
+    """Test ID: UT-99
+    Test cancellation with a user who does not have role 1.
+
+    This test ensures that a user with a role other than 1 cannot cancel an exam registration.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The user is redirected with an access denied message.
+    """
+    with app.app_context():
+        # Create and log in as a user with role 2 (VE)
+        ve_user = User(
+            username="VEUSER3",
+            first_name="VE",
+            last_name="User",
+            email="veuser3@example.com",
+            password="vepassword",
+            role=2,
+            active=True
+        )
+        db.session.add(ve_user)
+        db.session.commit()
+
+        login(client, ve_user.username, "vepassword")
+
+        # Attempt to cancel registration
+        response = client.post('/cancel_registration', data={
+            'session_id': '1',
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Please log in to access this page.' in response.data

@@ -187,7 +187,7 @@ def register():
             return redirect(url_for('main.sessions'))
 
         # Fetch exam session
-        exam_session = ExamSession.query.get(session_id)
+        exam_session = db.session.get(ExamSession, session_id)
         if not exam_session:
             flash('Exam session not found.', 'danger')
             return redirect(url_for('main.sessions'))
@@ -268,7 +268,7 @@ def cancel_registration():
             return redirect(url_for('main.sessions'))
 
         # Fetch the exam session
-        exam_session = ExamSession.query.get(session_id)
+        exam_session = db.session.get(ExamSession, session_id)
         if not exam_session:
             flash('Exam session not found.', 'danger')
             return redirect(url_for('main.sessions'))
