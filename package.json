@@ -13,18 +13,18 @@
   "devDependencies": {
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
-    "jest-junit": "^16.0.0"
+    "jest-junit": "^16.0.0",
+    "jest-sonar-reporter": "^2.0.0"
   },
   "jest": {
-    "reporters": [
-      "default",
-      [
-        "jest-junit",
-        {
-          "outputDirectory": "./coverage",
-          "outputName": "test-report.xml"
-        }
-      ]
-    ]
-  }
+  "collectCoverage": true,
+  "coverageDirectory": "./coverage",
+  "coverageReporters": ["lcov", "text"],
+  "reporters": [
+    "default",
+    ["jest-sonar-reporter", {
+      "reportFile": "test-report.xml",
+      "outputDirectory": "./coverage"
+    }]
+  ]}
 }
