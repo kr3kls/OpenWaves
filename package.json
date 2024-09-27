@@ -29,7 +29,7 @@
       [
         "jest-sonar",
         {
-          "reportFile": "test-report.xml",
+          "reportFile": "sonar-report.xml",
           "outputDirectory": "./coverage"
         }
       ]

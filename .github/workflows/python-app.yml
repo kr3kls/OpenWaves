@@ -58,7 +58,7 @@ jobs:
         run: ls -la coverage
 
       - name: View Jest JUnit report
-        run: cat coverage/test-report.xml
+        run: cat coverage/sonar-report.xml
   
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
