@@ -21,7 +21,7 @@
       [
         "jest-junit",
         {
-          "outputDirectory": "coverage",
+          "outputDirectory": "./coverage",
           "outputName": "test-report.xml"
         }
       ]
