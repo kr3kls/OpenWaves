@@ -84,8 +84,8 @@
 
                         <!-- Dropdown for Tech Pool Questions -->
                         <div class="field">
-                            <label class="label">Tech Pool Questions</label>
                             <div class="control">
+                                <label class="label" id="pool-labels">Tech Pool Questions</label>
                                 <div class="select">
                                     <select name="tech_pool" required>
                                         {% for pool_id, pool_text in tech_pool_options.items() %}
@@ -98,8 +98,8 @@
 
                         <!-- Dropdown for General Pool Questions -->
                         <div class="field">
-                            <label class="label">General Pool Questions</label>
                             <div class="control">
+                                <label class="label" id="pool-labels">General Pool Questions</label>
                                 <div class="select">
                                     <select name="general_pool" required>
                                         {% for pool_id, pool_text in general_pool_options.items() %}
@@ -112,8 +112,8 @@
 
                         <!-- Dropdown for Extra Pool Questions -->
                         <div class="field">
-                            <label class="label">Extra Pool Questions</label>
                             <div class="control">
+                                <label class="label" id="pool-labels">Extra Pool Questions</label>
                                 <div class="select">
                                     <select name="extra_pool" required>
                                         {% for pool_id, pool_text in extra_pool_options.items() %}
