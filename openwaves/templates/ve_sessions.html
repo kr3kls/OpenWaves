@@ -75,19 +75,20 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         {% endif %}
                         
+                        <!-- Date Field -->
                         <div class="field">
-                            <label class="label">Date</label>
+                            <label class="label" for="start-date">Date</label>
                             <div class="control">
                                 <input class="input" type="date" id="start-date" name="start_date" required>
                             </div>
                         </div>
-
+                    
                         <!-- Dropdown for Tech Pool Questions -->
                         <div class="field">
+                            <label class="label" for="tech-pool">Tech Pool Questions</label>
                             <div class="control">
-                                <label class="label" id="pool-labels">Tech Pool Questions</label>
                                 <div class="select">
-                                    <select name="tech_pool" required>
+                                    <select id="tech-pool" name="tech_pool" required>
                                         {% for pool_id, pool_text in tech_pool_options.items() %}
                                             <option value="{{ pool_id }}">{{ pool_text }}</option>
                                         {% endfor %}
@@ -95,13 +96,13 @@
                                 </div>
                             </div>
                         </div>
-
+                    
                         <!-- Dropdown for General Pool Questions -->
                         <div class="field">
+                            <label class="label" for="general-pool">General Pool Questions</label>
                             <div class="control">
-                                <label class="label" id="pool-labels">General Pool Questions</label>
                                 <div class="select">
-                                    <select name="general_pool" required>
+                                    <select id="general-pool" name="general_pool" required>
                                         {% for pool_id, pool_text in general_pool_options.items() %}
                                             <option value="{{ pool_id }}">{{ pool_text }}</option>
                                         {% endfor %}
@@ -109,13 +110,13 @@
                                 </div>
                             </div>
                         </div>
-
+                    
                         <!-- Dropdown for Extra Pool Questions -->
                         <div class="field">
+                            <label class="label" for="extra-pool">Extra Pool Questions</label>
                             <div class="control">
-                                <label class="label" id="pool-labels">Extra Pool Questions</label>
                                 <div class="select">
-                                    <select name="extra_pool" required>
+                                    <select id="extra-pool" name="extra_pool" required>
                                         {% for pool_id, pool_text in extra_pool_options.items() %}
                                             <option value="{{ pool_id }}">{{ pool_text }}</option>
                                         {% endfor %}
@@ -123,8 +124,8 @@
                                 </div>
                             </div>
                         </div>
-
                     </form>
+                    
                 </section>
                 <footer class="modal-card-foot">
                     <button class="button is-button-color" id="submit-session-form">Save</button>
