@@ -52,7 +52,7 @@ jobs:
 
       - name: Run Jest tests (with coverage and JUnit report)
         run: |
-          npm test -- --coverage
+          npm run test:ci
 
       - name: List coverage directory contents
         run: ls -la coverage
