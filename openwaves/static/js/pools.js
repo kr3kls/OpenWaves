@@ -39,12 +39,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Close modal on clicking the 'Cancel' button or 'X'
-    document.querySelectorAll('.delete').forEach(button => {
-        button.addEventListener('click', function() {
-            const modalId = this.closest('.modal').id;
-            document.getElementById(modalId).classList.remove('is-active');
+    const deleteButton = document.querySelector('.delete');
+    if (deleteButton) {
+        document.querySelectorAll('.delete').forEach(button => {
+            button.addEventListener('click', function() {
+                const modalId = this.closest('.modal').id;
+                document.getElementById(modalId).classList.remove('is-active');
+            });
         });
-    });
+    }
+    
 
     document.querySelectorAll('[id^=submit-upload]').forEach(button => {
         button.addEventListener('click', async function(e) {
@@ -80,67 +84,85 @@ document.addEventListener('DOMContentLoaded', function() {
     const endDateField = document.getElementById('end-date');
 
     // Toggle the create pool modal
-    createPoolButton.addEventListener('click', function() {
-        // Set default start and end dates
-        const currentYear = new Date().getFullYear();
-        startDateField.value = `${currentYear}-07-01`;
-        endDateField.value = `${currentYear + 4}-06-30`;
-
-        // Open the modal
-        createPoolModal.classList.add('is-active');
-    });
-
+    if (createPoolButton) {
+        createPoolButton.addEventListener('click', function() {
+            // Set default start and end dates
+            const currentYear = new Date().getFullYear();
+            startDateField.value = `${currentYear}-07-01`;
+            endDateField.value = `${currentYear + 4}-06-30`;
+    
+            // Open the modal
+            createPoolModal.classList.add('is-active');
+        });
+    }
+    
     // Close modal on clicking the 'Cancel' button or 'X'
-    document.querySelector('.delete').addEventListener('click', function() {
-        createPoolModal.classList.remove('is-active');
-    });
+    if (deleteButton) {
+        document.querySelector('.delete').addEventListener('click', function() {
+            createPoolModal.classList.remove('is-active');
+        });
+    }
+    
 
-    document.getElementById('cancel-pool-form').addEventListener('click', function() {
-        createPoolModal.classList.remove('is-active');
-    });
+    // Close modal on clicking the 'Cancel' button
+    const cancelPoolForm = document.getElementById('cancel-pool-form');
+    if (cancelPoolForm) {
+        document.getElementById('cancel-pool-form').addEventListener('click', function() {
+            createPoolModal.classList.remove('is-active');
+        });
+    }
+    
 
     // Handle pool name change to update the exam element automatically
-    poolNameDropdown.addEventListener('change', function() {
-        const selectedPool = poolNameDropdown.value;
-        if (selectedPool === 'Technician') {
-            examElementField.value = 2;
-        } else if (selectedPool === 'General') {
-            examElementField.value = 3;
-        } else if (selectedPool === 'Extra') {
-            examElementField.value = 4;
-        }
-    });
+    if (poolNameDropdown) {
+        poolNameDropdown.addEventListener('change', function() {
+            const selectedPool = poolNameDropdown.value;
+            if (selectedPool === 'Technician') {
+                examElementField.value = 2;
+            } else if (selectedPool === 'General') {
+                examElementField.value = 3;
+            } else if (selectedPool === 'Extra') {
+                examElementField.value = 4;
+            }
+        });
+    }
 
     // Automatically update end date based on start date
-    startDateField.addEventListener('change', function() {
-        const startDate = new Date(startDateField.value);
-        if (startDate) {
-            const endDate = new Date(startDate);
-            endDate.setFullYear(startDate.getFullYear() + 4);  // Add 4 years
-            endDateField.value = `${endDate.getFullYear()}-06-30`;  // Always set end date to June 30
-        }
-    });
+    if (startDateField) {
+        startDateField.addEventListener('change', function() {
+            const startDate = new Date(startDateField.value);
+            if (startDate) {
+                const endDate = new Date(startDate);
+                endDate.setFullYear(startDate.getFullYear() + 4);  // Add 4 years
+                endDateField.value = `${endDate.getFullYear()}-06-30`;  // Always set end date to June 30
+            }
+        });
+    }
+    
 
     // Handle form submission
-    document.getElementById('submit-pool-form').addEventListener('click', async function(e) {
-        e.preventDefault();
+    const submitPoolForm = document.getElementById('submit-pool-form');
+    if (submitPoolForm) {
+        document.getElementById('submit-pool-form').addEventListener('click', async function(e) {
+            e.preventDefault();
 
-        const formData = new FormData(document.getElementById('create-pool-form'));
+            const formData = new FormData(document.getElementById('create-pool-form'));
 
-        // Submit the form data via AJAX to the server
-        const response = await fetch('/ve/create_pool', {
-            method: 'POST',
-            body: formData,
+            // Submit the form data via AJAX to the server
+            const response = await fetch('/ve/create_pool', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                alert('Pool created successfully!');
+                location.reload();  // Reload the page to show the new pool
+            } else {
+                alert('There was an error creating the pool.');
+            }
+
+            // Close the modal after form submission
+            createPoolModal.classList.remove('is-active');
         });
-
-        if (response.ok) {
-            alert('Pool created successfully!');
-            location.reload();  // Reload the page to show the new pool
-        } else {
-            alert('There was an error creating the pool.');
-        }
-
-        // Close the modal after form submission
-        createPoolModal.classList.remove('is-active');
-    });
+    }
 });

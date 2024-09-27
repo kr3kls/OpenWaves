@@ -1,0 +1,22 @@
+{
+  "name": "openwaves",
+  "version": "1.0.0",
+  "description": "*This software is currently under development and will be released later this year. It is not ready for deployment at this time.*",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "test:ci": "jest --coverage --reporters=default --reporters=jest-junit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-junit": "^16.0.0"
+  },
+  "jest-junit": {
+    "outputDirectory": "coverage",
+    "outputName": "test-report.xml"
+  }
+}
