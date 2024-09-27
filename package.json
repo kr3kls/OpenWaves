@@ -15,8 +15,16 @@
     "jest-environment-jsdom": "^29.7.0",
     "jest-junit": "^16.0.0"
   },
-  "jest-junit": {
-    "outputDirectory": "coverage",
-    "outputName": "test-report.xml"
+  "jest": {
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "coverage",
+          "outputName": "test-report.xml"
+        }
+      ]
+    ]
   }
 }
