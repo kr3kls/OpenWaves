@@ -13,6 +13,7 @@ from .imports import db, Pool, Question, TLI, ExamSession, ExamRegistration, get
     is_already_registered, remove_exam_registration
 
 PAGE_LOGOUT = 'auth.logout'
+PAGE_SESSIONS = 'main.sessions'
 MSG_ACCESS_DENIED = 'Access denied.'
 
 main = Blueprint('main', __name__)
@@ -184,13 +185,13 @@ def register():
         # Check for missing input data
         if not session_id or not exam_element or not exam_name:
             flash('Invalid registration request. Missing required information.', 'danger')
-            return redirect(url_for('main.sessions'))
+            return redirect(url_for('PAGE_SESSIONS'))
 
         # Fetch exam session
         exam_session = db.session.get(ExamSession, session_id)
         if not exam_session:
             flash('Exam session not found.', 'danger')
-            return redirect(url_for('main.sessions'))
+            return redirect(url_for('PAGE_SESSIONS'))
 
         # Fetch existing registration
         existing_registration = ExamRegistration.query.filter_by(
@@ -201,7 +202,7 @@ def register():
         # Check if the user is already registered for this element
         if existing_registration and is_already_registered(existing_registration, exam_element):
             flash(f'You are already registered for the {exam_name} exam.', 'danger')
-            return redirect(url_for('main.sessions'))
+            return redirect(url_for('PAGE_SESSIONS'))
 
         # Create or update registration
         if existing_registration:
@@ -225,7 +226,7 @@ def register():
         # Commit changes and confirm registration
         db.session.commit()
         flash(f'Successfully registered for the {exam_name} exam.', 'success')
-        return redirect(url_for('main.sessions'))
+        return redirect(url_for('PAGE_SESSIONS'))
 
     # If no HC account exists, redirect to the logout page
     flash(MSG_ACCESS_DENIED, "danger")
@@ -265,13 +266,13 @@ def cancel_registration():
         # Check for missing input data
         if not session_id or not exam_element or not exam_name:
             flash('Invalid cancellation request. Missing required information.', 'danger')
-            return redirect(url_for('main.sessions'))
+            return redirect(url_for('PAGE_SESSIONS'))
 
         # Fetch the exam session
         exam_session = db.session.get(ExamSession, session_id)
         if not exam_session:
             flash('Exam session not found.', 'danger')
-            return redirect(url_for('main.sessions'))
+            return redirect(url_for('PAGE_SESSIONS'))
 
         # Fetch the existing registration
         existing_registration = ExamRegistration.query.filter_by(
@@ -283,7 +284,7 @@ def cancel_registration():
         if not existing_registration or not is_already_registered(existing_registration,
                                                                   exam_element):
             flash(f'You are not registered for the {exam_name} exam.', 'danger')
-            return redirect(url_for('main.sessions'))
+            return redirect(url_for('PAGE_SESSIONS'))
 
         # Remove the user's registration for the specified exam element
         remove_exam_registration(existing_registration, exam_element)
@@ -293,7 +294,7 @@ def cancel_registration():
 
         # Flash success message and redirect
         flash(f'Successfully canceled registration for the {exam_name} exam.', 'success')
-        return redirect(url_for('main.sessions'))
+        return redirect(url_for('PAGE_SESSIONS'))
 
     # If no HC account exists, redirect to the logout page
     flash(MSG_ACCESS_DENIED, "danger")

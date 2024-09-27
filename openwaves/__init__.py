@@ -65,11 +65,11 @@ def create_app():
         return response
 
     # blueprint for auth routes in our app
-    from .auth import auth as auth_blueprint # pylint: disable=C0415
+    from .auth import auth as auth_blueprint # pylint: disable=C0415,R0401
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
 
     # blueprint for non-auth parts of app
-    from .main import main as main_blueprint # pylint: disable=C0415
+    from .main import main as main_blueprint # pylint: disable=C0415,R0401
     app.register_blueprint(main_blueprint)
 
     return app
@@ -77,5 +77,5 @@ def create_app():
 @login_manager.user_loader
 def load_user(user_id):
     """Method to avoid circular import for User"""
-    from .models import User # pylint: disable=C0415
+    from .models import User # pylint: disable=C0415,R0401
     return db.session.get(User,int(user_id))

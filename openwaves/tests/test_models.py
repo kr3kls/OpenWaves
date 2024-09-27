@@ -106,7 +106,8 @@ def test_pool_repr(app):
         app: The Flask application instance.
 
     Asserts:
-        - The __repr__ method returns the expected string format showing the pool's name, start date, and end date.
+        - The __repr__ method returns the expected string format showing the pool's name,
+          start date, and end date.
     """
     with app.app_context():
         pool = Pool(
@@ -244,7 +245,8 @@ def test_tli_repr(app):
         app: The Flask application instance.
 
     Asserts:
-        - The __repr__ method returns the expected string format showing the pool ID, TLI, and quantity.
+        - The __repr__ method returns the expected string format showing the pool ID, TLI, and
+          quantity.
     """
     with app.app_context():
         tli = TLI(
@@ -347,7 +349,8 @@ def test_exam_registration_creation(app):
 
     Asserts:
         - The exam registration ID is generated after saving to the database.
-        - The exam registration can be retrieved by its user ID and matches the created registration.
+        - The exam registration can be retrieved by its user ID and matches the created
+          registration.
     """
     with app.app_context():
         # Create a User
