@@ -54,8 +54,8 @@ jobs:
         run: |
           npm run test:ci
 
-      - name: Print test report
-        run: cat /github/workspace/coverage/test-report.xml
+      - name: List coverage directory contents
+        run: ls -la coverage
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
