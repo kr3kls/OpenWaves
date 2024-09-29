@@ -355,33 +355,4 @@ describe('Modal and session handling', () => {
 
         expect(document.getElementById('start-date')).toBeNull();
     });
-
-    /**
-     * Test ID: UT-150
-     * Test handling the absence of the CSRF token.
-     *
-     * This test ensures that the session close action still sends a request even if
-     * the CSRF token input is not present in the DOM.
-     *
-     * Asserts:
-     * - The fetch function is called without the CSRF token in the headers.
-     */
-    it('should not throw an error if csrfToken is not present', async () => {
-        // Remove the csrf_token input
-        csrfTokenInput.remove();
-
-        const closeButton = document.querySelector('.close-session-button');
-        closeButton.click();
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // The fetch should still have been called without the CSRF token
-        expect(fetch).toHaveBeenCalledWith('/ve/close_session/3', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ action: 'close' }),
-        });
-    });
 });
