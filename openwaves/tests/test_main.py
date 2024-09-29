@@ -31,7 +31,6 @@ def test_index(client):
     assert response.status_code == 200
     assert b"Welcome to OpenWaves" in response.data
 
-
 def test_account_select(client):
     """Test ID: UT-24
     Test that the account select page loads correctly.
@@ -46,7 +45,6 @@ def test_account_select(client):
     response = client.get('/account_select')
     assert response.status_code == 200
     assert b"Choose Your Role" in response.data
-
 
 def test_profile_access(client, app):
     """Test ID: UT-25
@@ -101,7 +99,6 @@ def test_profile_access(client, app):
     assert response.status_code == 200
     assert b"Access denied." in response.data
 
-
 def test_ve_profile_exists(client, app):
     """Test ID: UT-26
     Test accessing the VE profile when it exists.
@@ -138,7 +135,6 @@ def test_ve_profile_exists(client, app):
     # Should redirect to 'main.ve_profile'
     assert b"OpenWaves VE Profile" in response.data
 
-
 def test_ve_profile_not_exists(client):
     """Test ID: UT-27
     Test accessing the VE account when logged in as role 1.
@@ -161,7 +157,6 @@ def test_ve_profile_not_exists(client):
     assert response.status_code == 200
     assert b"You have been logged out." in response.data
 
-
 def test_pools_page_no_pools(client, ve_user):
     """Test ID: UT-104
     Functional test: Verify the pools page displays correctly when no pools are available.
@@ -179,7 +174,6 @@ def test_pools_page_no_pools(client, ve_user):
 
     assert response.status_code == 200
     assert b'No question pools found.' in response.data
-
 
 def test_pools_page_with_pools(client, app, ve_user):
     """Test ID: UT-105
@@ -258,7 +252,6 @@ def test_pools_page_with_pools(client, app, ve_user):
             + 'Upload Questions</button>\n'
     assert code2.encode() in response.data
 
-
 def test_pools_page_role_not_allowed(client):
     """Test ID: UT-106
     Negative test: Ensure that users without the VE role cannot access the pools page.
@@ -277,7 +270,6 @@ def test_pools_page_role_not_allowed(client):
 
     assert response.status_code == 200
     assert b'Access denied' in response.data
-
 
 def test_csp_violation_report_valid_json(client, capsys):
     """Test ID: UT-28
@@ -309,7 +301,6 @@ def test_csp_violation_report_valid_json(client, capsys):
     captured = capsys.readouterr()
     assert "CSP Violation:" in captured.out
 
-
 def test_csp_violation_report_non_json(client, capsys):
     """Test ID: UT-29
     Test handling a CSP violation report with non-JSON data.
@@ -331,7 +322,6 @@ def test_csp_violation_report_non_json(client, capsys):
     # Capture the print output
     captured = capsys.readouterr()
     assert "Received non-JSON CSP violation report" in captured.out
-
 
 ###############################
 #                             #
@@ -356,7 +346,6 @@ def test_pools_page_access(client, ve_user):
     assert response.status_code == 200
     assert b'Question Pools' in response.data
 
-
 def test_pools_page_access_as_regular_user(client):
     """Test ID: UT-47
     Negative test: Ensures that a regular user cannot access the question pools page.
@@ -371,7 +360,6 @@ def test_pools_page_access_as_regular_user(client):
     response = client.get('/ve/pools', follow_redirects=True)
     assert b'Access denied.' in response.data
 
-
 def test_pools_page_access_not_logged_in(client):
     """Test ID: UT-48
     Negative test: Verifies that unauthenticated users cannot access the question pools page.
@@ -384,7 +372,6 @@ def test_pools_page_access_not_logged_in(client):
     """
     response = client.get('/ve/pools', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
-
 
 def test_create_pool_success(client, ve_user):
     """Test ID: UT-49
@@ -415,7 +402,6 @@ def test_create_pool_success(client, ve_user):
         assert pool is not None
         assert pool.element == 2
 
-
 def test_create_pool_missing_fields(client, ve_user):
     """Test ID: UT-50
     Negative test: Verifies that creating a question pool with missing fields returns an error.
@@ -439,7 +425,6 @@ def test_create_pool_missing_fields(client, ve_user):
     assert response.is_json
     assert 'All fields are required.' in response.get_json()['error']
 
-
 def test_create_pool_access_as_regular_user(client):
     """Test ID: UT-51
     Negative test: Ensures that a regular user cannot create a question pool.
@@ -459,7 +444,6 @@ def test_create_pool_access_as_regular_user(client):
     }, follow_redirects=True)
     assert b'Access denied.' in response.data
 
-
 def test_create_pool_not_logged_in(client):
     """Test ID: UT-52
     Negative test: Verifies that unauthenticated users cannot create a question pool.
@@ -477,7 +461,6 @@ def test_create_pool_not_logged_in(client):
         'end_date': '2026-12-31'
     }, follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
-
 
 def test_upload_questions_success(client, ve_user):
     """Test ID: UT-53
@@ -527,7 +510,6 @@ T1A02,B,What is 2+2?,1,4,3,5,Reference2
         tli_count = TLI.query.filter_by(pool_id=pool_id).count()
         assert tli_count == 1  # Both questions have TLI starting with 'T1'
 
-
 def test_upload_questions_no_file(client, ve_user):
     """Test ID: UT-54
     Negative test: Verifies that uploading questions without a file returns an error.
@@ -546,7 +528,6 @@ def test_upload_questions_no_file(client, ve_user):
     assert response.status_code == 400
     assert response.is_json
     assert 'No file provided.' in response.get_json()['error']
-
 
 def test_upload_questions_invalid_file_type(client, ve_user):
     """Test ID: UT-55
@@ -587,7 +568,6 @@ def test_upload_questions_invalid_file_type(client, ve_user):
     assert response.status_code == 400
     assert b'Invalid file type. Only CSV files are allowed.' in response.data
 
-
 def test_upload_questions_access_as_regular_user(client):
     """Test ID: UT-56
     Negative test: Ensures that a regular user cannot upload questions to a pool.
@@ -605,7 +585,6 @@ def test_upload_questions_access_as_regular_user(client):
     # Follow the redirect and check the final destination
     follow_response = client.get(response.headers["Location"], follow_redirects=True)
     assert b'Access denied' in follow_response.data
-
 
 def test_delete_pool_success(client, ve_user):
     """Test ID: UT-57
@@ -641,7 +620,6 @@ def test_delete_pool_success(client, ve_user):
         pool = db.session.get(Pool, pool_id)
         assert pool is None
 
-
 def test_delete_pool_not_found(client, ve_user):
     """Test ID: UT-58
     Negative test: Ensures that deleting a non-existent pool returns an error.
@@ -660,7 +638,6 @@ def test_delete_pool_not_found(client, ve_user):
     assert response.is_json
     assert 'Pool not found.' in response.get_json()['error']
 
-
 def test_delete_pool_access_as_regular_user(client):
     """Test ID: UT-59
     Negative test: Verifies that a regular user cannot delete a question pool.
@@ -678,7 +655,6 @@ def test_delete_pool_access_as_regular_user(client):
     # Follow the redirect and check the final destination
     follow_response = client.get(response.headers["Location"], follow_redirects=True)
     assert b'Access denied' in follow_response.data
-
 
 def test_delete_pool_not_logged_in(client):
     """Test ID: UT-60

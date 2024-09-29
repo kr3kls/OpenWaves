@@ -38,7 +38,6 @@ def test_user_creation(app):
         retrieved_user = User.query.filter_by(username="testuser").first()
         assert retrieved_user == user
 
-
 def test_user_repr(app):
     """Test ID: UT-77
     Test the __repr__ method of the User model.
@@ -64,7 +63,6 @@ def test_user_repr(app):
         )
         expected_repr = f"User('{user.username}', '{user.email}')"
         assert repr(user) == expected_repr
-
 
 def test_pool_creation(app):
     """Test ID: UT-78
@@ -94,7 +92,6 @@ def test_pool_creation(app):
         retrieved_pool = Pool.query.filter_by(name="General Class Pool").first()
         assert retrieved_pool == pool
 
-
 def test_pool_repr(app):
     """Test ID: UT-79
     Test the __repr__ method of the Pool model.
@@ -118,8 +115,6 @@ def test_pool_repr(app):
         )
         expected_repr = f"Pool('{pool.name}, start:{pool.start_date}, end:{pool.end_date}')"
         assert repr(pool) == expected_repr
-
-
 
 def test_question_creation(app):
     """Test ID: UT-80
@@ -165,7 +160,6 @@ def test_question_creation(app):
         retrieved_question = Question.query.filter_by(number="T1A01").first()
         assert retrieved_question == question
 
-
 def test_question_repr(app):
     """Test ID: UT-81
     Test the __repr__ method of the Question model.
@@ -193,7 +187,6 @@ def test_question_repr(app):
         )
         expected_repr = f"Question('{question.question}')"
         assert repr(question) == expected_repr
-
 
 def test_tli_creation(app):
     """Test ID: UT-82
@@ -233,7 +226,6 @@ def test_tli_creation(app):
         retrieved_tli = TLI.query.filter_by(tli="T1").first()
         assert retrieved_tli == tli
 
-
 def test_tli_repr(app):
     """Test ID: UT-83
     Test the __repr__ method of the TLI model.
@@ -256,7 +248,6 @@ def test_tli_repr(app):
         )
         expected_repr = f"Pool: {tli.pool_id}, TLI: {tli.tli}, Quantity: {tli.quantity}"
         assert repr(tli) == expected_repr
-
 
 def test_exam_session_creation(app):
     """Test ID: UT-84
@@ -310,7 +301,6 @@ def test_exam_session_creation(app):
         retrieved_session = ExamSession.query.filter_by(session_date=datetime(2023, 9, 1)).first()
         assert retrieved_session == exam_session
 
-
 def test_exam_session_repr(app):
     """Test ID: UT-85
     Test the __repr__ method of the ExamSession model.
@@ -334,7 +324,6 @@ def test_exam_session_repr(app):
         )
         expected_repr = f"ExamSession('{exam_session.session_date}')"
         assert repr(exam_session) == expected_repr
-
 
 def test_exam_registration_creation(app):
     """Test ID: UT-86
@@ -389,7 +378,6 @@ def test_exam_registration_creation(app):
         assert registration.id is not None
         retrieved_registration = ExamRegistration.query.filter_by(user_id=user.id).first()
         assert retrieved_registration == registration
-
 
 def test_exam_registration_repr(app):
     """Test ID: UT-87

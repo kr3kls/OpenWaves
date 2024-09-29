@@ -40,7 +40,6 @@ def test_update_user_password(app):
         # Assert that the password has changed
         assert updated_user.password != original_password_hash  # Hashes should be different
 
-
 def test_get_exam_name():
     """Test ID: UT-88
     Test the get_exam_name helper function.
@@ -63,7 +62,6 @@ def test_get_exam_name():
     assert get_exam_name('') == ''
     assert get_exam_name(None) == ''
     assert get_exam_name('abc') == ''
-
 
 def test_is_already_registered():
     """Test ID: UT-89
@@ -107,7 +105,6 @@ def test_is_already_registered():
 
     # Existing registration is None
     assert is_already_registered(None, '2') is False
-
 
 def test_remove_exam_registration():
     """Test ID: UT-90

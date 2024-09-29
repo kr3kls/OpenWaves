@@ -63,7 +63,6 @@ def app():
     db.drop_all()
     ctx.pop()
 
-
 @pytest.fixture
 def client(app): # pylint: disable=W0621
     """Provide a test client for the Flask application.
@@ -73,7 +72,6 @@ def client(app): # pylint: disable=W0621
     """
     return app.test_client()
 
-
 @pytest.fixture
 def runner(app): # pylint: disable=W0621
     """Provide a CLI runner for the Flask application.
@@ -82,7 +80,6 @@ def runner(app): # pylint: disable=W0621
     CLI.
     """
     return app.test_cli_runner()
-
 
 @pytest.fixture
 def ve_user(): # pylint: disable=W0621
@@ -100,7 +97,6 @@ def ve_user(): # pylint: disable=W0621
     db.session.add(new_ve_user)
     db.session.commit()
     return db.session.get(User, new_ve_user.id)
-
 
 @pytest.fixture
 def user_to_toggle(): # pylint: disable=W0621
