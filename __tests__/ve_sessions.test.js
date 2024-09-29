@@ -310,7 +310,7 @@ describe('Modal and session handling', () => {
             },
             body: JSON.stringify({ action: 'close' }),
         });
-    });    
+    });
 
     /**
      * Test ID: UT-148
