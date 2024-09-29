@@ -6,7 +6,6 @@
         <h3 class="title has-text-centered has-text-dark">Question Pools</h3>
         <div class="table-container has-text-centered">
             <table class="table is-striped is-hoverable is-fullwidth">
-            {% if question_pools|length > 0 %}
             <thead>
                 <tr>
                     <th>Pool ID</th>
@@ -17,7 +16,7 @@
                     <th>Questions</th>
                 </tr>
             </thead>
-            {% endif %}
+            {% if question_pools|length > 0 %}
             <tbody>
                 {% for pool in question_pools %}
                 <tr>
@@ -69,6 +68,13 @@
                 </tr>
             {% endfor %}
             </tbody>
+            {% else %}
+                <tbody>
+                    <tr>
+                        <td colspan="6">No question pools found.</td>
+                    </tr>
+                </tbody>
+            {% endif %}
             </table>
         </div>
 

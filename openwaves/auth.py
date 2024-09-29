@@ -13,7 +13,7 @@ from .imports import User, update_user_password, db
 auth = Blueprint('auth', __name__)
 
 PAGE_ACCOUNT = 'main.profile'
-PAGE_VE_ACCOUNT = 'main.ve_account'
+PAGE_VE_PROFILE = 'main.ve_profile'
 PAGE_LOGIN = 'auth.login'
 PAGE_LOGOUT = 'auth.logout'
 PASS_ENCRYPTION = 'pbkdf2:sha256'
@@ -55,7 +55,7 @@ def login_post():
         login_user(user)
 
         if current_user.role == 2:
-            return redirect(url_for(PAGE_VE_ACCOUNT))
+            return redirect(url_for(PAGE_VE_PROFILE))
         return redirect(url_for('main.profile'))
 
     # if the above check did not pass, we have an issue
@@ -241,7 +241,7 @@ def update_profile():
     if current_user.role == 1:
         return redirect(url_for(PAGE_ACCOUNT))
     if current_user.role == 2:
-        return redirect(url_for(PAGE_VE_ACCOUNT))
+        return redirect(url_for(PAGE_VE_PROFILE))
     return redirect(url_for(PAGE_LOGOUT))
 
 @auth.route('/ve_management')
@@ -252,8 +252,8 @@ def ve_management():
         flash("Access denied.", "danger")
         return redirect(url_for(PAGE_LOGOUT))
 
-    ve_accounts = User.query.filter(User.role == 2)  # Query to fetch all VE accounts
-    return render_template('ve_management.html', ve_accounts=ve_accounts)
+    ve_profiles = User.query.filter(User.role == 2)  # Query to fetch all VE accounts
+    return render_template('ve_management.html', ve_profiles=ve_profiles)
 
 @auth.route('/toggle_account_status/<int:account_id>', methods=['POST'])
 @login_required

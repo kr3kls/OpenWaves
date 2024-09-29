@@ -29,18 +29,21 @@
                         Home
                     </a>
                     {% if current_user.is_authenticated and current_user.role == 1 %}
+                        <a href="{{ url_for('main.sessions') }}" class="navbar-item">
+                            Exam Sessions
+                        </a>    
                         <a href="{{ url_for('main.profile') }}" class="navbar-item">
                             Profile
                         </a>
                     {% endif %}
                     {% if current_user.is_authenticated and current_user.role == 2 %}
-                        <a href="{{ url_for('main.sessions') }}" class="navbar-item">
-                            Test Sessions
+                        <a href="{{ url_for('main.ve_sessions') }}" class="navbar-item">
+                            Exam Sessions
                         </a>
                         <a href="{{ url_for('main.pools') }}" class="navbar-item">
-                            Test Pools
+                            Question Pools
                         </a>
-                        <a href="{{ url_for('main.ve_account') }}" class="navbar-item">
+                        <a href="{{ url_for('main.ve_profile') }}" class="navbar-item">
                             VE Profile
                         </a>
                         <a href="{{ url_for('auth.ve_management') }}" class="navbar-item">

@@ -74,7 +74,7 @@ def test_login_post_valid_ve(client, app):
         db.session.commit()
     response = login(client, 'veuser', 'vepassword')
     assert response.status_code == 200
-    # Should redirect to 'main.ve_account'
+    # Should redirect to 'main.ve_profile'
     assert b"OpenWaves VE Profile" in response.data
 
 def test_login_post_invalid_password(client):

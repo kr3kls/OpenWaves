@@ -1,0 +1,38 @@
+{
+  "name": "openwaves",
+  "version": "1.0.0",
+  "description": "*This software is currently under development and will be released later this year. It is not ready for deployment at this time.*",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "test:ci": "jest --coverage --reporters=default --reporters=jest-sonar"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "jest-sonar": "^0.2.16",
+    "jest-sonar-reporter": "^2.0.0"
+  },
+  "jest": {
+    "collectCoverage": true,
+    "coverageDirectory": "./coverage",
+    "coverageReporters": [
+      "lcov",
+      "text"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-sonar",
+        {
+          "reportFile": "sonar-report.xml",
+          "outputDirectory": "./coverage"
+        }
+      ]
+    ]
+  }
+}

@@ -156,3 +156,34 @@ class ExamSession(db.Model): # pylint: disable=R0903
             str: A string showing the start and end times of the exam session.
         """
         return f"ExamSession('{self.session_date}')"
+
+class ExamRegistration(db.Model): # pylint: disable=R0903
+    """Database model for exam registrations.
+    
+    Represents a exam session registration for users taking exams.
+    
+    Attributes:
+        id (int): The primary key for the exam session.
+        session_id (int): The foreign key for the session's id in ExamSession.
+        user_id (int): The foreign key for the user's id in User.
+        tech (bool): True if the candidate registered for element 2.
+        gen (bool): True if the candidate registered for element 3.
+        extra (bool): True if the candidate registered for element 4.
+        valid (bool): Whether the VEs have approved the registration.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    session_id = db.Column(db.Integer, db.ForeignKey('exam_session.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    tech = db.Column(db.Boolean, default=False)
+    gen = db.Column(db.Boolean, default=False)
+    extra = db.Column(db.Boolean, default=False)
+    valid = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        """Return a string representation of the registration.
+
+        Returns:
+            str: A string showing the registration info.
+        """
+        return f"ExamRegistration('{self.user_id}', '{self.session_id}')"

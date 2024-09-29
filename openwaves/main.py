@@ -9,9 +9,11 @@ from io import TextIOWrapper
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from .imports import db, Pool, Question, TLI, ExamSession
+from .imports import db, Pool, Question, TLI, ExamSession, ExamRegistration, get_exam_name, \
+    is_already_registered, remove_exam_registration
 
 PAGE_LOGOUT = 'auth.logout'
+PAGE_SESSIONS = 'main.sessions'
 MSG_ACCESS_DENIED = 'Access denied.'
 
 main = Blueprint('main', __name__)
@@ -26,7 +28,25 @@ def index():
     """
     return render_template('index.html')
 
-# Default Route
+# Route to handle CSP violations
+@main.route('/csp-violation-report-endpoint', methods=['POST'])
+def csp_violation_report():
+    """Handle incoming CSP violation reports.
+
+    Processes the Content Security Policy (CSP) violation reports sent by the browser.
+    Logs the violation details for further analysis.
+
+    Returns:
+        Tuple[str, int]: An empty response with HTTP status code 204 (No Content).
+    """
+    if request.is_json:
+        violation_report = request.get_json()
+        print("CSP Violation:", violation_report)
+    else:
+        print("Received non-JSON CSP violation report")
+    return '', 204  # Return 204 No Content
+
+# Account Select Route
 @main.route('/account_select')
 def account_select():
     """Render the account select page of the application.
@@ -36,7 +56,13 @@ def account_select():
     """
     return render_template('account_select.html')
 
-# User Profile
+#####################################
+#                                   #
+#     HC (Ham Candidate) Routes     #
+#                                   #
+#####################################
+
+# User Profile Route
 @main.route('/profile')
 @login_required
 def profile():
@@ -47,12 +73,243 @@ def profile():
     Returns:
         Response: The rendered 'profile.html' template.
     """
-    return render_template('profile.html')
+    if current_user.role == 1:
+        # If a HC account exists, render the profile page
+        return render_template('profile.html')
 
-# Route to check for VE account
-@main.route('/ve_account')
+    # If no HC account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
+
+# Exam Sessions Route
+@main.route('/sessions')
 @login_required
-def ve_account():
+def sessions():
+    """
+    Render the exam sessions page for the logged-in user.
+
+    This route handles the display of exam sessions for HAM candidates (role 1 users), 
+    providing information about each session's date, status, and the user's registration 
+    for specific exam elements (Tech, General, Extra).
+
+    Args:
+        None (the user must be logged in as role 1).
+
+    Returns:
+        Response: Renders the 'sessions.html' template, with the following context variables:
+        - exam_sessions (list[dict]): A list of exam sessions with user registration details:
+            - id (int): The session ID.
+            - session_date (datetime): The date of the exam session.
+            - start_time (datetime): The start time of the session (if it has started).
+            - end_time (datetime): The end time of the session (if it has ended).
+            - status (bool): The status of the session (open or closed).
+            - tech_registered (bool): Whether the user is registered for the Technician exam.
+            - gen_registered (bool): Whether the user is registered for the General exam.
+            - extra_registered (bool): Whether the user is registered for the Extra exam.
+        - current_date (date): The current date, used in the template for status comparisons.
+    """
+    if current_user.role == 1:
+        # Get all test sessions from the database
+        exam_sessions = \
+            db.session.query(ExamSession).order_by(ExamSession.session_date.desc()).all()
+
+        # Get the current user's registrations
+        user_registrations = \
+            db.session.query(ExamRegistration).filter_by(user_id=current_user.id).all()
+
+        # Create a list to pass to the template with registration info
+        sessions_with_registrations = []
+        for session in exam_sessions:
+            # Find if the user is registered for this session and exam elements
+            tech_registered = any(reg.session_id == session.id and
+                                  reg.tech for reg in user_registrations)
+            gen_registered = any(reg.session_id == session.id and
+                                 reg.gen for reg in user_registrations)
+            extra_registered = any(reg.session_id == session.id and
+                                   reg.extra for reg in user_registrations)
+
+            sessions_with_registrations.append({
+                'id': session.id,
+                'session_date': session.session_date,
+                'start_time': session.start_time,
+                'end_time': session.end_time,
+                'status': session.status,
+                'tech_pool_id': session.tech_pool_id,
+                'gen_pool_id': session.gen_pool_id,
+                'extra_pool_id': session.extra_pool_id,
+                'tech_registered': tech_registered,
+                'gen_registered': gen_registered,
+                'extra_registered': extra_registered
+            })
+
+        current_date = datetime.now().date()
+        return render_template('sessions.html',
+                               exam_sessions=sessions_with_registrations,
+                               current_date=current_date)
+
+    # If no HC account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
+
+# Route to register for an exam session
+@main.route('/register', methods=['POST'])
+@login_required
+def register():
+    """
+    Register a user for a specified exam element in an exam session.
+
+    This method processes a POST request from the registration form, allowing a 
+    user with the appropriate role (role 1) to register for an exam element (Tech, 
+    General, or Extra) in a selected exam session. If the user is already registered 
+    for the selected exam element, it returns an appropriate message. Otherwise, 
+    the user's registration is created or updated.
+
+    Args:
+        None (input data is taken from the form submission via POST request):
+        - session_id (str): The ID of the exam session.
+        - exam_element (str): The exam element to register for ('2' = Tech, '3' = General,
+          '4' = Extra).
+
+    Returns:
+        Redirect to the sessions page with:
+        - Success message if registration is successful.
+        - Error message if there is invalid input, the session is not found, or the user is already
+          registered.
+    """
+    if current_user.role == 1:
+        # Get session ID and exam element from the form
+        session_id = request.form.get('session_id')
+        exam_element = request.form.get('exam_element')
+        exam_name = get_exam_name(exam_element)
+
+        # Check for missing input data
+        if not session_id or not exam_element or not exam_name:
+            flash('Invalid registration request. Missing required information.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Fetch exam session
+        exam_session = db.session.get(ExamSession, session_id)
+        if not exam_session:
+            flash('Exam session not found.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Fetch existing registration
+        existing_registration = ExamRegistration.query.filter_by(
+            session_id=session_id,
+            user_id=current_user.id
+        ).first()
+
+        # Check if the user is already registered for this element
+        if existing_registration and is_already_registered(existing_registration, exam_element):
+            flash(f'You are already registered for the {exam_name} exam.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Create or update registration
+        if existing_registration:
+            if exam_element == '2':
+                existing_registration.tech = True
+            elif exam_element == '3':
+                existing_registration.gen = True
+            elif exam_element == '4':
+                existing_registration.extra = True
+        else:
+            new_registration = ExamRegistration(
+                session_id=session_id,
+                user_id=current_user.id,
+                tech=(exam_element == '2'),
+                gen=(exam_element == '3'),
+                extra=(exam_element == '4'),
+                valid=False
+            )
+            db.session.add(new_registration)
+
+        # Commit changes and confirm registration
+        db.session.commit()
+        flash(f'Successfully registered for the {exam_name} exam.', 'success')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # If no HC account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
+
+# Route to cancel exam registration
+@main.route('/cancel_registration', methods=['POST'])
+@login_required
+def cancel_registration():
+    """
+    Cancel a user's registration for an exam element in an exam session.
+
+    This method handles the POST request from the form to cancel a user's registration 
+    for a specific exam element (Tech, General, Extra) within a session. The user 
+    must have a role of 1 (HAM Candidate) to cancel the registration. If the user 
+    is not registered for the specified exam element, an appropriate error message 
+    is displayed.
+
+    Args:
+        None (input data is taken from the form submission via POST request):
+        - session_id (str): The ID of the exam session.
+        - exam_element (str): The exam element to cancel registration for ('2' = Tech,
+          '3' = General, '4' = Extra).
+
+    Returns:
+        Redirect to the sessions page with:
+        - Success message if cancellation is successful.
+        - Error message if input is missing, the session is not found, or the user is not
+          registered.
+    """
+    if current_user.role == 1:
+        # Get session ID and exam element from the form data
+        session_id = request.form.get('session_id')
+        exam_element = request.form.get('exam_element')
+        exam_name = get_exam_name(exam_element)  # Reusing the helper function
+
+        # Check for missing input data
+        if not session_id or not exam_element or not exam_name:
+            flash('Invalid cancellation request. Missing required information.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Fetch the exam session
+        exam_session = db.session.get(ExamSession, session_id)
+        if not exam_session:
+            flash('Exam session not found.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Fetch the existing registration
+        existing_registration = ExamRegistration.query.filter_by(
+            session_id=session_id,
+            user_id=current_user.id
+        ).first()
+
+        # Check if the user is registered for this exam element
+        if not existing_registration or not is_already_registered(existing_registration,
+                                                                  exam_element):
+            flash(f'You are not registered for the {exam_name} exam.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Remove the user's registration for the specified exam element
+        remove_exam_registration(existing_registration, exam_element)
+
+        # Commit the changes to the database
+        db.session.commit()
+
+        # Flash success message and redirect
+        flash(f'Successfully canceled registration for the {exam_name} exam.', 'success')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # If no HC account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
+
+##########################################
+#                                        #
+#     VE (Volunteer Examiner) Routes     #
+#                                        #
+##########################################
+
+# VE Profile Route
+@main.route('/ve/profile')
+@login_required
+def ve_profile():
     """Display the VE (Volunteer Examiner) account page or redirect to VE signup.
 
     Checks if the current user is a VE account.
@@ -71,8 +328,8 @@ def ve_account():
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-# Route to show pools page
-@main.route('/pools')
+# Question Pools Route
+@main.route('/ve/pools')
 @login_required
 def pools():
     """Render the pools page of the application.
@@ -96,7 +353,7 @@ def pools():
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to create question pools
-@main.route('/create_pool', methods=['POST'])
+@main.route('/ve/create_pool', methods=['POST'])
 @login_required
 def create_pool():
     """
@@ -145,7 +402,8 @@ def create_pool():
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-@main.route('/upload_questions/<int:pool_id>', methods=['POST'])
+# Route to upload question pools
+@main.route('/ve/upload_questions/<int:pool_id>', methods=['POST'])
 @login_required
 def upload_questions(pool_id):
     """Handle the CSV upload for questions and associate them with the given pool_id."""
@@ -204,7 +462,8 @@ def upload_questions(pool_id):
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-@main.route('/delete_pool/<int:pool_id>', methods=['DELETE'])
+# Route to delete question pools
+@main.route('/ve/delete_pool/<int:pool_id>', methods=['DELETE'])
 @login_required
 def delete_pool(pool_id):
     """Delete a question pool and all associated questions."""
@@ -230,14 +489,14 @@ def delete_pool(pool_id):
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-# Route to show pools page
-@main.route('/sessions')
+# Route to show exam sessions page
+@main.route('/ve/sessions')
 @login_required
-def sessions():
+def ve_sessions():
     """Render the sessions page of the application.
 
     Returns:
-        Response: The rendered 'sessions.html' template.
+        Response: The rendered 've_sessions.html' template.
     """
     if current_user.role == 2:
         # If a VE account exists
@@ -262,7 +521,7 @@ def sessions():
                     f"{pool.name} {pool.start_date.strftime('%Y')}-{pool.end_date.strftime('%Y')}"
 
         current_date = datetime.now().date()
-        return render_template('sessions.html',
+        return render_template('ve_sessions.html',
                             test_sessions=test_sessions,
                             tech_pool_options=tech_pool_options,
                             general_pool_options=general_pool_options,
@@ -274,7 +533,7 @@ def sessions():
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to create test sessions
-@main.route('/create_session', methods=['POST'])
+@main.route('/ve/create_session', methods=['POST'])
 @login_required
 def create_session():
     """
@@ -337,7 +596,7 @@ def create_session():
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to open a session
-@main.route('/open_session/<int:session_id>', methods=['POST'])
+@main.route('/ve/open_session/<int:session_id>', methods=['POST'])
 @login_required
 def open_session(session_id):
     """
@@ -363,7 +622,7 @@ def open_session(session_id):
     return redirect(url_for(PAGE_LOGOUT))
 
 # Route to close a session
-@main.route('/close_session/<int:session_id>', methods=['POST'])
+@main.route('/ve/close_session/<int:session_id>', methods=['POST'])
 @login_required
 def close_session(session_id):
     """Closes a test session by setting the current time as the end_time and updating the status."""
@@ -383,21 +642,3 @@ def close_session(session_id):
     # If no VE account exists, redirect to the logout page
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
-
-# Route to handle CSP violations
-@main.route('/csp-violation-report-endpoint', methods=['POST'])
-def csp_violation_report():
-    """Handle incoming CSP violation reports.
-
-    Processes the Content Security Policy (CSP) violation reports sent by the browser.
-    Logs the violation details for further analysis.
-
-    Returns:
-        Tuple[str, int]: An empty response with HTTP status code 204 (No Content).
-    """
-    if request.is_json:
-        violation_report = request.get_json()
-        print("CSP Violation:", violation_report)
-    else:
-        print("Received non-JSON CSP violation report")
-    return '', 204  # Return 204 No Content
