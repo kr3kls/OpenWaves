@@ -150,7 +150,7 @@ def test_remove_exam_registration():
     assert registration.extra is False
 
 def test_remove_exam_registration_none_registration():
-    """Test ID: UT-107
+    """Test ID: UT-106
     Negative test: Verify that the function handles None for the existing_registration argument.
 
     Asserts:
@@ -161,7 +161,7 @@ def test_remove_exam_registration_none_registration():
     remove_exam_registration(None, '2')
 
 def test_remove_exam_registration_none_exam_element():
-    """Test ID: UT-108
+    """Test ID: UT-107
     Negative test: Verify that the function handles None for the exam_element argument.
 
     Asserts:
@@ -178,7 +178,7 @@ def test_remove_exam_registration_none_exam_element():
     assert registration.extra is True
 
 def test_remove_exam_registration_none_both():
-    """Test ID: UT-109
+    """Test ID: UT-108
     Negative test: Verify that the function handles None for both arguments.
 
     Asserts:

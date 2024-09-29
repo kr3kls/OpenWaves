@@ -87,7 +87,7 @@ def test_cancel_registration_invalid_exam_element(client):
             in session['_flashes'][0][1]
 
 def test_cancel_registration_role_not_allowed(client, ve_user):
-    """Test ID: UT-110
+    """Test ID: UT-109
     Negative test: Ensure that users with the VE role cannot access the cancel registration page.
 
     Args:
@@ -110,7 +110,7 @@ def test_cancel_registration_role_not_allowed(client, ve_user):
     assert b'Access denied' in response.data
 
 def test_cancel_registration_invalid_exam_session_id(client):
-    """Test ID: UT-111
+    """Test ID: UT-110
     Negative test: Ensures that an invalid cancellation request is handled when the session id is
     invalid.
 
@@ -420,44 +420,6 @@ def test_register_route_invalid_role(client, app):
 
         # Attempt to register
         response = client.post('/register', data={
-            'session_id': '1',
-            'exam_element': '2'
-        }, follow_redirects=True)
-
-        assert response.status_code == 200
-        assert b'Please log in to access this page.' in response.data
-
-def test_cancel_registration_invalid_role(client, app):
-    """Test ID: UT-99
-    Test cancellation with a user who does not have role 1.
-
-    This test ensures that a user with a role other than 1 cannot cancel an exam registration.
-
-    Args:
-        client: The test client instance.
-        app: The Flask application instance.
-
-    Asserts:
-        - The user is redirected with an access denied message.
-    """
-    with app.app_context():
-        # Create and log in as a user with role 2 (VE)
-        ve_user = User(
-            username="VEUSER3",
-            first_name="VE",
-            last_name="User",
-            email="veuser3@example.com",
-            password="vepassword",
-            role=2,
-            active=True
-        )
-        db.session.add(ve_user)
-        db.session.commit()
-
-        login(client, ve_user.username, "vepassword")
-
-        # Attempt to cancel registration
-        response = client.post('/cancel_registration', data={
             'session_id': '1',
             'exam_element': '2'
         }, follow_redirects=True)
