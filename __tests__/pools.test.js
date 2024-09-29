@@ -15,6 +15,12 @@ describe('Pool management functionality', () => {
         // Replace location.reload with a mock function
         delete window.location;  // JSDOM allows deleting `location` for assignment
         window.location = { reload: jest.fn() };
+
+        // Mock window.location.reload to prevent navigation errors in jsdom
+        Object.defineProperty(window, 'location', {
+            writable: true,
+            value: { reload: jest.fn() }, // Mock reload method
+        });
     
         // Set up the DOM structure, including the required elements
         document.body.innerHTML = `
@@ -37,6 +43,7 @@ describe('Pool management functionality', () => {
         <select id="pool-name">
             <option value="Technician">Technician</option>
             <option value="General">General</option>
+            <option value="Extra">Extra</option>
         </select>
         <input id="exam-element" />
     `;
@@ -46,19 +53,22 @@ describe('Pool management functionality', () => {
         // Mock window.confirm and window.alert to prevent actual prompts during tests
         jest.spyOn(window, 'confirm').mockImplementation(() => true);
         jest.spyOn(window, 'alert').mockImplementation(() => {});
+        jest.spyOn(console, 'error').mockImplementation(() => {});
     
         // Mock fetch API
         global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
     
         // Simulate DOMContentLoaded to initialize event listeners
         document.dispatchEvent(new Event('DOMContentLoaded'));
+
+        consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
     });
     
 
     afterEach(() => {
         jest.clearAllMocks();
+        consoleErrorMock.mockRestore();
     });
-
 
     test('delete pool button triggers fetch and shows success alert', async () => {
         const deleteButton = document.querySelector('.delete-pool-button');
@@ -75,6 +85,26 @@ describe('Pool management functionality', () => {
         expect(window.alert).toHaveBeenCalledWith('Pool deleted successfully.');
     });
 
+    test('delete pool button handles fetch rejection gracefully', async () => {
+        // Mock fetch to reject with an error
+        const mockError = new Error('Network error');
+        fetch.mockRejectedValueOnce(mockError);
+    
+        // Reference the delete button
+        const deleteButton = document.querySelector('.delete-pool-button');
+        
+        // Add a console log to verify the button click is being called
+        deleteButton.click();
+    
+        // Wait for all asynchronous code to complete
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    
+        // Ensure that the correct alert message is displayed
+        expect(window.alert).toHaveBeenCalledWith('There was an error deleting the pool.');
+    
+        // Ensure that console.error is called with the error
+        expect(console.error).toHaveBeenCalledWith('Error:', mockError);
+    });   
 
     test('delete pool button triggers error alert on fetch failure', async () => {
         global.fetch = jest.fn(() => Promise.resolve({ ok: false }));  // Mock a failure response
@@ -84,7 +114,6 @@ describe('Pool management functionality', () => {
 
         expect(window.alert).toHaveBeenCalledWith('There was an error deleting the pool.');
     });
-
 
     test('upload button triggers modal visibility', () => {
         const uploadButton = document.getElementById('upload-button-1');
@@ -97,7 +126,32 @@ describe('Pool management functionality', () => {
         expect(modal.classList.contains('is-active')).toBe(true);
     });
 
-
+    test('submit upload form handles non-OK response', async () => {
+        const modal = document.getElementById('upload-modal-1');
+        const submitButton = document.getElementById('submit-upload-1');
+        
+        const form = document.createElement('form');
+        form.setAttribute('id', 'upload-form-1');
+        document.body.appendChild(form);
+        const formData = new FormData(form);
+    
+        // Mock fetch to return ok: false
+        global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
+    
+        // Simulate form submission
+        submitButton.click();
+        await Promise.resolve();
+    
+        expect(fetch).toHaveBeenCalledWith('/ve/upload_questions/1', {
+            method: 'POST',
+            body: formData,
+        });
+    
+        expect(window.alert).toHaveBeenCalledWith('There was an error uploading the questions.');
+        // The modal should still be closed after submission
+        expect(modal.classList.contains('is-active')).toBe(false);
+    });
+    
     test('submit upload form triggers fetch and closes modal', async () => {
         const modal = document.getElementById('upload-modal-1');
         const submitButton = document.getElementById('submit-upload-1');
@@ -122,7 +176,6 @@ describe('Pool management functionality', () => {
         expect(modal.classList.contains('is-active')).toBe(false);
     });
 
-
     test('close modal when cancel is clicked', () => {
         // Get the close button (X) and the modal from the DOM
         const cancelButton = document.querySelector('#cancel-pool-form'); // Cancel button class
@@ -141,7 +194,6 @@ describe('Pool management functionality', () => {
         expect(modal.classList.contains('is-active')).toBe(false);
     });
 
-
     test('close modal when X is clicked', () => {
         // Get the close button (X) and the modal from the DOM
         const closeButton = document.querySelector('.delete'); // X button class
@@ -159,7 +211,6 @@ describe('Pool management functionality', () => {
         // Assert the modal is no longer active (closed)
         expect(modal.classList.contains('is-active')).toBe(false);
     });
-
 
     test('submit pool form triggers fetch and closes modal', async () => {
         const modal = document.getElementById('create-pool-modal');
@@ -182,19 +233,6 @@ describe('Pool management functionality', () => {
         expect(modal.classList.contains('is-active')).toBe(false);
     });
 
-
-    test('pool name selection updates exam element', () => {
-        const poolNameDropdown = document.getElementById('pool-name');
-        const examElementField = document.getElementById('exam-element');
-
-        poolNameDropdown.value = 'General';
-        const changeEvent = new Event('change');
-        poolNameDropdown.dispatchEvent(changeEvent);
-
-        expect(examElementField.value).toBe('3');
-    });
-
-
     test('start date change updates end date automatically', () => {
         const startDateField = document.getElementById('start-date');
         const endDateField = document.getElementById('end-date');
@@ -209,4 +247,75 @@ describe('Pool management functionality', () => {
 
         expect(endDateField.value).toBe(expectedFormattedEndDate);
     });
+
+    test('create pool button sets default dates and opens modal', () => {
+        const createPoolButton = document.getElementById('create-pool-button');
+        const createPoolModal = document.getElementById('create-pool-modal');
+        const startDateField = document.getElementById('start-date');
+        const endDateField = document.getElementById('end-date');
+    
+        // Simulate clicking the create pool button
+        createPoolButton.click();
+    
+        const currentYear = new Date().getFullYear();
+        expect(startDateField.value).toBe(`${currentYear}-07-01`);
+        expect(endDateField.value).toBe(`${currentYear + 4}-06-30`);
+    
+        // Check that the modal is opened
+        expect(createPoolModal.classList.contains('is-active')).toBe(true);
+    });
+    
+    test('pool name selection updates exam element to 2 for Technician', () => {
+        const poolNameDropdown = document.getElementById('pool-name');
+        const examElementField = document.getElementById('exam-element');
+    
+        poolNameDropdown.value = 'Technician';
+        const changeEvent = new Event('change');
+        poolNameDropdown.dispatchEvent(changeEvent);
+    
+        expect(examElementField.value).toBe('2');
+    });
+    
+    test('pool name selection updates exam element to 3 for General', () => {
+        const poolNameDropdown = document.getElementById('pool-name');
+        const examElementField = document.getElementById('exam-element');
+
+        poolNameDropdown.value = 'General';
+        const changeEvent = new Event('change');
+        poolNameDropdown.dispatchEvent(changeEvent);
+
+        expect(examElementField.value).toBe('3');
+    });
+
+    test('pool name selection updates exam element to 4 for Extra', () => {
+        const poolNameDropdown = document.getElementById('pool-name');
+        const examElementField = document.getElementById('exam-element');
+
+        poolNameDropdown.value = 'Extra';
+        const changeEvent = new Event('change');
+        poolNameDropdown.dispatchEvent(changeEvent);
+
+        expect(examElementField.value).toBe('4');
+    });
+    
+    test('submit pool form handles non-OK response', async () => {
+        const modal = document.getElementById('create-pool-modal');
+        const submitPoolFormButton = document.getElementById('submit-pool-form');
+    
+        modal.classList.add('is-active');
+    
+        // Mock fetch to return ok: false
+        global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
+    
+        submitPoolFormButton.click();
+        await Promise.resolve();
+    
+        expect(fetch).toHaveBeenCalledWith('/ve/create_pool', expect.any(Object));
+    
+        expect(window.alert).toHaveBeenCalledWith('There was an error creating the pool.');
+    
+        // Check that the modal is closed after submission
+        expect(modal.classList.contains('is-active')).toBe(false);
+    });
+    
 });

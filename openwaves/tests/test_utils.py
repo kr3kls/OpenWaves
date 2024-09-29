@@ -151,3 +151,41 @@ def test_remove_exam_registration():
     assert registration.tech is False
     assert registration.gen is False
     assert registration.extra is False
+
+def test_remove_exam_registration_none_registration():
+    """Test ID: UT-107
+    Negative test: Verify that the function handles None for the existing_registration argument.
+
+    Asserts:
+        - The function does not raise an exception when existing_registration is None.
+        - No changes are made since the input is invalid.
+    """
+    # Attempt to remove registration when existing_registration is None
+    remove_exam_registration(None, '2')
+
+def test_remove_exam_registration_none_exam_element():
+    """Test ID: UT-108
+    Negative test: Verify that the function handles None for the exam_element argument.
+
+    Asserts:
+        - The function does not raise an exception when exam_element is None.
+        - No changes are made to the existing registration since the input is invalid.
+    """
+    # Create a mock ExamRegistration object with all elements registered
+    registration = ExamRegistration(tech=True, gen=True, extra=True)
+
+    # Attempt to remove registration with None as the exam_element
+    remove_exam_registration(registration, None)
+    assert registration.tech is True
+    assert registration.gen is True
+    assert registration.extra is True
+
+def test_remove_exam_registration_none_both():
+    """Test ID: UT-109
+    Negative test: Verify that the function handles None for both arguments.
+
+    Asserts:
+        - The function does not raise an exception when both arguments are None.
+    """
+    # Attempt to remove registration when both arguments are None
+    remove_exam_registration(None, None)

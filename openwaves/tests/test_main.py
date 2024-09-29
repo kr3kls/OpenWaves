@@ -3,6 +3,8 @@
     This file contains the tests for the code in the main.py file.
 """
 import io
+from datetime import datetime
+from flask import url_for
 from werkzeug.security import generate_password_hash
 from openwaves import db
 from openwaves.imports import User, Pool, Question, TLI
@@ -160,6 +162,123 @@ def test_ve_profile_not_exists(client):
     assert b"You have been logged out." in response.data
 
 
+def test_pools_page_no_pools(client, ve_user):
+    """Test ID: UT-104
+    Functional test: Verify the pools page displays correctly when no pools are available.
+
+    Args:
+        client: The test client instance.
+        ve_user: The VE user fixture.
+
+    Asserts:
+        - The response status code is 200.
+        - The response contains a message indicating that no question pools are available.
+    """
+    login(client, ve_user.username, 'vepassword')
+    response = client.get('/ve/pools')
+
+    assert response.status_code == 200
+    assert b'No question pools found.' in response.data
+
+
+def test_pools_page_with_pools(client, app, ve_user):
+    """Test ID: UT-105
+    Functional test: Verify the pools page correctly displays all pools with question counts.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+        ve_user: The VE user fixture.
+
+    Asserts:
+        - The response status code is 200.
+        - Each pool's question count is displayed correctly.
+    """
+    with app.app_context():
+        # Create test question pools
+        pool1 = Pool(name='Tech',
+                     element='2',
+                     start_date=datetime.strptime('2022-07-01', '%Y-%m-%d'),
+                     end_date=datetime.strptime('2026-06-30', '%Y-%m-%d'))
+        pool2 = Pool(name='General',
+                     element='3',
+                     start_date=datetime.strptime('2023-07-01', '%Y-%m-%d'),
+                     end_date=datetime.strptime('2027-06-30', '%Y-%m-%d'))
+        db.session.add_all([pool1, pool2])
+        db.session.commit()
+
+        # Add questions to pool1
+        question1 = Question(pool_id=pool1.id,
+                             number = 'T1A01',
+                             correct_answer = '2',
+                             question = 'Which of the following is part of the Basis and Purpose ' \
+                                + 'of the Amateur Radio Service?',
+                             option_a = 'Providing personal radio communications for as many ' \
+                                + 'citizens as possible',
+                             option_b = 'Providing communications for international non-profit ' \
+                                + 'organizations',
+                             option_c = 'Advancing skills in the technical and communication ' \
+                                + 'phases of the radio art',
+                             option_d = 'All these choices are correct',
+                             refs = '[97.1]')
+        question2 = Question(pool_id=pool1.id, \
+                            number = 'T1B09',
+                             correct_answer = '3',
+                             question = 'Why should you not set your transmit frequency to be ' \
+                                + 'exactly at the edge of an amateur band or sub-band?',
+                             option_a = 'To allow for calibration error in the transmitter ' \
+                                + 'frequency display',
+                             option_b = 'So that modulation sidebands do not extend beyond the ' \
+                                + 'band edge',
+                             option_c = 'To allow for transmitter frequency drift',
+                             option_d = 'All these choices are correct',
+                             refs = '[97.101(a), 97.301(a-e)]')
+        db.session.add_all([question1, question2])
+        db.session.commit()
+
+    login(client, ve_user.username, 'vepassword')
+    response = client.get('/ve/pools')
+
+    assert response.status_code == 200
+    print(response.data)
+    code1 = '<td>1</td>\n                    <td>Tech</td>\n                    <td>2</td>\n' \
+            + '                    <td>2022-07-01</td>\n                    ' \
+            + '<td>2026-06-30</td>\n                    <td>\n                        \n' \
+            + '                            2 questions\n                        \n' \
+            + '                    </td>\n                    <td>\n                        ' \
+            + '<button class="button is-small is-danger delete-pool-button" data-name="Tech" ' \
+            + 'data-id="1">Delete</button>\n                    </td>\n                ' \
+            + '</tr>\n'
+    assert code1.encode() in response.data
+    code2 = '<td>2</td>\n                    <td>General</td>\n                    <td>3</td>\n' \
+            + '                    <td>2023-07-01</td>\n                    <td>2027-06-30</td>\n' \
+            + '                    <td>\n                        \n                            ' \
+            + '<!-- Display upload button when there are no questions -->\n                      ' \
+            + '      <button class="button is-small is-light-button-color" id="upload-button-2">' \
+            + 'Upload Questions</button>\n'
+    assert code2.encode() in response.data
+
+
+def test_pools_page_role_not_allowed(client):
+    """Test ID: UT-106
+    Negative test: Ensure that users without the VE role cannot access the pools page.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - The response status code is 302 (redirect).
+        - The response redirects to the logout page.
+        - An 'Access denied' message is flashed.
+    """
+    login(client, 'TESTUSER', 'testpassword')
+
+    response = client.get(url_for('main.pools'), follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b'Access denied' in response.data
+
+
 def test_csp_violation_report_valid_json(client, capsys):
     """Test ID: UT-28
     Test reporting a valid CSP violation.
@@ -189,6 +308,7 @@ def test_csp_violation_report_valid_json(client, capsys):
     # Capture the print output
     captured = capsys.readouterr()
     assert "CSP Violation:" in captured.out
+
 
 def test_csp_violation_report_non_json(client, capsys):
     """Test ID: UT-29

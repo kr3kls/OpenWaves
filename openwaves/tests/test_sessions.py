@@ -512,7 +512,25 @@ def test_sessions_route_as_user(client, app):
         assert b'Exam Sessions' in response.data
         assert bytes(exam_session.session_date.strftime('%m/%d/%Y'), 'utf-8') in response.data
 
-def test_sessions_route_as_unauthorized_user(client, app):
+def test_sessions_route_as_ve(client, ve_user):
+    """Test ID: UT-100
+    Negative test: Verifies that a VE user cannot access the sessions page.
+
+    Args:
+        client: The test client instance.
+        ve_user: The VE user fixture.
+
+    Asserts:
+        - Response status code is 200.
+        - Response data contains "You have been logged out.".
+    """
+    login(client, ve_user.username, 'vepassword')
+    response = client.get('/sessions', follow_redirects=True)
+    assert response.status_code == 200
+    print(response.data)
+    assert b"You have been logged out." in response.data
+
+def test_sessions_route_as_unauthorized_user(client):
     """Test ID: UT-92
     Test the sessions route for an unauthorized user (not logged in or wrong role).
 
@@ -521,7 +539,6 @@ def test_sessions_route_as_unauthorized_user(client, app):
 
     Args:
         client: The test client instance.
-        app: The Flask application instance.
 
     Asserts:
         - The response status code is a redirect (302).
@@ -531,29 +548,8 @@ def test_sessions_route_as_unauthorized_user(client, app):
     response = client.get('/sessions', follow_redirects=True)
 
     assert response.status_code == 200
+    print(response.data)
     assert b'Please log in to access this page.' in response.data
-
-    with app.app_context():
-        # Log in as a user with role 2 (VE)
-        ve_user = User(
-            username="VEUSER",
-            first_name="VE",
-            last_name="User",
-            email="veuser@example.com",
-            password="vepassword",
-            role=2,
-            active=True
-        )
-        db.session.add(ve_user)
-        db.session.commit()
-
-        response = login(client, ve_user.username, "vepassword")
-
-        # Attempt to access the sessions page
-        response = client.get('/sessions', follow_redirects=True)
-
-        assert response.status_code == 200
-        assert b'Please log in to access this page.' in response.data
 
 def test_register_route_success(client, app):
     """Test ID: UT-93

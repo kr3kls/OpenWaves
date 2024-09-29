@@ -1,3 +1,23 @@
+// Helper function for making fetch requests with JSON response handling
+function makeRequest(url, method, body = null, csrfToken = null) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (csrfToken) headers['X-CSRFToken'] = csrfToken;
+
+    return fetch(url, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null,
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server responded with status: ${response.status}`);
+        }
+        return response.json();
+    });
+}
+// Export for testing
+module.exports = { makeRequest };
+
 document.addEventListener('DOMContentLoaded', () => {
     // Function to set date in modal
     const startDateField = document.getElementById('start-date');
@@ -26,23 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Helper function for making fetch requests with JSON response handling
-    function makeRequest(url, method, body = null, csrfToken = null) {
-        const headers = { 'Content-Type': 'application/json' };
-        if (csrfToken) headers['X-CSRFToken'] = csrfToken;
-
-        return fetch(url, {
-            method,
-            headers,
-            body: body ? JSON.stringify(body) : null,
-        })
-        .then(response => response.json())
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-        });
-    }
-
     // Handle session form submission
     function handleSessionFormSubmit() {
         const createSessionButton = document.getElementById('create-session-button');
@@ -56,12 +59,26 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const formData = new FormData(createSessionForm);
             fetch('/ve/create_session', { method: 'POST', body: formData })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) location.reload();
-                else alert('Error creating session: ' + data.error);
-            });
-        });
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || `Server responded with status: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error creating session: ' + (data && data.error ? data.error : 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || 'An error occurred. Please try again.');
+                });
+        });        
     }
 
     // Generic function to handle session actions (open/close/delete)
@@ -69,18 +86,27 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll(buttonSelector).forEach((button) => {
             button.addEventListener('click', () => {
                 const sessionId = button.getAttribute('data-id');
-                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
-
+                const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
+                const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+    
                 if (action === 'delete' && !confirm('Are you sure you want to delete this session?')) return;
-
+    
                 makeRequest(`/ve/${action}_session/${sessionId}`, method, { action }, csrfToken)
-                .then(data => {
-                    if (data.success) location.reload();
-                    else alert(`Error ${action} session: ${data.error}`);
-                });
+                    .then(data => {
+                        if (data && data.success) {
+                            location.reload();
+                        } else {
+                            alert(`Error ${action} session: ` + (data && data.error ? data.error : 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                    });
             });
         });
     }
+    
 
     // Initialize all modal events
     attachModalEvents();
