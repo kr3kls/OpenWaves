@@ -158,7 +158,7 @@ def test_ve_profile_not_exists(client):
     assert b"You have been logged out." in response.data
 
 def test_pools_page_no_pools(client, ve_user):
-    """Test ID: UT-104
+    """Test ID: UT-103
     Functional test: Verify the pools page displays correctly when no pools are available.
 
     Args:
@@ -176,7 +176,7 @@ def test_pools_page_no_pools(client, ve_user):
     assert b'No question pools found.' in response.data
 
 def test_pools_page_with_pools(client, app, ve_user):
-    """Test ID: UT-105
+    """Test ID: UT-104
     Functional test: Verify the pools page correctly displays all pools with question counts.
 
     Args:
@@ -253,7 +253,7 @@ def test_pools_page_with_pools(client, app, ve_user):
     assert code2.encode() in response.data
 
 def test_pools_page_role_not_allowed(client):
-    """Test ID: UT-106
+    """Test ID: UT-105
     Negative test: Ensure that users without the VE role cannot access the pools page.
 
     Args:

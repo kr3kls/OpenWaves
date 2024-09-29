@@ -497,7 +497,7 @@ def test_sessions_route_as_user(client, app):
         assert bytes(exam_session.session_date.strftime('%m/%d/%Y'), 'utf-8') in response.data
 
 def test_sessions_route_as_ve(client, ve_user):
-    """Test ID: UT-100
+    """Test ID: UT-99
     Negative test: Verifies that a VE user cannot access the sessions page.
 
     Args:

@@ -9,7 +9,7 @@ from openwaves.tests.test_auth import login
 from openwaves.imports import db, User, ExamSession, Pool, ExamRegistration
 
 def test_cancel_registration_missing_session_id(client):
-    """Test ID: UT-101
+    """Test ID: UT-100
     Negative test: Ensures that an invalid cancellation request is handled when the session ID is
     missing.
 
@@ -35,7 +35,7 @@ def test_cancel_registration_missing_session_id(client):
             in session['_flashes'][0][1]
 
 def test_cancel_registration_missing_exam_element(client):
-    """Test ID: UT-102
+    """Test ID: UT-101
     Negative test: Ensures that an invalid cancellation request is handled when the exam element is
     missing.
 
@@ -61,7 +61,7 @@ def test_cancel_registration_missing_exam_element(client):
             in session['_flashes'][0][1]
 
 def test_cancel_registration_invalid_exam_element(client):
-    """Test ID: UT-103
+    """Test ID: UT-102
     Negative test: Ensures that an invalid cancellation request is handled when the exam element is
     invalid.
 
