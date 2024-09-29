@@ -65,6 +65,16 @@ describe('makeRequest', () => {
         jest.clearAllMocks();
     });
 
+    /**
+     * Test ID: UT-111
+     * 
+     * This test ensures that the `makeRequest` function handles fetch errors gracefully.
+     * It simulates a network error to verify that an appropriate alert message is displayed
+     * when a fetch request fails.
+     * 
+     * Asserts:
+     * - The `window.alert` method is called with the message 'An error occurred. Please try again.'
+     */
     it('should handle fetch errors in makeRequest', async () => {
         // Mock fetch to reject
         fetch.mockRejectedValueOnce(new Error('Network error'));
@@ -83,7 +93,17 @@ describe('makeRequest', () => {
         expect(window.alert).toHaveBeenCalledWith('An error occurred. Please try again.');
     });
     
-
+    /**
+     * Test ID: UT-112
+     * 
+     * This test ensures that the `makeRequest` function throws an error for non-OK responses.
+     * It simulates a server response with a non-OK status (500) to verify that the function
+     * throws an error, which can be properly handled.
+     * 
+     * Asserts:
+     * - An error is thrown with the message indicating that the server returned a non-OK response.
+     * - The `fetch` method is called with the correct parameters (URL, method, headers).
+     */
     it('should throw an error if the server responds with a non-OK status', async () => {
         // Mock fetch to return a response with status 500
         fetch.mockResolvedValueOnce({

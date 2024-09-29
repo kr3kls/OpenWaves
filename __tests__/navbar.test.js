@@ -27,6 +27,16 @@ describe('Navbar functionality', () => {
         document.dispatchEvent(new Event('DOMContentLoaded'));
     });
 
+    /**
+     * Test ID: UT-113
+     * 
+     * This test ensures that clicking the `navbar-burger` element toggles the "is-active" class
+     * on both the `navbar-burger` and `navbar-menu` elements, thereby showing or hiding the menu.
+     * 
+     * Asserts:
+     * - The "is-active" class is added to both elements after the first click.
+     * - The "is-active" class is removed from both elements after the second click.
+     */
     test('click event on navbar-burger toggles "is-active" class on both elements', () => {
         // Simulate the click event on the navbar-burger
         navbarBurger.click();
@@ -43,6 +53,17 @@ describe('Navbar functionality', () => {
         expect(navbarMenu.classList.contains('is-active')).toBe(false);
     });
 
+    /**
+     * Test ID: UT-114
+     * 
+     * This test ensures that pressing the "Enter" key when focused on the `navbar-burger` element
+     * toggles the "is-active" class on both the `navbar-burger` and `navbar-menu` elements, 
+     * thereby showing or hiding the menu.
+     * 
+     * Asserts:
+     * - The "is-active" class is added to both elements after the first "Enter" keydown event.
+     * - The "is-active" class is removed from both elements after the second "Enter" keydown event.
+     */
     test('keydown event with "Enter" key toggles "is-active" class on both elements', () => {
         // Create and dispatch a keydown event with the "Enter" key
         const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
@@ -60,6 +81,17 @@ describe('Navbar functionality', () => {
         expect(navbarMenu.classList.contains('is-active')).toBe(false);
     });
 
+    /**
+     * Test ID: UT-115
+     * 
+     * This test ensures that pressing the "Space" key when focused on the `navbar-burger` element
+     * toggles the "is-active" class on both the `navbar-burger` and `navbar-menu` elements, 
+     * thereby showing or hiding the menu.
+     * 
+     * Asserts:
+     * - The "is-active" class is added to both elements after the first "Space" keydown event.
+     * - The "is-active" class is removed from both elements after the second "Space" keydown event.
+     */
     test('keydown event with "Space" key toggles "is-active" class on both elements', () => {
         // Create and dispatch a keydown event with the "Space" key
         const spaceEvent = new KeyboardEvent('keydown', { key: ' ' });
@@ -77,6 +109,17 @@ describe('Navbar functionality', () => {
         expect(navbarMenu.classList.contains('is-active')).toBe(false);
     });
 
+    /**
+     * Test ID: UT-116
+     * 
+     * Test that pressing irrelevant keys does not trigger the `toggleMenu` function.
+     * 
+     * This test ensures that the `toggleMenu` function is not called when keys other than
+     * "Enter" or "Space" are pressed on the `navbar-burger` element, such as the "Escape" key.
+     * 
+     * Asserts:
+     * - `toggleMenu` is not called when an irrelevant key ("Escape") is pressed.
+     */
     test('keydown event with irrelevant keys does not call toggleMenu', () => {
         const toggleMenuSpy = jest.spyOn(window, 'toggleMenu');
 
@@ -88,6 +131,20 @@ describe('Navbar functionality', () => {
         toggleMenuSpy.mockRestore();
     });
 
+    /**
+     * Test ID: UT-117
+     * 
+     * Test that multiple `navbar-burger` elements toggle their respective menus independently.
+     * 
+     * This test ensures that each `navbar-burger` element can independently control its corresponding 
+     * `navbar-menu` without affecting the other menus. When one `navbar-burger` is clicked, 
+     * only its corresponding menu should toggle.
+     * 
+     * Asserts:
+     * - Clicking the first `navbar-burger` adds the "is-active" class to itself and its corresponding menu.
+     * - The second `navbar-burger` and menu remain unaffected until explicitly toggled.
+     * - Both menus can be toggled independently.
+     */
     test('multiple navbar-burger elements toggle their respective menus independently', () => {
         // Set up the DOM with multiple navbar-burgers
         document.body.innerHTML = `
@@ -126,6 +183,18 @@ describe('Navbar functionality', () => {
         expect(navbarMenus[1].classList.contains('is-active')).toBe(true);
     });
 
+    /**
+     * Test ID: UT-118
+     * 
+     * Test that `toggleMenu` handles a missing `data-target` attribute gracefully.
+     * 
+     * This test ensures that when a `navbar-burger` element without a `data-target` attribute is clicked,
+     * the `toggleMenu` function does not throw an error, and an appropriate console error message is logged.
+     * 
+     * Asserts:
+     * - Clicking a `navbar-burger` without a `data-target` does not throw an error.
+     * - A console error is logged with the message indicating that the target element was not found.
+     */
     test('toggleMenu handles missing data-target gracefully', () => {
         // Set up the DOM with a navbar-burger missing data-target
         document.body.innerHTML = `
@@ -156,6 +225,17 @@ describe('Navbar functionality', () => {
         consoleSpy.mockRestore();
     });    
 
+    /**
+     * Test ID: UT-119
+     * Test the `toggleMenu` function when the target element does not exist.
+     *
+     * This test ensures that the `toggleMenu` function handles cases where the target element
+     * does not exist and logs an appropriate error message without throwing an exception.
+     *
+     * Asserts:
+     * - Clicking the `navbar-burger` does not throw an error.
+     * - A specific error message is logged to the console.
+     */
     test('toggleMenu handles non-existent target element gracefully', () => {
         // Set up the DOM with a navbar-burger pointing to a non-existent target
         document.body.innerHTML = `
@@ -186,6 +266,16 @@ describe('Navbar functionality', () => {
         consoleSpy.mockRestore();
     });    
 
+    /**
+     * Test ID: UT-120
+     * Test the `initializeNavbar` function when there are no `navbar-burger` elements in the DOM.
+     *
+     * This test ensures that the `initializeNavbar` function gracefully handles the absence of 
+     * `navbar-burger` elements without causing errors.
+     *
+     * Asserts:
+     * - The `document.querySelectorAll` is called to search for `navbar-burger` elements.
+     */
     test('initializeNavbar handles absence of navbar-burger elements gracefully', () => {
         // Set up the DOM without any navbar-burger elements
         document.body.innerHTML = `
@@ -207,6 +297,18 @@ describe('Navbar functionality', () => {
         querySelectorAllSpy.mockRestore();
     });
 
+    /**
+     * Test ID: UT-121
+     * Test the `toggleMenu` function's behavior on the `aria-expanded` attribute of `navbar-burger`.
+     *
+     * This test ensures that the `toggleMenu` function toggles the `aria-expanded` attribute
+     * of the `navbar-burger` element between `"true"` and `"false"` correctly.
+     *
+     * Asserts:
+     * - The `aria-expanded` attribute is `"false"` initially.
+     * - The `aria-expanded` attribute changes to `"true"` after the first toggle.
+     * - The `aria-expanded` attribute changes back to `"false"` after the second toggle.
+     */
     test('toggleMenu toggles aria-expanded attribute correctly', () => {
         // Initial state
         expect(navbarBurger.getAttribute('aria-expanded')).toBe('false');
@@ -220,6 +322,16 @@ describe('Navbar functionality', () => {
         expect(navbarBurger.getAttribute('aria-expanded')).toBe('false');
     });
 
+    /**
+     * Test ID: UT-122
+     * Test the attachment of event listeners to `navbar-burger` elements.
+     *
+     * This test ensures that the `initializeNavbar` function correctly attaches 
+     * event listeners (`click` and `keydown`) to each `navbar-burger` element in the DOM.
+     *
+     * Asserts:
+     * - The `addEventListener` method is called for both `click` and `keydown` events.
+     */
     test('event listeners are attached to navbar-burger elements', () => {
         // Spy on addEventListener
         const addEventListenerSpy = jest.spyOn(Element.prototype, 'addEventListener');

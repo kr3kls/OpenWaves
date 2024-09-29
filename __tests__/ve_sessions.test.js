@@ -81,16 +81,47 @@ describe('Modal and session handling', () => {
         jest.clearAllMocks();
     });
 
+    /**
+     * Test ID: UT-138
+     * Test setting the default date in the start date field.
+     *
+     * This test ensures that the start date field is automatically populated with
+     * today's date when the form is loaded.
+     *
+     * Asserts:
+     * - The start date field value is set to today's date in the format 'YYYY-MM-DD'.
+     */
     it("should set today's date as default in the start date field", () => {
         const today = new Date().toISOString().split('T')[0];
         expect(startDateField.value).toBe(today);
     });
 
+    /**
+     * Test ID: UT-139
+     * Test opening the session modal when the create session button is clicked.
+     *
+     * This test ensures that clicking the 'create session' button properly opens
+     * the session creation modal.
+     *
+     * Asserts:
+     * - The session modal contains the 'is-active' class when the button is clicked.
+     */
     it('should open the session modal when the create session button is clicked', () => {
         createSessionButton.click();
         expect(createSessionModal.classList.contains('is-active')).toBe(true);
     });
 
+    /**
+     * Test ID: UT-140
+     * Test closing the session modal when a close element is clicked.
+     *
+     * This test ensures that clicking a close element in the session modal properly
+     * closes the modal.
+     *
+     * Asserts:
+     * - The modal is open before the close button is clicked.
+     * - The modal no longer contains the 'is-active' class after the close button is clicked.
+     */
     it('should close the session modal when a close element is clicked', () => {
         const modal = document.querySelector('.modal');
         const closeButton = modal.querySelector('.delete');
@@ -104,6 +135,17 @@ describe('Modal and session handling', () => {
         expect(modal.classList.contains('is-active')).toBe(false);
     });
 
+    /**
+     * Test ID: UT-141
+     * Test submitting the session form and handling a successful response.
+     *
+     * This test ensures that clicking the submit button properly sends a request to create a session
+     * and reloads the page when the request is successful.
+     *
+     * Asserts:
+     * - The fetch function is called with the correct URL and options.
+     * - The window.location.reload function is called after a successful response.
+     */
     it('should submit the session form and handle success response', async () => {
         // Simulate form submission
         submitSessionForm.click();
@@ -121,6 +163,16 @@ describe('Modal and session handling', () => {
         expect(window.location.reload).toHaveBeenCalled();
     });
 
+    /**
+     * Test ID: UT-142
+     * Test handling form submission error response.
+     *
+     * This test ensures that the appropriate error message is displayed when the server responds
+     * with a non-OK status code during session form submission.
+     *
+     * Asserts:
+     * - The window.alert function is called with the correct error message from the response.
+     */
     it('should handle form submission error response', async () => {
         // Mock fetch to return a failure response with status 400 and an error message
         fetch.mockResolvedValueOnce({
@@ -135,8 +187,18 @@ describe('Modal and session handling', () => {
     
         // Update the expectation to match the actual alert message
         expect(window.alert).toHaveBeenCalledWith('Test error');
-    });       
+    });     
 
+    /**
+     * Test ID: UT-143
+     * Test handling undefined data response in session form submission.
+     *
+     * This test ensures that an appropriate error message is displayed when the server returns an
+     * undefined response during session form submission.
+     *
+     * Asserts:
+     * - The window.alert function is called with a generic error message if the response data is undefined.
+     */
     it('should handle undefined data response in session form submission', async () => {
         // Mock fetch to return undefined data
         fetch.mockResolvedValueOnce({
@@ -153,6 +215,16 @@ describe('Modal and session handling', () => {
         expect(window.alert).toHaveBeenCalledWith('Error creating session: Unknown error');
     });
     
+    /**
+     * Test ID: UT-144
+     * Test deleting a session by calling fetch with the correct parameters.
+     *
+     * This test ensures that clicking the delete button for a session sends a DELETE request
+     * with the appropriate parameters if the user confirms the deletion.
+     *
+     * Asserts:
+     * - The fetch function is called with the correct URL, method, headers, and body.
+     */
     it('should call fetch with the correct parameters for delete session', async () => {
         const deleteButton = document.querySelector('.delete-session-button');
         window.confirm = jest.fn(() => true); // Mock confirm dialog to always return true
@@ -170,6 +242,16 @@ describe('Modal and session handling', () => {
         });
     });
 
+    /**
+     * Test ID: UT-145
+     * Test not calling fetch when deleting a session if the confirm dialog is denied.
+     *
+     * This test ensures that clicking the delete button for a session does not send a DELETE request
+     * if the user does not confirm the deletion.
+     *
+     * Asserts:
+     * - The fetch function is not called when the confirmation dialog returns false.
+     */
     it('should not call fetch when deleting a session if confirm is denied', () => {
         const deleteButton = document.querySelector('.delete-session-button');
         window.confirm = jest.fn(() => false); // Mock confirm dialog to return false
@@ -178,6 +260,16 @@ describe('Modal and session handling', () => {
         expect(fetch).not.toHaveBeenCalled();
     });
 
+    /**
+     * Test ID: UT-146
+     * Test opening a session by calling fetch with the correct parameters.
+     *
+     * This test ensures that clicking the open button for a session sends a POST request
+     * with the appropriate parameters to open the session.
+     *
+     * Asserts:
+     * - The fetch function is called with the correct URL, method, headers, and body.
+     */
     it('should call fetch with the correct parameters for opening a session', async () => {
         const openButton = document.querySelector('.open-session-button');
         openButton.click();
@@ -194,6 +286,16 @@ describe('Modal and session handling', () => {
         });
     });
 
+    /**
+     * Test ID: UT-147
+     * Test closing a session by calling fetch with the correct parameters.
+     *
+     * This test ensures that clicking the close button for a session sends a POST request
+     * with the appropriate parameters to close the session.
+     *
+     * Asserts:
+     * - The fetch function is called with the correct URL, method, headers, and body.
+     */
     it('should call fetch with the correct parameters for closing a session', async () => {
         const closeButton = document.querySelector('.close-session-button');
         closeButton.click();
@@ -210,6 +312,16 @@ describe('Modal and session handling', () => {
         });
     });    
 
+    /**
+     * Test ID: UT-148
+     * Test handling unsuccessful responses in session actions.
+     *
+     * This test ensures that an appropriate error message is displayed when a session action,
+     * such as opening a session, fails due to an unsuccessful response from the server.
+     *
+     * Asserts:
+     * - An alert is displayed with the appropriate error message when the response is unsuccessful.
+     */
     it('should handle unsuccessful responses in session actions', async () => {
         fetch.mockResolvedValueOnce({
             ok: true,
@@ -224,6 +336,16 @@ describe('Modal and session handling', () => {
         expect(window.alert).toHaveBeenCalledWith('Error open session: Session error');
     });
 
+    /**
+     * Test ID: UT-149
+     * Test handling the absence of the start date field.
+     *
+     * This test ensures that no errors occur if the start date field is not present
+     * in the DOM when the DOMContentLoaded event is triggered.
+     *
+     * Asserts:
+     * - The start date field is not present in the DOM after attempting to set it.
+     */
     it('should not set the date if startDateField is not present', () => {
         // Remove the start-date field from the DOM
         startDateField.remove();
@@ -234,6 +356,16 @@ describe('Modal and session handling', () => {
         expect(document.getElementById('start-date')).toBeNull();
     });
 
+    /**
+     * Test ID: UT-150
+     * Test handling the absence of the CSRF token.
+     *
+     * This test ensures that the session close action still sends a request even if
+     * the CSRF token input is not present in the DOM.
+     *
+     * Asserts:
+     * - The fetch function is called without the CSRF token in the headers.
+     */
     it('should not throw an error if csrfToken is not present', async () => {
         // Remove the csrf_token input
         csrfTokenInput.remove();
