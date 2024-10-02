@@ -3,14 +3,18 @@
     This file contains the main routes and view functions for the application.
 """
 
+import os
 import csv
 from datetime import datetime
 from io import TextIOWrapper
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, \
+    current_app as app
 from flask_login import login_required, current_user
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
 from .imports import db, Pool, Question, TLI, ExamSession, ExamRegistration, get_exam_name, \
-    is_already_registered, remove_exam_registration
+    is_already_registered, remove_exam_registration, load_question_pools, allowed_file, \
+    ExamDiagram
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_SESSIONS = 'main.sessions'
@@ -342,7 +346,7 @@ def pools():
         # If a VE account exists
 
         # Get all question pools from the database
-        question_pools = Pool.query.order_by(Pool.element.asc(), Pool.start_date.asc()).all()
+        question_pools = load_question_pools()
         for question_pool in question_pools:
             question_count = Question.query.filter_by(pool_id=question_pool.id).count()
             question_pool.question_count = question_count
@@ -642,3 +646,67 @@ def close_session(session_id):
     # If no VE account exists, redirect to the logout page
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
+
+# Route to upload exam diagrams
+@main.route('/ve/upload_diagram/<int:pool_id>', methods=['POST'])
+def upload_diagram(pool_id):
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.referrer)
+
+    file = request.files['file']
+    diagram_name = request.form.get('diagram_name')
+
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.referrer)
+
+    if file and allowed_file(file.filename):
+        # Secure the filename to prevent issues with directory traversal
+        filename = secure_filename(f"{pool_id}_{file.filename}")
+
+        # Construct the full path to save the file using current_app
+        upload_folder = app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_folder, filename)
+
+        # Relative path to store in the database
+        relative_path = f"diagrams/{filename}"
+
+        # Debugging output to verify the path
+        app.logger.info(f"File path to save: {file_path}")
+        app.logger.info(f"Path to store in database: {relative_path}")
+
+        # Ensure the directory exists
+        if not os.path.exists(upload_folder):
+            app.logger.error(f"Directory does not exist: {upload_folder}")
+            flash('Upload directory does not exist.')
+            return redirect(request.referrer)
+
+        app.logger.info(f"Directory exists: {upload_folder}")
+
+        try:
+            # Save the file to the designated folder
+            file.save(file_path)
+
+            # Store the diagram information in the database
+            new_diagram = ExamDiagram(
+                pool_id=pool_id,
+                name=diagram_name,
+                path=relative_path  # Store the relative path, not the full path
+            )
+            db.session.add(new_diagram)
+            db.session.commit()
+
+            flash('Diagram uploaded successfully')
+            return redirect(url_for('main.pools', pool_id=pool_id))
+
+        except SQLAlchemyError as e:
+            db.session.rollback()  # Rollback the session in case of an error
+            app.logger.error(f"Error saving diagram to the database: {e}")
+            flash('An error occurred while saving the diagram to the database.')
+
+            return redirect(request.referrer)
+
+    else:
+        flash('Invalid file type. Allowed types: png, jpg, jpeg, gif')
+        return redirect(request.referrer)

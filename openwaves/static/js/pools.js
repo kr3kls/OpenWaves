@@ -165,4 +165,75 @@ document.addEventListener('DOMContentLoaded', function() {
             createPoolModal.classList.remove('is-active');
         });
     }
+
+    document.querySelectorAll('.pool-row').forEach(row => {
+        row.addEventListener('click', function() {
+            const poolId = this.getAttribute('data-id');
+
+            const expandableRow = document.querySelector(`.expandable-row[data-id='${poolId}']`);
+            if (expandableRow) {
+                if (expandableRow.classList.contains('show')) {
+                    expandableRow.classList.remove('show');
+                } else {
+                    expandableRow.classList.add('show');
+                }
+            } else {
+                console.error(`No expandable row found for pool ID: ${poolId}`);
+            }
+        });
+    });
+
+    // Open the modal when the 'Upload' button is clicked
+    document.querySelectorAll('.upload-diagram-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const poolId = this.getAttribute('data-id');
+            const modal = document.getElementById(`upload-modal-${poolId}`);
+            console.log('Looking for modal:', modal);
+            if (modal) {
+                modal.classList.add('is-active');
+            }
+        });
+    });
+
+    // Close the modal when 'Cancel' button or 'X' button is clicked
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.classList.remove('is-active');
+            }
+        });
+    });
+
+    // Handle the upload button in the modal
+    document.querySelectorAll('.submit-upload').forEach(button => {
+        button.addEventListener('click', async function() {
+            const poolId = this.getAttribute('data-pool-id');
+            const form = document.getElementById(`upload-form-${poolId}`);
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(`/ve/upload_diagram/${poolId}`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    alert('Diagram uploaded successfully!');
+                    location.reload(); // Reload the page to show the new diagram
+                } else {
+                    alert('There was an error uploading the diagram.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('There was an error uploading the diagram.');
+            }
+
+            // Close the modal after submission
+            const modal = document.getElementById(`upload-modal-${poolId}`);
+            if (modal) {
+                modal.classList.remove('is-active');
+            }
+        });
+    });
 });
