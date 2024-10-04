@@ -25,6 +25,9 @@ describe('Pool management functionality', () => {
         // Set up the DOM structure, including the required elements
         document.body.innerHTML = `
         <input name="csrf_token" value="dummy-csrf-token" />
+        <div id="fullscreen-overlay" class="fullscreen-overlay">
+            <img id="fullscreen-image" class="fullscreen-image" src="" alt="Blown-up Diagram">
+        </div>
         <button id="create-pool-button"></button>  <!-- Mock the create pool button -->
         <form id="create-pool-form">
             <!-- Form inputs... -->
