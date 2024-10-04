@@ -77,13 +77,16 @@
                                     <th>Path</th>
                                 </tr>
                             </thead>
+                            <div id="fullscreen-overlay" class="fullscreen-overlay">
+                                <img id="fullscreen-image" class="fullscreen-image" src="" alt="Blown-up Diagram">
+                            </div>
                             <tbody>
                                 {% if pool.diagrams|length > 0 %}
                                 {% for diagram in pool.diagrams %}
                                 <tr>
                                     <td>{{ diagram.id }}</td>
                                     <td>{{ diagram.name }}</td>
-                                    <td><img src="{{ url_for('static', filename='images/' + diagram.path) }}" alt="{{ diagram.name }}" class="pool-diagram"></td>
+                                    <td><img src="{{ url_for('static', filename='images/' + diagram.path) }}" alt="{{ diagram.name }}" class="pool-diagram thumbnail-image"></td>
                                     <td>{{ diagram.path }}</td>
                                 </tr>
                                 {% endfor %}

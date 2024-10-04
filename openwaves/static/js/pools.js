@@ -236,4 +236,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Handle image click to show enlarged version
+    document.querySelectorAll('.thumbnail-image').forEach(image => {
+        image.addEventListener('click', function() {
+            const fullscreenOverlay = document.getElementById('fullscreen-overlay');
+            const fullscreenImage = document.getElementById('fullscreen-image');
+
+            fullscreenImage.src = this.src;  // Set the source of the enlarged image
+            fullscreenOverlay.style.display = 'flex';  // Show the overlay
+        });
+    });
+
+    // Handle clicking on the blown-up image to close the overlay
+    document.getElementById('fullscreen-overlay').addEventListener('click', function() {
+        this.style.display = 'none';  // Hide the overlay when clicked
+    });
 });

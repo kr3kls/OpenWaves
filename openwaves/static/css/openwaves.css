@@ -107,3 +107,32 @@ footer {
     margin-right: auto;
     max-width: 100px;
 }
+
+/* Fullscreen overlay for the blown-up image */
+.fullscreen-overlay {
+    display: none; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); 
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* Enlarged image styling */
+.fullscreen-image {
+    max-width: 90%;
+    max-height: 90%;
+    border: 2px solid white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    cursor: pointer; 
+}
+
+/* Thumbnail image styling */
+.thumbnail-image {
+    max-width: 100px;
+    cursor: pointer; 
+}
