@@ -142,17 +142,16 @@
                                 </footer>
                             </div>
                         </div>
-
+                        {% endfor %}
                     </td>
                 </tr>                
             </tbody>
             {% else %}
-                <tbody>
-                    <tr>
-                        <td colspan="6">No question pools found.</td>
-                    </tr>
-                </tbody>
-                {% endfor %}
+            <tbody>
+                <tr>
+                    <td colspan="6">No question pools found.</td>
+                </tr>
+            </tbody>
             {% endif %}
             </table>
         </div>

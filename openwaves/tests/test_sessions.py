@@ -29,7 +29,7 @@ def test_sessions_page_access(client, ve_user):
     login(client, ve_user.username, 'vepassword')
     response = client.get('/ve/sessions')
     assert response.status_code == 200
-    assert b'Test Sessions' in response.data
+    assert b'Exam Sessions' in response.data
 
 def test_sessions_page_access_as_regular_user(client):
     """Test ID: UT-62
