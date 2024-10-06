@@ -169,6 +169,47 @@ if (!window.poolsEventListenersInitialized) {
             });
         });
 
+        // Open the modal when the 'Upload' button is clicked
+        document.querySelectorAll('.upload-diagram-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const poolId = this.getAttribute('data-id');
+                const modal = document.getElementById(`upload-modal-${poolId}`);
+                console.log('Looking for modal:', modal);
+                if (modal) {
+                    modal.classList.add('is-active');
+                }
+            });
+        });
+
+        // Handle the upload button in the modal
+        document.querySelectorAll('.submit-upload').forEach(button => {
+            button.addEventListener('click', async function() {
+                const poolId = this.getAttribute('data-pool-id');
+                const form = document.getElementById(`upload-form-${poolId}`);
+                const formData = new FormData(form);
+                try {
+                    const response = await fetch(`/ve/upload_diagram/${poolId}`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    if (response.ok) {
+                        alert('Diagram uploaded successfully!');
+                        location.reload(); // Reload the page to show the new diagram
+                    } else {
+                        alert('There was an error uploading the diagram.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('There was an error uploading the diagram.');
+                }
+                // Close the modal after submission
+                const modal = document.getElementById(`upload-modal-${poolId}`);
+                if (modal) {
+                    modal.classList.remove('is-active');
+                }
+            });
+        });
+
         // Handle image click to show enlarged version
         document.querySelectorAll('.thumbnail-image').forEach(image => {
             image.addEventListener('click', function() {
