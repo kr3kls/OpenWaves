@@ -865,7 +865,7 @@ describe('Pool management functionality', () => {
         expect(modal.classList.contains('is-active')).toBe(true);
     });
 
-        /**
+    /**
      * Test ID: UT-154
      * Test the functionality of clicking on a thumbnail image to show the fullscreen overlay.
      *
