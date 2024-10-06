@@ -762,7 +762,7 @@ def test_upload_diagram_invalid_file_type(client, app, ve_user):
         assert b'Invalid file type. Allowed types: png, jpg, jpeg, gif' in response.data
 
 @patch('os.path.exists', return_value=False)
-def test_upload_diagram_directory_does_not_exist(mock_exists, client, app, ve_user):
+def test_upload_diagram_directory_does_not_exist(mock_exists, client, app, ve_user): # pylint: disable=W0613
     """Test ID: UT-168
     Test upload diagram when the directory does not exist.
 
@@ -793,7 +793,7 @@ def test_upload_diagram_directory_does_not_exist(mock_exists, client, app, ve_us
 
 @patch('os.path.exists', return_value=True)
 @patch('werkzeug.datastructures.FileStorage.save')
-def test_upload_diagram_successful(mock_save, mock_exists, client, app, ve_user):
+def test_upload_diagram_successful(mock_save, mock_exists, client, app, ve_user): # pylint: disable=W0613
     """Test ID: UT-169
     Test successful upload of a diagram.
 
@@ -826,7 +826,7 @@ def test_upload_diagram_successful(mock_save, mock_exists, client, app, ve_user)
 
 @patch('os.path.exists', return_value=True)
 @patch('werkzeug.datastructures.FileStorage.save', side_effect=SQLAlchemyError)
-def test_upload_diagram_database_error(mock_save, mock_exists, client, app, ve_user):
+def test_upload_diagram_database_error(mock_save, mock_exists, client, app, ve_user): # pylint: disable=W0613
     """Test ID: UT-170
     Test upload diagram with a database error.
 
