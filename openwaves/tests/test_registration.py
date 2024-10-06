@@ -426,3 +426,303 @@ def test_register_route_invalid_role(client, app):
 
         assert response.status_code == 200
         assert b'Please log in to access this page.' in response.data
+
+def test_register_route_invalid_exam_session_id(client, app):
+    """Test ID: UT-158
+    Test registration with an invalid exam session ID.
+
+    This test ensures that attempting to register for an exam with an invalid session ID 
+    results in an appropriate error message.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The user receives an error message about the exam session not being found.
+        - The user is redirected to the sessions page.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Attempt to register with an invalid session ID
+        response = client.post('/register', data={
+            'session_id': '9999',  # Non-existent session ID
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Exam session not found.' in response.data
+
+def test_register_route_exam_session_not_found(client, app):
+    """Test ID: UT-159
+    Test registration when the exam session cannot be found.
+
+    This test ensures that when an exam session cannot be found in the database, 
+    an appropriate error message is displayed.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The user receives an error message about the exam session not being found.
+        - The user is redirected to the sessions page.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Create a pool but do not create any exam session
+        pool = Pool(
+            name="Test Pool",
+            element=2,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        # Attempt to register for a non-existent exam session
+        response = client.post('/register', data={
+            'session_id': '123',  # Assume this session ID does not exist
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Exam session not found.' in response.data
+
+def test_register_update_existing_registration_tech(client, app):
+    """Test ID: UT-160
+    Test updating an existing registration for the Tech exam.
+
+    This test ensures that when a user is already registered for a session, updating the 
+    registration for the Tech exam correctly updates the 'tech' field.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The 'tech' field of the registration is updated to True.
+        - A success message is flashed to the user.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Create a pool and an exam session
+        pool = Pool(
+            name="Test Pool",
+            element=2,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        exam_session = ExamSession(
+            session_date=datetime.now(),
+            tech_pool_id=pool.id,
+            gen_pool_id=pool.id,
+            extra_pool_id=pool.id,
+            status=True
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Create an existing registration without tech element
+        registration = ExamRegistration(
+            session_id=exam_session.id,
+            user_id=user.id,
+            tech=False,
+            gen=False,
+            extra=False
+        )
+        db.session.add(registration)
+        db.session.commit()
+
+        # Update the registration to include the Tech exam
+        response = client.post('/register', data={
+            'session_id': exam_session.id,
+            'exam_element': '2'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Successfully registered for the Tech exam.' in response.data
+
+        # Verify the registration in the database
+        updated_registration = ExamRegistration.query.filter_by(
+            session_id=exam_session.id,
+            user_id=user.id
+        ).first()
+        assert updated_registration.tech is True
+
+def test_register_update_existing_registration_general(client, app):
+    """Test ID: UT-161
+    Test updating an existing registration for the General exam.
+
+    This test ensures that when a user is already registered for a session, updating the 
+    registration for the General exam correctly updates the 'gen' field.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The 'gen' field of the registration is updated to True.
+        - A success message is flashed to the user.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Create a pool and an exam session
+        pool = Pool(
+            name="Test Pool",
+            element=3,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        exam_session = ExamSession(
+            session_date=datetime.now(),
+            tech_pool_id=pool.id,
+            gen_pool_id=pool.id,
+            extra_pool_id=pool.id,
+            status=True
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Create an existing registration without general element
+        registration = ExamRegistration(
+            session_id=exam_session.id,
+            user_id=user.id,
+            tech=False,
+            gen=False,
+            extra=False
+        )
+        db.session.add(registration)
+        db.session.commit()
+
+        # Update the registration to include the General exam
+        response = client.post('/register', data={
+            'session_id': exam_session.id,
+            'exam_element': '3'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Successfully registered for the General exam.' in response.data
+
+        # Verify the registration in the database
+        updated_registration = ExamRegistration.query.filter_by(
+            session_id=exam_session.id,
+            user_id=user.id
+        ).first()
+        assert updated_registration.gen is True
+
+def test_register_update_existing_registration_extra(client, app):
+    """Test ID: UT-162
+    Test updating an existing registration for the Extra exam.
+
+    This test ensures that when a user is already registered for a session, updating the 
+    registration for the Extra exam correctly updates the 'extra' field.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The 'extra' field of the registration is updated to True.
+        - A success message is flashed to the user.
+    """
+    with app.app_context():
+        # Log in as the test user (role 1)
+        user = User.query.filter_by(username="TESTUSER").first()
+        login(client, user.username, "testpassword")
+
+        # Create a pool and an exam session
+        pool = Pool(
+            name="Test Pool",
+            element=4,
+            start_date=datetime(2023, 1, 1),
+            end_date=datetime(2026, 12, 31)
+        )
+        db.session.add(pool)
+        db.session.commit()
+
+        exam_session = ExamSession(
+            session_date=datetime.now(),
+            tech_pool_id=pool.id,
+            gen_pool_id=pool.id,
+            extra_pool_id=pool.id,
+            status=True
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Create an existing registration without extra element
+        registration = ExamRegistration(
+            session_id=exam_session.id,
+            user_id=user.id,
+            tech=False,
+            gen=False,
+            extra=False
+        )
+        db.session.add(registration)
+        db.session.commit()
+
+        # Update the registration to include the Extra exam
+        response = client.post('/register', data={
+            'session_id': exam_session.id,
+            'exam_element': '4'
+        }, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Successfully registered for the Extra exam.' in response.data
+
+        # Verify the registration in the database
+        updated_registration = ExamRegistration.query.filter_by(
+            session_id=exam_session.id,
+            user_id=user.id
+        ).first()
+        assert updated_registration.extra is True
+
+def test_register_route_invalid_role_redirect(client, ve_user):
+    """Test ID: UT-163
+    Test registration with a user who does not have role 1 (HAM Candidate).
+
+    This test ensures that a user with a role other than 1 is redirected to the logout page
+    when attempting to access the register route.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The user is redirected to the logout page.
+        - The user receives an 'Access denied' message.
+    """
+    # Log in as the VE user
+    login(client, ve_user.username, 'vepassword')
+
+    # Attempt to register for an exam session
+    response = client.post('/register', data={
+        'session_id': '1',
+        'exam_element': '2'
+    }, follow_redirects=True)
+
+    # Assert the user is redirected to the logout page
+    assert response.status_code == 200
+    print(response.data)
+
+    # Assert the 'Access denied' message is flashed
+    assert b'Access denied' in response.data

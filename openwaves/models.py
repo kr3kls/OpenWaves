@@ -187,3 +187,28 @@ class ExamRegistration(db.Model): # pylint: disable=R0903
             str: A string showing the registration info.
         """
         return f"ExamRegistration('{self.user_id}', '{self.session_id}')"
+
+class ExamDiagram(db.Model):
+    """Database model for exam diagrams.
+    
+    Represents a diagram for an exam question.
+    
+    Attributes:
+        id (int): The primary key for the exam diagram.
+        pool_id (int): The foreign key for the pool's id in Pool.
+        name (str): The diagram name
+        path (str): The path to the diagram file.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    path = db.Column(db.String(100), nullable=False)
+
+    def __repr__(self):
+        """Return a string representation of the diagram.
+
+        Returns:
+            str: A string showing the diagram path.
+        """
+        return f"ExamDiagram('{self.path}')"
