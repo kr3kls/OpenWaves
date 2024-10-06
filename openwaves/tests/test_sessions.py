@@ -4,6 +4,7 @@
 """
 
 from datetime import datetime
+from flask import url_for
 from openwaves import db
 from openwaves.imports import User, Pool, ExamSession
 from openwaves.tests.test_auth import login
@@ -443,6 +444,53 @@ def test_close_session_not_logged_in(client):
     """
     response = client.post('/ve/close_session/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
+
+def test_ve_sessions_pool_categorization(client, ve_user):
+    """Test ID: UT-164
+    Test categorization of question pools by element in the VE sessions route.
+
+    This test ensures that the question pools are properly categorized into tech, general,
+    and extra pool options based on their element values.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The response contains the correct pool options categorized by exam element.
+    """
+    login(client, ve_user.username, "vepassword")
+
+    # Create question pools for Tech, General, and Extra
+    tech_pool = Pool(
+        name="Tech Pool",
+        element=2,
+        start_date=datetime(2023, 1, 1),
+        end_date=datetime(2026, 12, 31)
+    )
+    general_pool = Pool(
+        name="General Pool",
+        element=3,
+        start_date=datetime(2023, 1, 1),
+        end_date=datetime(2026, 12, 31)
+    )
+    extra_pool = Pool(
+        name="Extra Pool",
+        element=4,
+        start_date=datetime(2023, 1, 1),
+        end_date=datetime(2026, 12, 31)
+    )
+    db.session.add_all([tech_pool, general_pool, extra_pool])
+    db.session.commit()
+
+    # Access the VE sessions route
+    response = client.get(url_for('main.ve_sessions'))
+
+    # Assert that the response contains the correct pool options
+    assert response.status_code == 200
+    assert f"{tech_pool.name} 2023-2026" in response.data.decode('utf-8')
+    assert f"{general_pool.name} 2023-2026" in response.data.decode('utf-8')
+    assert f"{extra_pool.name} 2023-2026" in response.data.decode('utf-8')
 
 #############################
 #                           #

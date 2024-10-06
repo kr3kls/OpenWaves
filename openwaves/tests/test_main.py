@@ -2,10 +2,12 @@
 
     This file contains the tests for the code in the main.py file.
 """
-import io
+from io import BytesIO
 from datetime import datetime
+from unittest.mock import patch
 from flask import url_for
 from werkzeug.security import generate_password_hash
+from sqlalchemy.exc import SQLAlchemyError
 from openwaves import db
 from openwaves.imports import User, Pool, Question, TLI
 from openwaves.tests.test_auth import login, logout
@@ -494,7 +496,7 @@ T1A01,A,What is 1+1?,2,3,4,5,Reference1
 T1A02,B,What is 2+2?,1,4,3,5,Reference2
 """
     data = {
-        'file': (io.BytesIO(csv_content.encode('utf-8')), 'questions.csv')
+        'file': (BytesIO(csv_content.encode('utf-8')), 'questions.csv')
     }
 
     response = client.post(f'/ve/upload_questions/{pool_id}',
@@ -558,7 +560,7 @@ def test_upload_questions_invalid_file_type(client, ve_user):
     # Prepare a non-CSV file-like object to upload
     non_csv_content = "Not a CSV content"
     data = {
-        'file': (io.BytesIO(non_csv_content.encode('utf-8')), 'questions.txt')
+        'file': (BytesIO(non_csv_content.encode('utf-8')), 'questions.txt')
     }
 
     response = client.post(f'/ve/upload_questions/{pool_id}',
@@ -670,3 +672,186 @@ def test_delete_pool_not_logged_in(client):
     """
     response = client.delete('/ve/delete_pool/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
+
+def test_upload_diagram_missing_file(client, app, ve_user):
+    """Test ID: UT-165
+    Test upload diagram with no file in request.
+
+    This test ensures that when the file is missing in the request,
+    an appropriate error message is flashed.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+        ve_user: The VE user fixture.
+
+    Asserts:
+        - The appropriate flash message is displayed when no file is provided.
+        - The response redirects to the referring page.
+    """
+    # Ensure a VE user is logged in
+    login(client, ve_user.username, 'vepassword')
+
+    # Create a pool for testing
+    with app.app_context():
+        new_pool = Pool(name="Test Pool", element="2", start_date=datetime.now(), end_date=datetime.now())
+        db.session.add(new_pool)
+        db.session.commit()
+        pool_id = new_pool.id
+
+    # Make a request without a file to the upload diagram route
+    response = client.post(f'/ve/upload_diagram/{pool_id}', data={}, follow_redirects=True)
+
+    # Assert the expected response
+    assert response.status_code == 200
+    assert b'No file part' in response.data
+
+def test_upload_diagram_empty_filename(client, app, ve_user):
+    """Test ID: UT-166
+    Test upload diagram with an empty filename.
+
+    This test ensures that when a file with an empty filename is provided,
+    an appropriate error message is flashed.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The appropriate flash message is displayed when the file has no name.
+        - The response redirects to the referring page.
+    """
+    # Ensure a VE user is logged in
+    login(client, ve_user.username, 'vepassword')
+
+    data = {
+        'file': (BytesIO(b'my file contents'), '')
+    }
+    with app.app_context():
+        response = client.post('/ve/upload_diagram/1', data=data, follow_redirects=True)
+
+        assert response.status_code == 200
+        print(response.data)
+        assert b'No selected file' in response.data
+
+def test_upload_diagram_invalid_file_type(client, app, ve_user):
+    """Test ID: UT-167
+    Test upload diagram with an invalid file type.
+
+    This test ensures that when an invalid file type is uploaded,
+    an appropriate error message is flashed.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The appropriate flash message is displayed for invalid file types.
+        - The response redirects to the referring page.
+    """
+    # Ensure a VE user is logged in
+    login(client, ve_user.username, 'vepassword')
+
+    data = {
+        'file': (BytesIO(b'my file contents'), 'test.txt')  # Invalid file type
+    }
+    with app.app_context():
+        response = client.post('/ve/upload_diagram/1', data=data, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Invalid file type. Allowed types: png, jpg, jpeg, gif' in response.data
+
+@patch('os.path.exists', return_value=False)
+def test_upload_diagram_directory_does_not_exist(mock_exists, client, app, ve_user):
+    """Test ID: UT-168
+    Test upload diagram when the directory does not exist.
+
+    This test ensures that when the directory for storing uploads does not exist,
+    an appropriate error message is flashed.
+
+    Args:
+        mock_exists: Mock for os.path.exists to simulate a non-existing directory.
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The appropriate flash message is displayed when the directory doesn't exist.
+        - The response redirects to the referring page.
+    """
+    # Ensure a VE user is logged in
+    login(client, ve_user.username, 'vepassword')
+
+    data = {
+        'file': (BytesIO(b'my file contents'), 'test.png')
+    }
+    with app.app_context():
+        response = client.post('/ve/upload_diagram/1', data=data, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Upload directory does not exist.' in response.data
+
+
+@patch('os.path.exists', return_value=True)
+@patch('werkzeug.datastructures.FileStorage.save')
+def test_upload_diagram_successful(mock_save, mock_exists, client, app, ve_user):
+    """Test ID: UT-169
+    Test successful upload of a diagram.
+
+    This test ensures that when all conditions are met, the diagram is successfully uploaded,
+    and the appropriate success message is flashed.
+
+    Args:
+        mock_save: Mock for FileStorage.save to simulate successful file saving.
+        mock_exists: Mock for os.path.exists to simulate an existing directory.
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The appropriate flash message is displayed for successful upload.
+        - The response redirects to the pools page.
+    """
+    # Ensure a VE user is logged in
+    login(client, ve_user.username, 'vepassword')
+
+    data = {
+        'file': (BytesIO(b'my file contents'), 'test.png'),
+        'diagram_name': 'Test Diagram'
+    }
+    with app.app_context():
+        response = client.post('/ve/upload_diagram/1', data=data, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'Diagram uploaded successfully' in response.data
+
+
+@patch('os.path.exists', return_value=True)
+@patch('werkzeug.datastructures.FileStorage.save', side_effect=SQLAlchemyError)
+def test_upload_diagram_database_error(mock_save, mock_exists, client, app, ve_user):
+    """Test ID: UT-170
+    Test upload diagram with a database error.
+
+    This test ensures that when there is a database error during the diagram save,
+    an appropriate error message is flashed.
+
+    Args:
+        mock_save: Mock for FileStorage.save to simulate a database error.
+        mock_exists: Mock for os.path.exists to simulate an existing directory.
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The appropriate flash message is displayed for a database error.
+        - The response redirects to the referring page.
+    """
+    # Ensure a VE user is logged in
+    login(client, ve_user.username, 'vepassword')
+
+    data = {
+        'file': (BytesIO(b'my file contents'), 'test.png'),
+        'diagram_name': 'Test Diagram'
+    }
+    with app.app_context():
+        response = client.post('/ve/upload_diagram/1', data=data, follow_redirects=True)
+
+        assert response.status_code == 200
+        assert b'An error occurred while saving the diagram to the database.' in response.data

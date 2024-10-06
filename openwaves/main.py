@@ -649,17 +649,19 @@ def close_session(session_id):
 
 # Route to upload exam diagrams
 @main.route('/ve/upload_diagram/<int:pool_id>', methods=['POST'])
+@login_required
 def upload_diagram(pool_id):
     if 'file' not in request.files:
         flash('No file part')
-        return redirect(request.referrer)
+        return redirect(request.referrer or url_for('main.pools'))
+
 
     file = request.files['file']
     diagram_name = request.form.get('diagram_name')
 
     if file.filename == '':
         flash('No selected file')
-        return redirect(request.referrer)
+        return redirect(request.referrer or url_for('main.pools'))
 
     if file and allowed_file(file.filename):
         # Secure the filename to prevent issues with directory traversal
@@ -680,7 +682,7 @@ def upload_diagram(pool_id):
         if not os.path.exists(upload_folder):
             app.logger.error(f"Directory does not exist: {upload_folder}")
             flash('Upload directory does not exist.')
-            return redirect(request.referrer)
+            return redirect(request.referrer or url_for('main.pools'))
 
         app.logger.info(f"Directory exists: {upload_folder}")
 
@@ -705,8 +707,8 @@ def upload_diagram(pool_id):
             app.logger.error(f"Error saving diagram to the database: {e}")
             flash('An error occurred while saving the diagram to the database.')
 
-            return redirect(request.referrer)
+            return redirect(request.referrer or url_for('main.pools'))
 
     else:
         flash('Invalid file type. Allowed types: png, jpg, jpeg, gif')
-        return redirect(request.referrer)
+        return redirect(request.referrer or url_for('main.pools'))
