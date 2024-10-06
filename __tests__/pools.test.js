@@ -918,4 +918,69 @@ describe('Pool management functionality', () => {
         expect(fullscreenOverlay.style.display).toBe('none');
     });
     
+    /**
+     * Test ID: UT-156
+     * Test the functionality of clicking the "Upload" button to open the upload modal.
+     *
+     * This test ensures that clicking the "Upload" button opens the corresponding modal.
+     *
+     * Asserts:
+     * - Clicking the "Upload" button adds the "is-active" class to the modal.
+     */
+    test('UT-156: Open upload modal when "Upload" button is clicked', () => {
+        // Reference the upload button and the modal elements
+        const uploadButton = document.querySelector('.upload-diagram-button');
+        const modal = document.getElementById('upload-modal-1');
+
+        // Simulate clicking the upload button
+        uploadButton.click();
+
+        // Assert that the modal becomes active (is shown)
+        expect(modal.classList.contains('is-active')).toBe(true);
+    });
+
+    /**
+     * Test ID: UT-157
+     * Test the functionality of handling the upload submission in the modal.
+     *
+     * This test ensures that clicking the upload button sends a POST request,
+     * shows an alert upon success, and closes the modal.
+     *
+     * Asserts:
+     * - A POST request is made to the correct URL with the appropriate form data.
+     * - The success alert is shown to the user.
+     * - The modal is closed after submission.
+     */
+    test('UT-157: Handle upload submission and close modal upon successful response', async () => {
+        // Reference the modal and the upload button inside the modal
+        const modal = document.getElementById('upload-modal-1');
+        const submitUploadButton = document.querySelector('.submit-upload[data-pool-id="1"]');
+        const form = document.getElementById('upload-form-1');
+        const formData = new FormData(form);
+
+        // Ensure the modal starts as active (open)
+        modal.classList.add('is-active');
+        expect(modal.classList.contains('is-active')).toBe(true);
+
+        // Mock the fetch API to simulate a successful response
+        global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
+
+        // Simulate clicking the submit upload button
+        submitUploadButton.click();
+
+        // Wait for asynchronous actions to complete
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        // Assert that a POST request was made with the correct URL and data
+        expect(fetch).toHaveBeenCalledWith('/ve/upload_diagram/1', {
+            method: 'POST',
+            body: expect.any(FormData),
+        });
+
+        // Assert that the success alert is shown
+        expect(window.alert).toHaveBeenCalledWith('Diagram uploaded successfully!');
+
+        // Assert that the modal is closed after submission
+        expect(modal.classList.contains('is-active')).toBe(false);
+    });
 });

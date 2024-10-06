@@ -174,7 +174,6 @@ if (!window.poolsEventListenersInitialized) {
             button.addEventListener('click', function() {
                 const poolId = this.getAttribute('data-id');
                 const modal = document.getElementById(`upload-modal-${poolId}`);
-                console.log('Looking for modal:', modal);
                 if (modal) {
                     modal.classList.add('is-active');
                 }
