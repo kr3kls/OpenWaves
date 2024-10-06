@@ -5,7 +5,7 @@
 
 from datetime import datetime
 from openwaves import db
-from openwaves.models import User, Pool, Question, TLI, ExamSession, ExamRegistration
+from openwaves.models import User, Pool, Question, TLI, ExamSession, ExamRegistration, ExamDiagram
 
 def test_user_creation(app):
     """Test ID: UT-76
@@ -403,3 +403,25 @@ def test_exam_registration_repr(app):
         )
         expected_repr = f"ExamRegistration('{registration.user_id}', '{registration.session_id}')"
         assert repr(registration) == expected_repr
+
+def test_exam_diagram_repr(app):
+    """Test ID: UT-171
+    Test the __repr__ method of the ExamDiagram model.
+
+    This test ensures that the string representation of the ExamDiagram object
+    correctly displays the diagram path.
+
+    Args:
+        app: The Flask application instance.
+
+    Asserts:
+        - The __repr__ method returns the expected string format.
+    """
+    with app.app_context():
+        exam_diagram = ExamDiagram(
+            pool_id=1,
+            name="Test Diagram",
+            path="diagrams/test_diagram.png"
+        )
+        expected_repr = f"ExamDiagram('{exam_diagram.path}')"
+        assert repr(exam_diagram) == expected_repr

@@ -211,4 +211,4 @@ class ExamDiagram(db.Model):
         Returns:
             str: A string showing the diagram path.
         """
-        return f"ExamDiagram('{self.diagram}')"
+        return f"ExamDiagram('{self.path}')"
