@@ -6,10 +6,10 @@
  * @jest-environment jsdom
  */
 
-require('../openwaves/static/js/pools'); // This will execute the pools.js code, including the DOMContentLoaded event
 
 describe('Pool management functionality', () => {
     let csrfTokenInput;
+    let poolRow, expandableRow;
 
     beforeEach(() => {
         // Replace location.reload with a mock function
@@ -24,33 +24,208 @@ describe('Pool management functionality', () => {
     
         // Set up the DOM structure, including the required elements
         document.body.innerHTML = `
-        <input name="csrf_token" value="dummy-csrf-token" />
-        <div id="fullscreen-overlay" class="fullscreen-overlay">
-            <img id="fullscreen-image" class="fullscreen-image" src="" alt="Blown-up Diagram">
+        <div class="container has-text-centered">
+            <!-- Flash messages -->   
+            <div class="column is-8 is-offset-2">
+                <div class="box">
+                    <h3 class="title has-text-centered has-text-dark">Question Pools</h3>
+                    <div class="table-container has-text-centered">
+                        <table class="table is-striped is-hoverable is-fullwidth">
+                        <thead>
+                            <tr>
+                                <th>Pool ID</th>
+                                <th>Pool Name</th>
+                                <th>Element</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Questions</th>
+                            </tr>
+                        </thead>
+                        
+                        <tbody>
+                            
+                            <tr class="pool-row" data-id="1">
+                                <td>1</td>
+                                <td>Technician</td>
+                                <td>2</td>
+                                <td>2024-07-01</td>
+                                <td>2028-06-30</td>
+                                <td>
+                                    
+                                        <!-- Display upload button when there are no questions -->
+                                        <button class="button is-small is-light-button-color" id="upload-button-1">Upload Questions</button>
+                        
+                                        <!-- Modal for CSV upload -->
+                                        <div class="modal" id="upload-modal-1">
+                                            <div class="modal-background"></div>
+                                            <div class="modal-card">
+                                                <header class="modal-card-head">
+                                                    <p class="modal-card-title">Upload Questions for Technician</p>
+                                                    <button class="delete" aria-label="close"></button>
+                                                </header>
+                                                <section class="modal-card-body">
+                                                    <form id="upload-form-1" enctype="multipart/form-data">
+                                                        
+                                                            <input type="hidden" name="csrf_token" value="dummy-csrf-token">
+                                                        
+                                                        
+                                                        <div class="field">
+                                                            <label class="label">Upload CSV File</label>
+                                                            <div class="control">
+                                                                <input class="input" type="file" name="file" accept=".csv" required="">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </section>
+                                                <footer class="modal-card-foot">
+                                                    <button class="button is-light-button-color" id="submit-upload-1">Upload</button>
+                                                    <button class="button is-button-color">Cancel</button>
+                                                </footer>
+                                            </div>
+                                        </div>
+                                    
+                                </td>
+                                <td>
+                                    <button class="button is-small is-danger delete-pool-button" data-name="Technician" data-id="1">Delete</button>
+                                </td>
+                            </tr>
+                            <tr class="expandable-row" data-id="1">
+                                <td colspan="7">
+                                    <div id="fullscreen-overlay" class="fullscreen-overlay">
+                                            <img id="fullscreen-image" class="fullscreen-image" src="" alt="Blown-up Diagram">
+                                        </div><table class="table is-striped is-fullwidth">
+                                        <thead>
+                                            <tr>
+                                                <th>Diagram ID</th>
+                                                <th>Diagram Name</th>
+                                                <th>Image</th>
+                                                <th>Path</th>
+                                            </tr>
+                                        </thead>
+                                        
+                                        <tbody>
+                                            
+                                            <tr>
+                                                <td colspan="4">No diagrams found.</td>
+                                                <td>
+                                                    <button class="button is-small is-light-button-color upload-diagram-button" data-name="Technician" data-id="1">Upload</button>
+                                                </td>
+                                            </tr>
+                                            
+                                    </tbody></table>
+                                    <!-- Modal for CSV and Image upload for this pool -->
+                                    <div class="modal" id="upload-modal-1">
+                                        <div class="modal-background"></div>
+                                        <div class="modal-card">
+                                            <header class="modal-card-head">
+                                                <p class="modal-card-title">Upload Diagram for Technician</p>
+                                                <button class="delete close-modal" aria-label="close"></button>
+                                            </header>
+                                            <section class="modal-card-body">
+                                                <form id="upload-form-1" enctype="multipart/form-data">
+                                                    
+                                                        <input type="hidden" name="csrf_token" value="dummy-csrf-token">
+                                                    
+
+                                                    <!-- Diagram Name Field (Readonly) -->
+                                                    <div class="field">
+                                                        <label class="label">Diagram Name</label>
+                                                        <div class="control">
+                                                            <input class="input" type="text" name="diagram_name" value="">
+                                                        </div>
+                                                        <p class="help">Please enter the diagram name based on the element and current number (e.g., T-1, G-1, E-1).</p>
+                                                    </div>
+
+                                                    <!-- Upload Image File Field -->
+                                                    <div class="field">
+                                                        <label class="label">Upload Image File</label>
+                                                        <div class="control">
+                                                            <input class="input" type="file" name="file" accept="image/*" required="">
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </section>
+                                            <footer class="modal-card-foot">
+                                                <button class="button is-success submit-upload" data-pool-id="1">Upload</button>
+                                                <button class="button close-modal">Cancel</button>
+                                            </footer>
+                                        </div>
+                                    </div>
+                                    
+                                </td>
+                            </tr>                
+                        </tbody>
+                        
+                        </table>
+                    </div>
+
+                    <!-- Button to create a new pool -->
+                    <div class="has-text-centered">
+                        <button class="button is-button-color" id="create-pool-button">Create New Pool</button>
+                    </div>
+
+                    <!-- Modal for creating a new question pool -->
+                    <div class="modal" id="create-pool-modal">
+                        <div class="modal-background"></div>
+                        <div class="modal-card">
+                            <header class="modal-card-head">
+                                <p class="modal-card-title">Create Question Pool</p>
+                                <button class="delete close-modal" aria-label="close"></button>
+                            </header>
+                            <section class="modal-card-body">
+                                <form id="create-pool-form">
+                                    
+                                        <input type="hidden" name="csrf_token" value="dummy-csrf-token">
+                                    
+
+                                    <!-- Dropdown for Pool Name -->
+                                    <div class="field">
+                                        <label class="label">Element Pool</label>
+                                        <div class="control">
+                                            <div class="select">
+                                                <select id="pool-name" name="pool_name" required="">
+                                                    <option value="Technician">Technician</option>
+                                                    <option value="General">General</option>
+                                                    <option value="Extra">Extra</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hidden Element field that gets auto-filled -->
+                                    <input type="hidden" id="exam-element" name="exam_element" value="2">
+
+                                    <!-- Auto-populated Start Date -->
+                                    <div class="field">
+                                        <label class="label">Start Date</label>
+                                        <div class="control">
+                                            <input class="input" type="date" id="start-date" name="start_date" required="">
+                                        </div>
+                                    </div>
+
+                                    <!-- Auto-populated End Date -->
+                                    <div class="field">
+                                        <label class="label">End Date</label>
+                                        <div class="control">
+                                            <input class="input" type="date" id="end-date" name="end_date" required="">
+                                        </div>
+                                    </div>
+                                </form>
+                            </section>
+                            <footer class="modal-card-foot">
+                                <button class="button is-success" id="submit-pool-form">Save</button>
+                                <button class="button is-light" id="cancel-pool-form">Cancel</button>
+                            </footer>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button id="create-pool-button"></button>  <!-- Mock the create pool button -->
-        <form id="create-pool-form">
-            <!-- Form inputs... -->
-            <button id="submit-pool-form"></button>  <!-- Mock submit button -->
-        </form>
-        <div id="create-pool-modal" class="modal"></div>  <!-- Mock modal -->
-        <button class="delete-pool-button" data-id="1" data-name="Test Pool"></button>
-        <button id="upload-button-1"></button>  <!-- Mock upload button -->
-        <div id="upload-modal-1" class="modal">
-            <button class="delete"></button>  <!-- Mock close button -->
-            <button id="cancel-pool-form"></button>  <!-- Mock cancel button -->
-            <button id="submit-upload-1"></button>  <!-- Mock submit button -->
-        </div>  <!-- Mock upload modal -->
-        <input id="start-date" type="date" />
-        <input id="end-date" type="date" />
-        <select id="pool-name">
-            <option value="Technician">Technician</option>
-            <option value="General">General</option>
-            <option value="Extra">Extra</option>
-        </select>
-        <input id="exam-element" />
-    `;
-    
+        `;
+
+        // Mock console.error to track errors
+        console.error = jest.fn();
+
         csrfTokenInput = document.querySelector('input[name="csrf_token"]');
         
         // Mock window.confirm and window.alert to prevent actual prompts during tests
@@ -60,17 +235,26 @@ describe('Pool management functionality', () => {
     
         // Mock fetch API
         global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
-    
+
+        // Require pools.js in an isolated module context
+        jest.isolateModules(() => {
+            require('../openwaves/static/js/pools');
+        });
+
         // Simulate DOMContentLoaded to initialize event listeners
         document.dispatchEvent(new Event('DOMContentLoaded'));
 
+        // Now assign poolRow and expandableRow after event listeners are attached
+        poolRow = document.querySelector('.pool-row');
+        expandableRow = document.querySelector('.expandable-row');
+
         consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
     });
-    
-
+        
     afterEach(() => {
+        jest.resetModules();
         jest.clearAllMocks();
-        consoleErrorMock.mockRestore();
+        document.body.innerHTML = '';
     });
 
     /**
@@ -84,7 +268,7 @@ describe('Pool management functionality', () => {
      * - A DELETE request is sent to the correct URL with appropriate headers.
      * - A success alert is shown to the user.
      */
-    test('delete pool button triggers fetch and shows success alert', async () => {
+    test('UT-123: delete pool button triggers fetch and shows success alert', async () => {
         const deleteButton = document.querySelector('.delete-pool-button');
         deleteButton.click();
         await Promise.resolve();
@@ -110,7 +294,7 @@ describe('Pool management functionality', () => {
      * - An error alert is shown to the user when the fetch request is rejected.
      * - The console.error is called with the correct error message.
      */
-    test('delete pool button handles fetch rejection gracefully', async () => {
+    test('UT-124: delete pool button handles fetch rejection gracefully', async () => {
         // Mock fetch to reject with an error
         const mockError = new Error('Network error');
         fetch.mockRejectedValueOnce(mockError);
@@ -141,7 +325,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - An error alert is shown to the user when the server responds with a non-OK status.
      */
-    test('delete pool button triggers error alert on fetch failure', async () => {
+    test('UT-125: delete pool button triggers error alert on fetch failure', async () => {
         global.fetch = jest.fn(() => Promise.resolve({ ok: false }));  // Mock a failure response
         const deleteButton = document.querySelector('.delete-pool-button');
         deleteButton.click();
@@ -160,7 +344,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - The modal becomes active (is shown) after clicking the upload button.
      */
-    test('upload button triggers modal visibility', () => {
+    test('UT-126: upload button triggers modal visibility', () => {
         const uploadButton = document.getElementById('upload-button-1');
         const modal = document.getElementById('upload-modal-1');
         
@@ -183,28 +367,28 @@ describe('Pool management functionality', () => {
      * - An error alert is shown to the user.
      * - The modal is closed after the submission fails.
      */
-    test('submit upload form handles non-OK response', async () => {
+    test('UT-127: submit upload form handles non-OK response', async () => {
         const modal = document.getElementById('upload-modal-1');
         const submitButton = document.getElementById('submit-upload-1');
         
-        const form = document.createElement('form');
-        form.setAttribute('id', 'upload-form-1');
-        document.body.appendChild(form);
-        const formData = new FormData(form);
-    
         // Mock fetch to return ok: false
         global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
-    
+        
         // Simulate form submission
         submitButton.click();
+        
+        // Wait for the asynchronous code to complete
         await Promise.resolve();
-    
-        expect(fetch).toHaveBeenCalledWith('/ve/upload_questions/1', {
+        
+        // Use toHaveBeenNthCalledWith to verify the specific call to fetch
+        expect(fetch).toHaveBeenNthCalledWith(1, '/ve/upload_questions/1', {
             method: 'POST',
-            body: formData,
+            body: expect.any(FormData),
         });
-    
+
+        // Assert that the error alert is shown
         expect(window.alert).toHaveBeenCalledWith('There was an error uploading the questions.');
+
         // The modal should still be closed after submission
         expect(modal.classList.contains('is-active')).toBe(false);
     });
@@ -220,24 +404,24 @@ describe('Pool management functionality', () => {
      * - A POST request is sent to the correct URL with appropriate form data.
      * - The modal is closed after the submission succeeds.
      */
-    test('submit upload form triggers fetch and closes modal', async () => {
+    test('UT-128: submit upload form triggers fetch and closes modal', async () => {
         const modal = document.getElementById('upload-modal-1');
         const submitButton = document.getElementById('submit-upload-1');
         
-        const form = document.createElement('form');
-        form.setAttribute('id', 'upload-form-1');
-        document.body.appendChild(form);
+        const form = document.getElementById('upload-form-1');
         const formData = new FormData(form);
 
+        // Mock the global fetch to return a successful response
         global.fetch = jest.fn(() => Promise.resolve({ ok: true }));
 
         // Simulate form submission
         submitButton.click();
-        await Promise.resolve();
+        await new Promise((resolve) => setTimeout(resolve, 0)); // Wait for asynchronous code to complete
 
-        expect(fetch).toHaveBeenCalledWith('/ve/upload_questions/1', {
+        // Ensure that the fetch was called correctly
+        expect(fetch).toHaveBeenNthCalledWith(1, '/ve/upload_questions/1', {
             method: 'POST',
-            body: formData,
+            body: expect.any(FormData),
         });
 
         // Assert that the modal is no longer active (closed)
@@ -255,7 +439,7 @@ describe('Pool management functionality', () => {
      * - The modal starts as active (open).
      * - The modal is closed after the cancel button is clicked.
      */
-    test('close modal when cancel is clicked', () => {
+    test('UT-129: close create-pool-modal when cancel is clicked', () => {
         // Get the close button (X) and the modal from the DOM
         const cancelButton = document.querySelector('#cancel-pool-form'); // Cancel button class
         const modal = document.getElementById('create-pool-modal');
@@ -284,21 +468,23 @@ describe('Pool management functionality', () => {
      * - The modal starts as active (open).
      * - The modal is closed after the close button is clicked.
      */
-    test('close modal when X is clicked', () => {
-        // Get the close button (X) and the modal from the DOM
-        const closeButton = document.querySelector('.delete'); // X button class
+    test('UT-130: close create-pool-modal when X is clicked', async () => {    
+        const closeButton = document.querySelector('#create-pool-modal .delete');
         const modal = document.getElementById('create-pool-modal');
     
-        // Ensure the modal starts as active (open)
-        modal.classList.add('is-active'); // This opens the modal
+        // Open the modal
+        modal.classList.add('is-active');
     
-        // Ensure the modal is actually open before closing
+        // Ensure the modal starts as active (open)
         expect(modal.classList.contains('is-active')).toBe(true);
     
-        // Try to close with the close button
-        closeButton.click(); 
+        // Simulate the click event
+        closeButton.click();
     
-        // Assert the modal is no longer active (closed)
+        // Wait for any asynchronous actions to complete (this ensures that event listeners are executed)
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    
+        // Assert that the modal is no longer active
         expect(modal.classList.contains('is-active')).toBe(false);
     });
 
@@ -312,25 +498,45 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - A POST request is made to the correct URL with appropriate data.
      * - The modal is closed after the form submission.
+     * - An alert is shown if the pool is created successfully.
+     * - The page is reloaded after successful creation.
      */
-    test('submit pool form triggers fetch and closes modal', async () => {
+    test('UT-131: submit pool form triggers fetch, shows alert, reloads, and closes modal', async () => {
         const modal = document.getElementById('create-pool-modal');
         const createPoolForm = document.getElementById('create-pool-form');
         const submitPoolFormButton = document.getElementById('submit-pool-form');
 
         modal.classList.add('is-active');
 
+        // Mock global fetch to return a successful response
         global.fetch = jest.fn(() =>
             Promise.resolve({
+                ok: true,
                 json: () => Promise.resolve({ success: true }),
             })
         );
 
-        submitPoolFormButton.click();
-        await Promise.resolve();
+        // Mock window.alert
+        window.alert = jest.fn();
 
+        // Mock window.location.reload
+        delete window.location;
+        window.location = { reload: jest.fn() };
+
+        // Trigger form submission
+        submitPoolFormButton.click();
+        await Promise.resolve(); // Wait for the fetch call to resolve
+
+        // Assertions
         expect(fetch).toHaveBeenCalledWith('/ve/create_pool', expect.any(Object));
 
+        // Assert alert is shown
+        expect(window.alert).toHaveBeenCalledWith('Pool created successfully!');
+
+        // Assert location.reload is called
+        expect(window.location.reload).toHaveBeenCalled();
+
+        // Assert modal is closed
         expect(modal.classList.contains('is-active')).toBe(false);
     });
 
@@ -344,7 +550,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - The end date is correctly updated based on the new start date.
      */
-    test('start date change updates end date automatically', () => {
+    test('UT-132: start date change updates end date automatically', () => {
         const startDateField = document.getElementById('start-date');
         const endDateField = document.getElementById('end-date');
 
@@ -371,7 +577,7 @@ describe('Pool management functionality', () => {
      * - The end date is set to June 30, 4 years from the start date.
      * - The create pool modal is opened after clicking the create pool button.
      */
-    test('create pool button sets default dates and opens modal', () => {
+    test('UT-133: create pool button sets default dates and opens modal', () => {
         const createPoolButton = document.getElementById('create-pool-button');
         const createPoolModal = document.getElementById('create-pool-modal');
         const startDateField = document.getElementById('start-date');
@@ -398,7 +604,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - Selecting 'Technician' updates the exam element field to '2'.
      */
-    test('pool name selection updates exam element to 2 for Technician', () => {
+    test('UT-134: pool name selection updates exam element to 2 for Technician', () => {
         const poolNameDropdown = document.getElementById('pool-name');
         const examElementField = document.getElementById('exam-element');
     
@@ -419,7 +625,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - Selecting 'General' updates the exam element field to '3'.
      */
-    test('pool name selection updates exam element to 3 for General', () => {
+    test('UT-135: pool name selection updates exam element to 3 for General', () => {
         const poolNameDropdown = document.getElementById('pool-name');
         const examElementField = document.getElementById('exam-element');
 
@@ -440,7 +646,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - Selecting 'Extra' updates the exam element field to '4'.
      */
-    test('pool name selection updates exam element to 4 for Extra', () => {
+    test('UT-136: pool name selection updates exam element to 4 for Extra', () => {
         const poolNameDropdown = document.getElementById('pool-name');
         const examElementField = document.getElementById('exam-element');
 
@@ -464,7 +670,7 @@ describe('Pool management functionality', () => {
      * - An error alert is shown to the user.
      * - The pool creation modal is closed after submission.
      */
-    test('submit pool form handles non-OK response', async () => {
+    test('UT-137: submit pool form handles non-OK response', async () => {
         const modal = document.getElementById('create-pool-modal');
         const submitPoolFormButton = document.getElementById('submit-pool-form');
     
@@ -482,5 +688,95 @@ describe('Pool management functionality', () => {
     
         // Check that the modal is closed after submission
         expect(modal.classList.contains('is-active')).toBe(false);
+    });
+
+    /**
+     * Test ID: UT-150
+     * Test the functionality of clicking a pool row to add the "show" class if the expandable row is hidden.
+     *
+     * This test ensures that when a pool row is clicked and the expandable row is initially hidden,
+     * the "show" class is added to make it visible.
+     *
+     * Asserts:
+     * - Clicking a pool row adds the "show" class to the expandable row when it is hidden.
+     */
+    test('UT-150: clicking a pool row adds "show" class if expandable row is hidden', async () => {
+        // Initially, the expandable row should not have the "show" class
+        expect(expandableRow.classList.contains('show')).toBe(false);
+    
+        // Simulate clicking the pool row
+        poolRow.click();
+    
+        // Wait for any asynchronous code to complete
+        await Promise.resolve();
+    
+        // Now, check if the "show" class has been added
+        expect(expandableRow.classList.contains('show')).toBe(true);
+    });
+    
+    /**
+     * Test ID: UT-151
+     * Test the functionality of clicking a pool row to remove the "show" class if the expandable row is shown.
+     *
+     * This test ensures that when a pool row is clicked and the expandable row is initially shown,
+     * the "show" class is removed to hide it.
+     *
+     * Asserts:
+     * - Clicking a pool row removes the "show" class from the expandable row when it is visible.
+     */
+    test('UT-151: clicking a pool row removes "show" class if expandable row is shown', () => {
+        // Add the "show" class initially
+        expandableRow.classList.add('show');
+        expect(expandableRow.classList.contains('show')).toBe(true);
+
+        // Click the pool row
+        poolRow.click();
+
+        // The "show" class should now be removed
+        expect(expandableRow.classList.contains('show')).toBe(false);
+    });
+
+    /**
+     * Test ID: UT-152
+     * Test the functionality of clicking a pool row when no corresponding expandable row is found.
+     *
+     * This test ensures that when a pool row is clicked, but no expandable row with the matching data-id exists,
+     * an error is logged to the console.
+     *
+     * Asserts:
+     * - If no expandable row exists, an error is logged with the correct message.
+     */
+    test('UT-152: clicking a pool row logs an error if no expandable row is found', () => {
+        // Remove the expandable row from the DOM
+        expandableRow.remove();
+
+        // Click the pool row
+        poolRow.click();
+
+        // Ensure console.error is called with the correct message
+        expect(console.error).toHaveBeenCalledWith('No expandable row found for pool ID: 1');
+    });
+
+    /**
+     * Test ID: UT-153
+     * Test the functionality of clicking the upload button to show the modal.
+     *
+     * This test ensures that clicking the "Upload" button opens the corresponding modal.
+     *
+     * Asserts:
+     * - Clicking the "Upload" button adds the "is-active" class to the modal.
+     */
+    test('UT-153: clicking the upload button shows the corresponding modal', () => {
+        // Simulate clicking the upload button
+        const uploadButton = document.getElementById('upload-button-1');
+        const modal = document.getElementById('upload-modal-1');
+    
+        // Initially, the modal should not be active
+        expect(modal.classList.contains('is-active')).toBe(false);
+    
+        uploadButton.click();
+    
+        // Assert that the modal becomes active (is shown)
+        expect(modal.classList.contains('is-active')).toBe(true);
     });
 });
