@@ -4,7 +4,9 @@
 """
 
 from werkzeug.security import generate_password_hash
+from openwaves.models import Pool, ExamDiagram
 from . import db
+from .config import Config
 
 def update_user_password(user, new_password):
     """Update the user's password with a new hashed password.
@@ -53,3 +55,17 @@ def remove_exam_registration(existing_registration, exam_element):
             existing_registration.gen = False
         elif exam_element == '4':
             existing_registration.extra = False
+
+# Helper function to load question pools
+def load_question_pools():
+    """Load the question pools from the database."""
+    pools = Pool.query.order_by(Pool.element.asc(), Pool.start_date.asc()).all()
+    diagrams = ExamDiagram.query.all()
+    for pool in pools:
+        pool.diagrams = [diagram for diagram in diagrams if diagram.pool_id == pool.id]
+    return pools
+
+# Helper function to check if a file has an allowed extension
+def allowed_file(filename):
+    """Check if a given filename has an allowed extension."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in Config.ALLOWED_EXTENSIONS
