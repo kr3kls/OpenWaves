@@ -712,3 +712,35 @@ def upload_diagram(pool_id):
     else:
         flash('Invalid file type. Allowed types: png, jpg, jpeg, gif')
         return redirect(request.referrer or url_for('main.pools'))
+
+# Route to delete diagrams
+@main.route('/ve/delete_diagram/<int:diagram_id>', methods=['DELETE'])
+@login_required
+def delete_diagram(diagram_id):
+    """Delete a diagram."""
+    # Check if the current user has role 2
+    if current_user.role == 2:
+        # If a VE account exists
+        # Find the diagram by ID
+        diagram = db.session.get(ExamDiagram, diagram_id)
+        if not diagram:
+            return jsonify({"error": "Diagram not found."}), 404
+
+        # Delete the diagram file from the server
+        upload_folder = app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_folder, os.path.basename(diagram.path))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        else:
+            app.logger.error(f"File does not exist: {file_path}")
+            return jsonify({"error": "Diagram file not found."}), 404
+
+        # Delete the diagram itself
+        db.session.delete(diagram)
+        db.session.commit()
+
+        return jsonify({"success": True}), 200
+
+    # If no VE account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
