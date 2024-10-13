@@ -404,7 +404,7 @@ def test_upload_diagram_database_error(mock_save, mock_exists, client, app, ve_u
 
 @patch('os.path.exists', return_value=True)
 @patch('os.remove')
-def test_delete_diagram_success(mock_remove, mock_exists, client, app, ve_user): 
+def test_delete_diagram_success(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
     """Test ID: UT-172
     Test successful diagram deletion.
 
@@ -476,7 +476,7 @@ def test_delete_diagram_not_found(client, ve_user):
     assert b'Diagram not found.' in response.data
 
 @patch('os.path.exists', return_value=False)
-def test_delete_diagram_file_not_found(mock_exists, client, app, ve_user):
+def test_delete_diagram_file_not_found(mock_exists, client, app, ve_user): # pylint: disable=W0613
     """Test ID: UT-174
     Test diagram deletion when the diagram file does not exist on the server.
 

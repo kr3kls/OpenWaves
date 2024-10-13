@@ -1089,7 +1089,6 @@ describe('Pool management functionality', () => {
         expect(window.location.reload).toHaveBeenCalled();
     });
 
-
     /**
      * Test ID: UT-177
      * Test the behavior of the delete diagram button when the fetch request is rejected.
