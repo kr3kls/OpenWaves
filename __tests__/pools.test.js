@@ -69,7 +69,6 @@ describe('Pool management functionality', () => {
                                                 <th>Diagram ID</th>
                                                 <th>Diagram Name</th>
                                                 <th>Image</th>
-                                                <th>Path</th>
                                             </tr>
                                         </thead>
                                         
@@ -80,7 +79,9 @@ describe('Pool management functionality', () => {
                                                 <td>1</td>
                                                 <td>T-1</td>
                                                 <td><img src="/static/images/diagrams/1_T1.jpg" alt="T-1" class="pool-diagram thumbnail-image"></td>
-                                                <td>diagrams/1_T1.jpg</td>
+                                                <td>
+                                                    <button class="button is-small is-danger delete-diagram-button" data-name="diagrams/1_T1.jpg" data-id="1">Delete</button>
+                                                </td>
                                             </tr>
                                             
                                             <tr>
@@ -137,37 +138,7 @@ describe('Pool management functionality', () => {
                                 <td>2028-06-30</td>
                                 <td>
                                     
-                                        <!-- Display upload button when there are no questions -->
-                                        <button class="button is-small is-light-button-color" id="upload-button-2">Upload Questions</button>
-                        
-                                        <!-- Modal for CSV upload -->
-                                        <div class="modal" id="upload-modal-2">
-                                            <div class="modal-background"></div>
-                                            <div class="modal-card">
-                                                <header class="modal-card-head">
-                                                    <p class="modal-card-title">Upload Questions for General</p>
-                                                    <button class="delete" aria-label="close"></button>
-                                                </header>
-                                                <section class="modal-card-body">
-                                                    <form id="upload-form-2" enctype="multipart/form-data">
-                                                        
-                                                            <input type="hidden" name="csrf_token" value="dummy-csrf-token">
-                                                        
-                                                        
-                                                        <div class="field">
-                                                            <label class="label">Upload CSV File</label>
-                                                            <div class="control">
-                                                                <input class="input" type="file" name="file" accept=".csv" required="">
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </section>
-                                                <footer class="modal-card-foot">
-                                                    <button class="button is-light-button-color" id="submit-upload-2">Upload</button>
-                                                    <button class="button is-button-color">Cancel</button>
-                                                </footer>
-                                            </div>
-                                        </div>
+                                        427 questions
                                     
                                 </td>
                                 <td>
@@ -184,7 +155,6 @@ describe('Pool management functionality', () => {
                                                 <th>Diagram ID</th>
                                                 <th>Diagram Name</th>
                                                 <th>Image</th>
-                                                <th>Path</th>
                                             </tr>
                                         </thead>
                                         
@@ -232,6 +202,113 @@ describe('Pool management functionality', () => {
                                             </section>
                                             <footer class="modal-card-foot">
                                                 <button class="button is-success submit-upload" data-pool-id="2">Upload</button>
+                                                <button class="button close-modal">Cancel</button>
+                                            </footer>
+                                        </div>
+                                    </div>
+                                    
+                            </td></tr><tr class="pool-row" data-id="3">
+                                <td>3</td>
+                                <td>Extra</td>
+                                <td>4</td>
+                                <td>2024-07-01</td>
+                                <td>2028-06-30</td>
+                                <td>
+                                    
+                                        <!-- Display upload button when there are no questions -->
+                                        <button class="button is-small is-light-button-color" id="upload-button-3">Upload Questions</button>
+                        
+                                        <!-- Modal for CSV upload -->
+                                        <div class="modal" id="upload-modal-3">
+                                            <div class="modal-background"></div>
+                                            <div class="modal-card">
+                                                <header class="modal-card-head">
+                                                    <p class="modal-card-title">Upload Questions for Extra</p>
+                                                    <button class="delete" aria-label="close"></button>
+                                                </header>
+                                                <section class="modal-card-body">
+                                                    <form id="upload-form-3" enctype="multipart/form-data">
+                                                        
+                                                            <input type="hidden" name="csrf_token" value="dummy-csrf-token">
+                                                        
+                                                        
+                                                        <div class="field">
+                                                            <label class="label">Upload CSV File</label>
+                                                            <div class="control">
+                                                                <input class="input" type="file" name="file" accept=".csv" required="">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </section>
+                                                <footer class="modal-card-foot">
+                                                    <button class="button is-light-button-color" id="submit-upload-3">Upload</button>
+                                                    <button class="button is-button-color">Cancel</button>
+                                                </footer>
+                                            </div>
+                                        </div>
+                                    
+                                </td>
+                                <td>
+                                    <button class="button is-small is-danger delete-pool-button" data-name="Extra" data-id="3">Delete</button>
+                                </td>
+                            </tr>
+                            <tr class="expandable-row" data-id="3">
+                                <td colspan="7">
+                                    <div id="fullscreen-overlay" class="fullscreen-overlay">
+                                            <img id="fullscreen-image" class="fullscreen-image" src="" alt="Blown-up Diagram">
+                                        </div><table class="table is-striped is-fullwidth">
+                                        <thead>
+                                            <tr>
+                                                <th>Diagram ID</th>
+                                                <th>Diagram Name</th>
+                                                <th>Image</th>
+                                            </tr>
+                                        </thead>
+                                        
+                                        <tbody>
+                                            
+                                            <tr>
+                                                <td colspan="4">No diagrams found.</td>
+                                                <td>
+                                                    <button class="button is-small is-light-button-color upload-diagram-button" data-name="Extra" data-id="3">Upload</button>
+                                                </td>
+                                            </tr>
+                                            
+                                    </tbody></table>
+                                    <!-- Modal for CSV and Image upload for this pool -->
+                                    <div class="modal" id="upload-modal-3">
+                                        <div class="modal-background"></div>
+                                        <div class="modal-card">
+                                            <header class="modal-card-head">
+                                                <p class="modal-card-title">Upload Diagram for Extra</p>
+                                                <button class="delete close-modal" aria-label="close"></button>
+                                            </header>
+                                            <section class="modal-card-body">
+                                                <form id="upload-form-3" enctype="multipart/form-data">
+                                                    
+                                                        <input type="hidden" name="csrf_token" value="dummy-csrf-token">
+                                                    
+
+                                                    <!-- Diagram Name Field (Readonly) -->
+                                                    <div class="field">
+                                                        <label class="label">Diagram Name</label>
+                                                        <div class="control">
+                                                            <input class="input" type="text" name="diagram_name" value="">
+                                                        </div>
+                                                        <p class="help">Please enter the diagram name based on the element and current number (e.g., T-1, G-1, E-1).</p>
+                                                    </div>
+
+                                                    <!-- Upload Image File Field -->
+                                                    <div class="field">
+                                                        <label class="label">Upload Image File</label>
+                                                        <div class="control">
+                                                            <input class="input" type="file" name="file" accept="image/*" required="">
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </section>
+                                            <footer class="modal-card-foot">
+                                                <button class="button is-success submit-upload" data-pool-id="3">Upload</button>
                                                 <button class="button close-modal">Cancel</button>
                                             </footer>
                                         </div>
@@ -430,8 +507,8 @@ describe('Pool management functionality', () => {
      * - The modal becomes active (is shown) after clicking the upload button.
      */
     test('UT-126: upload button triggers modal visibility', () => {
-        const uploadButton = document.getElementById('upload-button-2');
-        const modal = document.getElementById('upload-modal-2');
+        const uploadButton = document.getElementById('upload-button-3');
+        const modal = document.getElementById('upload-modal-3');
         
         // Simulate clicking the upload button
         uploadButton.click();
@@ -453,8 +530,8 @@ describe('Pool management functionality', () => {
      * - The modal is closed after the submission fails.
      */
     test('UT-127: submit upload form handles non-OK response', async () => {
-        const modal = document.getElementById('upload-modal-2');
-        const submitButton = document.getElementById('submit-upload-2');
+        const modal = document.getElementById('upload-modal-3');
+        const submitButton = document.getElementById('submit-upload-3');
         
         // Mock fetch to return ok: false
         global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
@@ -466,7 +543,7 @@ describe('Pool management functionality', () => {
         await Promise.resolve();
         
         // Use toHaveBeenNthCalledWith to verify the specific call to fetch
-        expect(fetch).toHaveBeenNthCalledWith(1, '/ve/upload_questions/2', {
+        expect(fetch).toHaveBeenNthCalledWith(1, '/ve/upload_questions/3', {
             method: 'POST',
             body: expect.any(FormData),
         });
@@ -490,10 +567,10 @@ describe('Pool management functionality', () => {
      * - The modal is closed after the submission succeeds.
      */
     test('UT-128: submit upload form triggers fetch and closes modal', async () => {
-        const modal = document.getElementById('upload-modal-2');
-        const submitButton = document.getElementById('submit-upload-2');
+        const modal = document.getElementById('upload-modal-3');
+        const submitButton = document.getElementById('submit-upload-3');
         
-        const form = document.getElementById('upload-form-2');
+        const form = document.getElementById('upload-form-3');
         const formData = new FormData(form);
 
         // Mock the global fetch to return a successful response
@@ -504,7 +581,7 @@ describe('Pool management functionality', () => {
         await new Promise((resolve) => setTimeout(resolve, 0)); // Wait for asynchronous code to complete
 
         // Ensure that the fetch was called correctly
-        expect(fetch).toHaveBeenNthCalledWith(1, '/ve/upload_questions/2', {
+        expect(fetch).toHaveBeenNthCalledWith(1, '/ve/upload_questions/3', {
             method: 'POST',
             body: expect.any(FormData),
         });
@@ -853,8 +930,8 @@ describe('Pool management functionality', () => {
      */
     test('UT-153: clicking the upload button shows the corresponding modal', () => {
         // Simulate clicking the upload button
-        const uploadButton = document.getElementById('upload-button-2');
-        const modal = document.getElementById('upload-modal-2');
+        const uploadButton = document.getElementById('upload-button-3');
+        const modal = document.getElementById('upload-modal-3');
     
         // Initially, the modal should not be active
         expect(modal.classList.contains('is-active')).toBe(false);
@@ -982,5 +1059,76 @@ describe('Pool management functionality', () => {
 
         // Assert that the modal is closed after submission
         expect(modal.classList.contains('is-active')).toBe(false);
+    });
+
+    /**
+     * Test ID: UT-176
+     * Test the functionality of the delete diagram button when the request is successful.
+     *
+     * This test ensures that clicking the delete diagram button triggers a DELETE request 
+     * and shows a success alert when the request completes successfully.
+     *
+     * Asserts:
+     * - A DELETE request is sent to the correct URL with appropriate headers.
+     * - A success alert is shown to the user.
+     * - The page is reloaded after successful deletion.
+     */
+    test('UT-176: delete diagram button triggers fetch and shows success alert', async () => {
+        const deleteButton = document.querySelector('.delete-diagram-button');
+        deleteButton.click();
+        await Promise.resolve();
+
+        expect(fetch).toHaveBeenCalledWith('/ve/delete_diagram/1', {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': 'dummy-csrf-token',
+                'Content-Type': 'application/json',
+            },
+        });
+        expect(window.alert).toHaveBeenCalledWith('Diagram deleted successfully.');
+        expect(window.location.reload).toHaveBeenCalled();
+    });
+
+
+    /**
+     * Test ID: UT-177
+     * Test the behavior of the delete diagram button when the fetch request is rejected.
+     *
+     * This test ensures that when the delete request fails due to a network error, 
+     * an appropriate error message is displayed to the user, and the error is logged.
+     *
+     * Asserts:
+     * - An error alert is shown to the user when the fetch request is rejected.
+     * - The console.error is called with the correct error message.
+     */
+    test('UT-177: delete diagram button handles fetch rejection gracefully', async () => {
+        const mockError = new Error('Network error');
+        fetch.mockRejectedValueOnce(mockError);
+
+        const deleteButton = document.querySelector('.delete-diagram-button');
+        deleteButton.click();
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(window.alert).toHaveBeenCalledWith('There was an error deleting the diagram.');
+        expect(console.error).toHaveBeenCalledWith('Error:', mockError);
+    });
+
+    /**
+     * Test ID: UT-178
+     * Test the behavior of the delete diagram button when the server returns a non-OK response.
+     *
+     * This test ensures that when the server returns a non-OK response (e.g., 400 or 500 status),
+     * an appropriate error alert is shown to the user.
+     *
+     * Asserts:
+     * - An error alert is shown to the user when the server responds with a non-OK status.
+     */
+    test('UT-178: delete diagram button triggers error alert on fetch failure', async () => {
+        global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
+        const deleteButton = document.querySelector('.delete-diagram-button');
+        deleteButton.click();
+        await Promise.resolve();
+
+        expect(window.alert).toHaveBeenCalledWith('There was an error deleting the diagram.');
     });
 });
