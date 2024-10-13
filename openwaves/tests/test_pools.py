@@ -409,42 +409,6 @@ def test_upload_diagram_database_error(mock_save, mock_exists, client, app, ve_u
         assert response.status_code == 200
         assert b'An error occurred while saving the diagram to the database.' in response.data
 
-def test_delete_pool_no_diagrams(client, app, ve_user):
-    """Test ID: UT-171
-    Test pool deletion when there are no diagrams associated with the pool.
-
-    This test ensures that the pool is deleted successfully, even if no diagrams are linked.
-
-    Args:
-        client: The test client instance.
-        app: The Flask application instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The pool is removed from the database.
-        - The response status code is 200.
-    """
-    login(client, ve_user.username, 'vepassword')
-
-    with app.app_context():
-        # Create a pool with no diagrams
-        pool = Pool(name="Test Pool", element="2",
-                    start_date=datetime.now(),
-                    end_date=datetime.now())
-        db.session.add(pool)
-        db.session.flush()
-
-        # DELETE request to remove the pool
-        response = client.delete(f'/ve/delete_pool/{pool.id}', follow_redirects=True)
-
-    # Assert the request was successful
-    assert response.status_code == 200
-
-    # Verify the pool was removed from the database
-    with app.app_context():
-        deleted_pool = db.session.get(Pool, pool.id)
-        assert deleted_pool is None
-
 @patch('os.path.exists', return_value=True)
 @patch('os.remove')
 def test_delete_diagram_success(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
@@ -708,3 +672,39 @@ def test_delete_pool_multiple_diagrams(mock_remove, mock_exists, client, app, ve
     with app.app_context():
         remaining_diagrams = ExamDiagram.query.filter_by(pool_id=pool.id).all()
         assert len(remaining_diagrams) == 0
+
+def test_delete_pool_no_diagrams(client, app, ve_user):
+    """Test ID: UT-182
+    Test pool deletion when there are no diagrams associated with the pool.
+
+    This test ensures that the pool is deleted successfully, even if no diagrams are linked.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+        ve_user: The VE user fixture.
+
+    Asserts:
+        - The pool is removed from the database.
+        - The response status code is 200.
+    """
+    login(client, ve_user.username, 'vepassword')
+
+    with app.app_context():
+        # Create a pool with no diagrams
+        pool = Pool(name="Test Pool", element="2",
+                    start_date=datetime.now(),
+                    end_date=datetime.now())
+        db.session.add(pool)
+        db.session.flush()
+
+        # DELETE request to remove the pool
+        response = client.delete(f'/ve/delete_pool/{pool.id}', follow_redirects=True)
+
+    # Assert the request was successful
+    assert response.status_code == 200
+
+    # Verify the pool was removed from the database
+    with app.app_context():
+        deleted_pool = db.session.get(Pool, pool.id)
+        assert deleted_pool is None
