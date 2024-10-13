@@ -470,10 +470,24 @@ def upload_questions(pool_id):
 @main.route('/ve/delete_pool/<int:pool_id>', methods=['DELETE'])
 @login_required
 def delete_pool(pool_id):
-    """Delete a question pool and all associated questions."""
-    # Check if the current user has role 2
+    """
+    Deletes a question pool, all associated questions, and any diagrams linked to the pool.
+
+    This route handles the deletion of an exam pool, ensuring that the pool's questions 
+    and diagrams are removed from both the database and the server. Only users with 
+    role 2 can perform this operation.
+
+    Args:
+        pool_id (int): The ID of the pool to be deleted.
+
+    Returns:
+        - 200 JSON response: {"success": True} on successful deletion.
+        - 404 JSON response: {"error": "Pool not found."} if the pool ID is invalid.
+        - 404 JSON response: {"error": "Diagram file not found."} if any associated diagram 
+          file is missing from the server.
+        - Redirect to the logout page if the user does not have the appropriate role.
+    """
     if current_user.role == 2:
-        # If a VE account exists
         # Find the pool by ID
         pool = db.session.get(Pool, pool_id)
         if not pool:
@@ -482,6 +496,21 @@ def delete_pool(pool_id):
         # Delete all questions associated with the pool
         Question.query.filter_by(pool_id=pool_id).delete()
         TLI.query.filter_by(pool_id=pool_id).delete()
+
+        # Delete all diagrams associated with the pool
+        diagrams = ExamDiagram.query.filter_by(pool_id=pool_id).all()
+        upload_folder = app.config['UPLOAD_FOLDER']
+
+        for diagram in diagrams:
+            # Delete the diagram file from the server
+            file_path = os.path.join(upload_folder, os.path.basename(diagram.path))
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            else:
+                app.logger.error(f"File does not exist: {file_path}")
+
+            # Delete the diagram from the database
+            db.session.delete(diagram)
 
         # Delete the pool itself
         db.session.delete(pool)
@@ -492,6 +521,7 @@ def delete_pool(pool_id):
     # If no VE account exists, redirect to the logout page
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
+
 
 # Route to show exam sessions page
 @main.route('/ve/sessions')
@@ -651,6 +681,20 @@ def close_session(session_id):
 @main.route('/ve/upload_diagram/<int:pool_id>', methods=['POST'])
 @login_required
 def upload_diagram(pool_id):
+    """
+    Uploads an exam diagram to the server and stores its metadata in the database.
+
+    This route handles the process of uploading a diagram file associated with 
+    a specific exam pool. It ensures that the uploaded file is valid, saves the 
+    file securely, and stores the diagram's metadata (including the path) in the 
+    database. 
+
+    Args:
+        pool_id (int): The ID of the exam pool to which the diagram belongs.
+
+    Returns:
+        - Redirects back to the pools page or the referrer upon success or failure.
+    """
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.referrer or url_for('main.pools'))
@@ -712,3 +756,53 @@ def upload_diagram(pool_id):
     else:
         flash('Invalid file type. Allowed types: png, jpg, jpeg, gif')
         return redirect(request.referrer or url_for('main.pools'))
+
+# Route to delete diagrams
+@main.route('/ve/delete_diagram/<int:diagram_id>', methods=['DELETE'])
+@login_required
+def delete_diagram(diagram_id):
+    """
+    Deletes an exam diagram from both the server and the database.
+
+    This route handles the deletion of a diagram associated with an exam pool. 
+    It ensures that only users with the appropriate role (role 2) can perform 
+    the deletion. The method checks for the existence of the diagram, removes 
+    the file from the server, deletes the diagram record from the database, 
+    and handles any errors that may occur during the process.
+
+    Args:
+        diagram_id (int): The ID of the diagram to be deleted.
+
+    Returns:
+        - 200 JSON response: {"success": True} on successful deletion.
+        - 404 JSON response: {"error": "Diagram not found."} if the diagram ID is invalid.
+        - 404 JSON response: {"error": "Diagram file not found."} if the file does not exist on 
+          the server.
+        - Redirect to the logout page if the user does not have the appropriate role.
+    """
+    # Check if the current user has role 2
+    if current_user.role == 2:
+        # If a VE account exists
+        # Find the diagram by ID
+        diagram = db.session.get(ExamDiagram, diagram_id)
+        if not diagram:
+            return jsonify({"error": "Diagram not found."}), 404
+
+        # Delete the diagram file from the server
+        upload_folder = app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_folder, os.path.basename(diagram.path))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        else:
+            app.logger.error(f"File does not exist: {file_path}")
+            return jsonify({"error": "Diagram file not found."}), 404
+
+        # Delete the diagram itself
+        db.session.delete(diagram)
+        db.session.commit()
+
+        return jsonify({"success": True}), 200
+
+    # If no VE account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))

@@ -74,7 +74,6 @@
                                     <th>Diagram ID</th>
                                     <th>Diagram Name</th>
                                     <th>Image</th>
-                                    <th>Path</th>
                                 </tr>
                             </thead>
                             <div id="fullscreen-overlay" class="fullscreen-overlay">
@@ -87,7 +86,9 @@
                                     <td>{{ diagram.id }}</td>
                                     <td>{{ diagram.name }}</td>
                                     <td><img src="{{ url_for('static', filename='images/' + diagram.path) }}" alt="{{ diagram.name }}" class="pool-diagram thumbnail-image"></td>
-                                    <td>{{ diagram.path }}</td>
+                                    <td>
+                                        <button class="button is-small is-danger delete-diagram-button" data-name="{{ diagram.path }}" data-id="{{ diagram.id }}">Delete</button>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                                 <tr>

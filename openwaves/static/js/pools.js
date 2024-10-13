@@ -40,6 +40,37 @@ if (!window.poolsEventListenersInitialized) {
             });
         });
 
+        // Handle deleting diagrams
+        document.querySelectorAll('.delete-diagram-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const diagramId = this.getAttribute('data-id');
+                const diagramPath = this.getAttribute('data-name');
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+                if (confirm("Are you sure you want to delete the " + diagramPath + " diagram?")) {
+                    fetch(`/ve/delete_diagram/${diagramId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Diagram deleted successfully.');
+                            location.reload();  // Reload the page to reflect changes
+                        } else {
+                            alert('There was an error deleting the diagram.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('There was an error deleting the diagram.');
+                    });
+                }
+            });
+        });
+
         // Toggle the upload modal
         document.querySelectorAll('[id^=upload-button]').forEach(button => {
             button.addEventListener('click', function() {
