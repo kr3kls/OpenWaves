@@ -443,9 +443,11 @@ def test_delete_diagram_success(mock_remove, mock_exists, client, app, ve_user):
 
     # Assert successful removal
     assert response.status_code == 200
-    assert b'"success": true' in response.data
+    response_json = response.get_json()
+    assert response_json == {"success": True}, f"Unexpected response: {response_json}"
+
     mock_remove.assert_called_once()
-    
+
     # Verify the diagram was deleted from the database
     with app.app_context():
         diagram = db.session.get(ExamDiagram, diagram_id)
