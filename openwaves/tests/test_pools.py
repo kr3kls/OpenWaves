@@ -2,7 +2,7 @@
 
     This file contains the tests for the pools code in the main.py file.
 """
-
+import os
 from datetime import datetime
 from io import BytesIO
 from unittest.mock import patch
@@ -10,6 +10,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from openwaves import db
 from openwaves.imports import Pool, Question, TLI, ExamDiagram
 from openwaves.tests.test_auth import login
+
+def create_test_diagram(pool_id, path, session):
+    """Helper function to create and add a diagram to the test database."""
+    diagram = ExamDiagram(pool_id=pool_id, name="Test Diagram", path=path)
+    session.add(diagram)
+    session.commit()
+    return diagram.id
 
 def test_create_pool_success(client, ve_user):
     """Test ID: UT-49
@@ -517,3 +524,187 @@ def test_delete_diagram_file_not_found(mock_exists, client, app, ve_user): # pyl
     # Assert the expected error response
     assert response.status_code == 404
     assert b'Diagram file not found.' in response.data
+
+@patch('os.path.exists', return_value=True)
+@patch('os.remove')
+def test_delete_pool_diagram_file_exists(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
+    """Test ID: UT-179
+    Test diagram deletion when the file exists on the server.
+
+    This test ensures that when the diagram file exists on the server,
+    it is successfully deleted from both the server and the database.
+
+    Args:
+        mock_remove: Mock for os.remove to simulate successful file removal.
+        mock_exists: Mock for os.path.exists to simulate an existing file.
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The diagram file is deleted from the server.
+        - The diagram record is removed from the database.
+        - The response status code is 200.
+    """
+    login(client, ve_user.username, 'vepassword')
+
+    with app.app_context():
+        # Create pool and diagram for testing
+        pool = Pool(name="Test Pool", element="2",
+                    start_date=datetime.now(),
+                    end_date=datetime.now())
+        db.session.add(pool)
+        db.session.flush()
+
+        diagram = ExamDiagram(pool_id=pool.id, name="Test Diagram", path="diagrams/test.png")
+        db.session.add(diagram)
+        db.session.flush()
+
+        # DELETE request to remove the pool and diagrams
+        response = client.delete(f'/ve/delete_pool/{pool.id}', follow_redirects=True)
+
+    # Assert the request was successful
+    assert response.status_code == 200
+
+    # Verify the diagram file was removed
+    mock_remove.assert_called_once_with(os.path.join(app.config['UPLOAD_FOLDER'], "test.png"))
+
+    # Verify the diagram was deleted from the database
+    with app.app_context():
+        deleted_diagram = db.session.get(ExamDiagram, diagram.id)
+        assert deleted_diagram is None
+
+@patch('os.path.exists', return_value=False)
+@patch('os.remove')
+def test_delete_pool_diagram_file_not_found(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
+    """Test ID: UT-180
+    Test diagram deletion when the file does not exist on the server.
+
+    This test ensures that if the diagram file is missing on the server,
+    the application logs an error and still deletes the diagram from the database.
+
+    Args:
+        mock_remove: Mock for os.remove to ensure it's not called.
+        mock_exists: Mock for os.path.exists to simulate a missing file.
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - The diagram record is removed from the database.
+        - The response status code is 200.
+        - The os.remove function is not called.
+    """
+    login(client, ve_user.username, 'vepassword')
+
+    with app.app_context():
+        # Create a test pool and diagram
+        pool = Pool(name="Test Pool", element="2",
+                    start_date=datetime.now(),
+                    end_date=datetime.now())
+        db.session.add(pool)
+        db.session.flush()
+
+        diagram = ExamDiagram(pool_id=pool.id, name="Test Diagram", path="diagrams/missing.png")
+        db.session.add(diagram)
+        db.session.flush()
+
+        # DELETE request to remove the pool
+        response = client.delete(f'/ve/delete_pool/{pool.id}', follow_redirects=True)
+
+    # Assert the request was successful
+    assert response.status_code == 200
+
+    # Ensure os.remove was not called
+    mock_remove.assert_not_called()
+
+    # Verify the diagram was deleted from the database
+    with app.app_context():
+        deleted_diagram = db.session.get(ExamDiagram, diagram.id)
+        assert deleted_diagram is None
+
+@patch('os.path.exists', return_value=True)
+@patch('os.remove')
+def test_delete_pool_multiple_diagrams(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
+    """Test ID: UT-181
+    Test multiple diagrams are deleted when deleting a pool.
+
+    This test ensures that all diagrams associated with a pool are deleted
+    from both the server and the database.
+
+    Args:
+        mock_remove: Mock for os.remove to simulate file removal.
+        mock_exists: Mock for os.path.exists to simulate existing files.
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - All diagram files are deleted from the server.
+        - All diagram records are removed from the database.
+        - The response status code is 200.
+    """
+    login(client, ve_user.username, 'vepassword')
+
+    with app.app_context():
+        # Create a test pool and multiple diagrams
+        pool = Pool(name="Test Pool", element="2",
+                    start_date=datetime.now(),
+                    end_date=datetime.now())
+        db.session.add(pool)
+        db.session.flush()
+
+        diagrams = [
+            ExamDiagram(pool_id=pool.id, name="Diagram 1", path="diagrams/1.png"),
+            ExamDiagram(pool_id=pool.id, name="Diagram 2", path="diagrams/2.png"),
+        ]
+        db.session.bulk_save_objects(diagrams)
+        db.session.flush()
+
+        # DELETE request to remove the pool and diagrams
+        response = client.delete(f'/ve/delete_pool/{pool.id}', follow_redirects=True)
+
+    # Assert the request was successful
+    assert response.status_code == 200
+
+    # Verify that both diagram files were removed
+    mock_remove.assert_any_call(os.path.join(app.config['UPLOAD_FOLDER'], "1.png"))
+    mock_remove.assert_any_call(os.path.join(app.config['UPLOAD_FOLDER'], "2.png"))
+
+    # Verify that both diagrams were removed from the database
+    with app.app_context():
+        remaining_diagrams = ExamDiagram.query.filter_by(pool_id=pool.id).all()
+        assert len(remaining_diagrams) == 0
+
+def test_delete_pool_no_diagrams(client, app, ve_user):
+    """Test ID: UT-182
+    Test pool deletion when there are no diagrams associated with the pool.
+
+    This test ensures that the pool is deleted successfully, even if no diagrams are linked.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+        ve_user: The VE user fixture.
+
+    Asserts:
+        - The pool is removed from the database.
+        - The response status code is 200.
+    """
+    login(client, ve_user.username, 'vepassword')
+
+    with app.app_context():
+        # Create a pool with no diagrams
+        pool = Pool(name="Test Pool", element="2",
+                    start_date=datetime.now(),
+                    end_date=datetime.now())
+        db.session.add(pool)
+        db.session.flush()
+
+        # DELETE request to remove the pool
+        response = client.delete(f'/ve/delete_pool/{pool.id}', follow_redirects=True)
+
+    # Assert the request was successful
+    assert response.status_code == 200
+
+    # Verify the pool was removed from the database
+    with app.app_context():
+        deleted_pool = db.session.get(Pool, pool.id)
+        assert deleted_pool is None
