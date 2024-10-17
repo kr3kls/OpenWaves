@@ -367,6 +367,8 @@ def launch_exam():
             db.session.add(new_exam)
             db.session.commit()
 
+            # TODO: add questions to the exam
+
             return redirect(url_for('main.exam', exam_id=new_exam.id))
         except Exception as e:
             db.session.rollback()
