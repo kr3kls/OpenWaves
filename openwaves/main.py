@@ -14,7 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
 from .imports import db, Pool, Question, TLI, ExamSession, ExamRegistration, get_exam_name, \
     is_already_registered, remove_exam_registration, load_question_pools, allowed_file, \
-    ExamDiagram
+    ExamDiagram, Exam, ExamAnswer
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_SESSIONS = 'main.sessions'
@@ -304,21 +304,11 @@ def cancel_registration():
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-@main.route('/exam', methods=['POST'])
+@main.route('/launch-exam', methods=['POST'])
 @login_required
-def exam():
+def launch_exam():
     """
     Route to start an exam session for the user.
-
-    This route handles the POST request to start an exam session for the user. 
-    It verifies the user's registration for the selected exam element and session, 
-    sets the exam start time, and updates the registration status to indicate that 
-    the user has started the exam.
-
-    Returns:
-        Redirect to the sessions page with:
-        - Success message if the exam session is started successfully.
-        - Error message if the user is not registered for the exam element or session.
     """
     if current_user.role == 1:
         # Get the session ID and exam element from the form data
@@ -326,11 +316,75 @@ def exam():
         exam_element = request.form.get('exam_element')
         exam_name = get_exam_name(exam_element)
 
-        return(f"<h1>Exam route: {exam_name}</h1><br><p>Session: {session_id}, Element: {exam_element}</p>")
+        # Check for missing input data 
+        if not session_id or not exam_element or not exam_name:
+            flash('Invalid exam request. Missing required information.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
 
-     # If no HC account exists, redirect to the logout page
+        # Check if an exam session already exists for this session and user
+        existing_exam = Exam.query.filter_by(user_id=current_user.id,
+                                             session_id=session_id,
+                                             element=exam_element).first()
+        if existing_exam:
+            flash(f'You already have an exam in progress for session {session_id}.', 'warning')
+            return redirect(url_for('main.exam', exam_id=existing_exam.id))
+
+        # Get the Exam Registration for the user and session
+        exam_registration = ExamRegistration.query.filter_by(
+            user_id=current_user.id,
+            session_id=session_id,
+            valid=True
+        ).first()
+
+        if not exam_registration:
+            flash('You are not registered for this exam session or your registration is invalid.',
+                  'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Get Exam Session
+        exam_session = ExamSession.query.get(session_id)
+
+        # Check if the user is registered for the correct exam element
+        if (exam_element == 'tech' and exam_registration.tech):
+            pool_id = exam_session.tech_pool_id
+        elif (exam_element == 'gen' and not exam_registration.gen):
+            pool_id = exam_session.gen_pool_id
+        elif (exam_element == 'extra' and not exam_registration.extra):
+            pool_id = exam_session.extra_pool_id
+        else:
+            flash(f'You are not registered for the {exam_name} exam.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        try:
+            # Create a new exam session
+            new_exam = Exam(
+                user_id=current_user.id,
+                pool_id=pool_id,
+                session_id=session_id,
+                element=exam_element,
+                open=True
+            )
+            db.session.add(new_exam)
+            db.session.commit()
+
+            return redirect(url_for('main.exam', exam_id=new_exam.id))
+        except Exception as e:
+            db.session.rollback()
+            flash('An error occurred while creating the exam session.', 'danger')
+            app.logger.error(f'Error creating exam session: {str(e)}')
+            return redirect(url_for(PAGE_SESSIONS))
+
+    # If no HC account exists, redirect to the logout page
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
+
+@main.route('/exam', methods=['GET', 'POST'])
+@login_required
+def exam(exam_id):
+    """
+    Route to take an exam.
+    """
+    pass
 
 
 ##########################################

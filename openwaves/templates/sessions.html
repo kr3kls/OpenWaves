@@ -65,7 +65,7 @@
                                 {% endif %}
                             {% elif status == 'Open' %}
                                 {% if exam_session.tech_registered %}
-                                    <form action="{{ url_for('main.exam') }}" method="POST">
+                                    <form action="{{ url_for('main.launch_exam') }}" method="POST">
                                         {% if config['WTF_CSRF_ENABLED'] %}
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         {% endif %}
@@ -110,7 +110,7 @@
                                 {% endif %}
                             {% elif status == 'Open' %}
                                 {% if exam_session.gen_registered %}
-                                    <form action="{{ url_for('main.exam') }}" method="POST">
+                                    <form action="{{ url_for('main.launch_exam') }}" method="POST">
                                         {% if config['WTF_CSRF_ENABLED'] %}
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         {% endif %}
@@ -155,7 +155,7 @@
                                 {% endif %}
                             {% elif status == 'Open' %}
                                 {% if exam_session.extra_registered %}
-                                    <form action="{{ url_for('main.exam') }}" method="POST">
+                                    <form action="{{ url_for('main.launch_exam') }}" method="POST">
                                         {% if config['WTF_CSRF_ENABLED'] %}
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         {% endif %}
