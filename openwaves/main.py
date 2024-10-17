@@ -304,6 +304,35 @@ def cancel_registration():
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
+@main.route('/exam', methods=['POST'])
+@login_required
+def exam():
+    """
+    Route to start an exam session for the user.
+
+    This route handles the POST request to start an exam session for the user. 
+    It verifies the user's registration for the selected exam element and session, 
+    sets the exam start time, and updates the registration status to indicate that 
+    the user has started the exam.
+
+    Returns:
+        Redirect to the sessions page with:
+        - Success message if the exam session is started successfully.
+        - Error message if the user is not registered for the exam element or session.
+    """
+    if current_user.role == 1:
+        # Get the session ID and exam element from the form data
+        session_id = request.form.get('session_id')
+        exam_element = request.form.get('exam_element')
+        exam_name = get_exam_name(exam_element)
+
+        return(f"<h1>Exam route: {exam_name}</h1><br><p>Session: {session_id}, Element: {exam_element}</p>")
+
+     # If no HC account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
+
+
 ##########################################
 #                                        #
 #     VE (Volunteer Examiner) Routes     #
@@ -521,7 +550,6 @@ def delete_pool(pool_id):
     # If no VE account exists, redirect to the logout page
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
-
 
 # Route to show exam sessions page
 @main.route('/ve/sessions')

@@ -43,7 +43,7 @@
 
                         {# Tech column #}
                         <td>
-                            {% if status == 'Registration' or status == 'Open' %}
+                            {% if status == 'Registration' %}
                                 {% if exam_session.tech_registered %}
                                     <form action="{{ url_for('main.cancel_registration') }}" method="POST">
                                         {% if config['WTF_CSRF_ENABLED'] %}
@@ -63,12 +63,32 @@
                                         <button type="submit" class="button is-light-button-color is-small">Register</button>
                                     </form>
                                 {% endif %}
+                            {% elif status == 'Open' %}
+                                {% if exam_session.tech_registered %}
+                                    <form action="{{ url_for('main.exam') }}" method="POST">
+                                        {% if config['WTF_CSRF_ENABLED'] %}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% endif %}
+                                        <input type="hidden" name="exam_element" value="2">
+                                        <input type="hidden" name="session_id" value="{{ exam_session.id }}">
+                                        <button type="submit" class="button is-button-color is-small">Launch</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('main.register') }}" method="POST">
+                                        {% if config['WTF_CSRF_ENABLED'] %}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% endif %}
+                                        <input type="hidden" name="exam_element" value="2">
+                                        <input type="hidden" name="session_id" value="{{ exam_session.id }}">
+                                        <button type="submit" class="button is-light-button-color is-small">Register</button>
+                                    </form>
+                                {% endif %}
                             {% endif %}
                         </td>
 
                         {# General column #}
                         <td>
-                            {% if status == 'Registration' or status == 'Open' %}
+                            {% if status == 'Registration' %}
                                 {% if exam_session.gen_registered %}
                                     <form action="{{ url_for('main.cancel_registration') }}" method="POST">
                                         {% if config['WTF_CSRF_ENABLED'] %}
@@ -88,12 +108,32 @@
                                         <button type="submit" class="button is-light-button-color is-small">Register</button>
                                     </form>
                                 {% endif %}
+                            {% elif status == 'Open' %}
+                                {% if exam_session.gen_registered %}
+                                    <form action="{{ url_for('main.exam') }}" method="POST">
+                                        {% if config['WTF_CSRF_ENABLED'] %}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% endif %}
+                                        <input type="hidden" name="exam_element" value="3">
+                                        <input type="hidden" name="session_id" value="{{ exam_session.id }}">
+                                        <button type="submit" class="button is-button-color is-small">Launch</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('main.register') }}" method="POST">
+                                        {% if config['WTF_CSRF_ENABLED'] %}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% endif %}
+                                        <input type="hidden" name="exam_element" value="3">
+                                        <input type="hidden" name="session_id" value="{{ exam_session.id }}">
+                                        <button type="submit" class="button is-light-button-color is-small">Register</button>
+                                    </form>
+                                {% endif %}
                             {% endif %}
                         </td>
 
                         {# Extra column #}
                         <td>
-                            {% if status == 'Registration' or status == 'Open' %}
+                            {% if status == 'Registration' %}
                                 {% if exam_session.extra_registered %}
                                     <form action="{{ url_for('main.cancel_registration') }}" method="POST">
                                         {% if config['WTF_CSRF_ENABLED'] %}
@@ -102,6 +142,26 @@
                                         <input type="hidden" name="exam_element" value="4">
                                         <input type="hidden" name="session_id" value="{{ exam_session.id }}">
                                         <button type="submit" class="button is-danger is-small">Unregister</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('main.register') }}" method="POST">
+                                        {% if config['WTF_CSRF_ENABLED'] %}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% endif %}
+                                        <input type="hidden" name="exam_element" value="4">
+                                        <input type="hidden" name="session_id" value="{{ exam_session.id }}">
+                                        <button type="submit" class="button is-light-button-color is-small">Register</button>
+                                    </form>
+                                {% endif %}
+                            {% elif status == 'Open' %}
+                                {% if exam_session.extra_registered %}
+                                    <form action="{{ url_for('main.exam') }}" method="POST">
+                                        {% if config['WTF_CSRF_ENABLED'] %}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% endif %}
+                                        <input type="hidden" name="exam_element" value="4">
+                                        <input type="hidden" name="session_id" value="{{ exam_session.id }}">
+                                        <button type="submit" class="button is-button-color is-small">Launch</button>
                                     </form>
                                 {% else %}
                                     <form action="{{ url_for('main.register') }}" method="POST">

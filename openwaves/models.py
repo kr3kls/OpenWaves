@@ -188,7 +188,7 @@ class ExamRegistration(db.Model): # pylint: disable=R0903
         """
         return f"ExamRegistration('{self.user_id}', '{self.session_id}')"
 
-class ExamDiagram(db.Model):
+class ExamDiagram(db.Model): # pylint: disable=R0903
     """Database model for exam diagrams.
     
     Represents a diagram for an exam question.
@@ -212,3 +212,60 @@ class ExamDiagram(db.Model):
             str: A string showing the diagram path.
         """
         return f"ExamDiagram('{self.path}')"
+
+class Exam(db.Model): # pylint: disable=R0903
+    """Database model for exams.
+    
+    Represents an exam that is part of a session, associated with a user and a question pool.
+
+    Attributes:
+        id (int): The primary key for the exam.
+        user_id (int): The foreign key referencing the user's id in the User model.
+        pool_id (int): The foreign key referencing the pool's id in the Pool model.
+        session_id (int): The foreign key referencing the session's id in the ExamSession model.
+        open (bool): Indicates whether the exam is open (default is True).
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('exam_session.id'), nullable=False)
+    open = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        """Return a string representation of the diagram.
+
+        Returns:
+            str: A string showing the Exam information.
+        """
+        return f"Exam('{self.id}', user_id: '{self.user_id}', pool: '{self.pool_id}', " \
+            + f"session: '{self.session_id}')"
+
+class ExamAnswer(db.Model): # pylint: disable=R0903
+    """Database model for exam answers.
+    
+    Represents an answer to an exam question.
+
+    Attributes:
+        id (int): The primary key for the exam answer.
+        exam_id (int): The foreign key referencing the exam's id in the Exam model.
+        question_id (int): The foreign key referencing the question's id in the Question model.
+        question_number (int): The number of the question in the exam (2-digit integer).
+        correct_answer (int): The correct answer to the question (single-digit integer).
+        answer (int, optional): The answer provided by the user (single-digit integer).
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
+    question_number = db.Column(db.Integer(2), nullable=False)
+    correct_answer = db.Column(db.Integer(1), nullable=False)
+    answer = db.Column(db.Integer(1), nullable=True)
+
+    def __repr__(self):
+        """Return a string representation of the answer.
+
+        Returns:
+            str: A string showing the answer to the question.
+        """
+        return f"ExamAnswer('{self.answer}')"
