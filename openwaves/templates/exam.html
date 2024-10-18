@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="box">
+    <!-- Exam question container -->
+    <div class="columns is-centered">
+        <p>T6C02</p>
+        <div class="column is-half">
+            <!-- Diagram -->
+            <figure class="image is-4by3">
+                <img src="{{ url_for('static', filename='images/diagrams/1_T1.jpg') }}" alt="Figure T-1">
+            </figure>
+
+            <!-- Question -->
+            <h2 class="title is-5">Q3: What is component 1 in figure T-1?</h2>
+
+            <!-- Answer options -->
+            <form action="{{ url_for('main.profile') }}" method="POST">
+                <div class="control">
+                    <label class="radio">
+                        <input type="radio" name="answer" value="A">
+                        A. Resistor
+                    </label>
+                    <br>
+                    <label class="radio">
+                        <input type="radio" name="answer" value="B">
+                        B. Transistor
+                    </label>
+                    <br>
+                    <label class="radio">
+                        <input type="radio" name="answer" value="C">
+                        C. Battery
+                    </label>
+                    <br>
+                    <label class="radio">
+                        <input type="radio" name="answer" value="D">
+                        D. Connector
+                    </label>
+                </div>
+
+                <!-- Navigation buttons -->
+                <div class="buttons is-centered">
+                    <button type="button" class="button is-light">Back</button>
+                    <button type="submit" class="button is-link">Next</button>
+                    <button type="button" class="button is-light">Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

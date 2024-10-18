@@ -178,7 +178,7 @@ class ExamRegistration(db.Model): # pylint: disable=R0903
     tech = db.Column(db.Boolean, default=False)
     gen = db.Column(db.Boolean, default=False)
     extra = db.Column(db.Boolean, default=False)
-    valid = db.Column(db.Boolean, default=False)
+    valid = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         """Return a string representation of the registration.
