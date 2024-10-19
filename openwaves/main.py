@@ -18,6 +18,7 @@ from .imports import db, Pool, Question, TLI, ExamSession, ExamRegistration, get
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_SESSIONS = 'main.sessions'
+PAGE_POOLS = 'main.pools'
 MSG_ACCESS_DENIED = 'Access denied.'
 
 main = Blueprint('main', __name__)
@@ -849,7 +850,7 @@ def upload_diagram(pool_id):
     """
     if 'file' not in request.files:
         flash('No file part')
-        return redirect(request.referrer or url_for('main.pools'))
+        return redirect(request.referrer or url_for(PAGE_POOLS))
 
 
     file = request.files['file']
@@ -857,7 +858,7 @@ def upload_diagram(pool_id):
 
     if file.filename == '':
         flash('No selected file')
-        return redirect(request.referrer or url_for('main.pools'))
+        return redirect(request.referrer or url_for(PAGE_POOLS))
 
     if file and allowed_file(file.filename):
         # Secure the filename to prevent issues with directory traversal
@@ -878,7 +879,7 @@ def upload_diagram(pool_id):
         if not os.path.exists(upload_folder):
             app.logger.error(f"Directory does not exist: {upload_folder}")
             flash('Upload directory does not exist.')
-            return redirect(request.referrer or url_for('main.pools'))
+            return redirect(request.referrer or url_for(PAGE_POOLS))
 
         app.logger.info(f"Directory exists: {upload_folder}")
 
@@ -896,18 +897,18 @@ def upload_diagram(pool_id):
             db.session.commit()
 
             flash('Diagram uploaded successfully')
-            return redirect(url_for('main.pools', pool_id=pool_id))
+            return redirect(url_for(PAGE_POOLS, pool_id=pool_id))
 
         except SQLAlchemyError as e:
             db.session.rollback()  # Rollback the session in case of an error
             app.logger.error(f"Error saving diagram to the database: {e}")
             flash('An error occurred while saving the diagram to the database.')
 
-            return redirect(request.referrer or url_for('main.pools'))
+            return redirect(request.referrer or url_for(PAGE_POOLS))
 
     else:
         flash('Invalid file type. Allowed types: png, jpg, jpeg, gif')
-        return redirect(request.referrer or url_for('main.pools'))
+        return redirect(request.referrer or url_for(PAGE_POOLS))
 
 # Route to delete diagrams
 @main.route('/ve/delete_diagram/<int:diagram_id>', methods=['DELETE'])
