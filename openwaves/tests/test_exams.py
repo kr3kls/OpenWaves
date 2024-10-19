@@ -6,6 +6,8 @@
 from io import BytesIO
 from datetime import datetime
 from flask import url_for
+from sqlalchemy.exc import SQLAlchemyError
+from unittest.mock import patch
 from openwaves import db
 from openwaves.imports import User, ExamSession, ExamRegistration, Exam, ExamAnswer, Pool, \
                             get_exam_name
@@ -151,9 +153,16 @@ T1A35,C,What is 35+35?,1,70,4,5,Reference35
         # Assert new exam and questions exist in the database
         new_exam = Exam.query.filter_by(user_id=ham_user.id, element='2').first()
         assert new_exam is not None
-        questions = ExamAnswer.query.all()
-        print(questions)
         assert ExamAnswer.query.filter_by(exam_id=new_exam.id).count() == 35
+
+        # Navigate away from exam page
+        response = client.get(url_for('main.profile'))
+        assert response.status_code == 200
+
+        # Navigate back to exam page
+        response = client.get(url_for('main.take_exam', exam_id=new_exam.id))
+        assert response.status_code == 200
+        assert b"Question ID:" in response.data
 
 def test_launch_exam_no_registration(client, app):
     """Test ID: UT-186
@@ -267,3 +276,412 @@ def test_launch_exam_missing_input(client, app):
 
         # Assert redirection to sessions page
         assert b"Exam Sessions" in response.data
+
+def test_launch_exam_role_not_allowed(client, ve_user):
+    """Test ID: UT-188
+    Negative test: Ensure that users with the VE role cannot access the launch exam page.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - The response status code is 302 (redirect).
+        - The response redirects to the logout page.
+        - An 'Access denied' message is flashed.
+    """
+    login(client, ve_user.username, 'vepassword')
+
+    response = client.post(
+        url_for('main.launch_exam'),
+        follow_redirects=True
+    )
+
+    assert response.status_code == 200
+    assert b'Access denied' in response.data
+
+def test_launch_exam_invalid_tech_element(client, app):
+    """Test ID: UT-189
+    Negative test to ensure an error message is shown when a user tries to start 
+    a Technician exam without a valid registration for that element.
+
+    This test checks that the user cannot launch a Technician exam session if they 
+    do not have a valid registration for it.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Test user can log in successfully.
+        - Exam launch request for Technician element returns a 200 status code.
+        - Response data contains an error message about invalid registration for Technician exam.
+    """
+    with app.app_context():
+        # Get the test user created by the fixture
+        ham_user = User.query.filter_by(username="TESTUSER").first()
+
+        # Create pools for exam session
+        tech_pool = Pool(name="Tech Pool",
+                        element="2",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        gen_pool = Pool(name="General Pool",
+                        element="3",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        extra_pool = Pool(name="Extra Pool",
+                        element="4",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        db.session.add(tech_pool)
+        db.session.add(gen_pool)
+        db.session.add(extra_pool)
+        db.session.commit()
+        tech_id = tech_pool.id
+        gen_id = gen_pool.id
+        extra_id = extra_pool.id
+
+        # Create a valid exam registration and session
+        exam_session = ExamSession(
+            session_date=datetime.today(),
+            tech_pool_id=tech_id,
+            gen_pool_id=gen_id,
+            extra_pool_id=extra_id
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        exam_registration = ExamRegistration(
+            user_id=ham_user.id,
+            session_id=exam_session.id,
+            tech=False,
+            gen=False,
+            extra=False,
+            valid=True
+        )
+        db.session.add(exam_registration)
+        db.session.commit()
+
+        # Log in as the test user
+        response = login(client, ham_user.username, 'testpassword')
+        assert response.status_code == 200
+
+        # Send POST request to launch exam
+        response = client.post(
+            url_for('main.launch_exam'),
+            data={
+                'session_id': exam_session.id,
+                'exam_element': '2',
+                'exam_name': get_exam_name('2')
+            },
+            follow_redirects=True
+        )
+
+        # Assert error message is flashed
+        assert response.status_code == 200
+        print(response.data)
+        assert b"You are not registered for the Tech exam." in response.data
+
+def test_launch_exam_invalid_general_element(client, app):
+    """Test ID: UT-190
+    Negative test to ensure an error message is shown when a user tries to start 
+    a General exam without a valid registration for that element.
+
+    This test checks that the user cannot launch a General exam session if they 
+    do not have a valid registration for it.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Test user can log in successfully.
+        - Exam launch request for General element returns a 200 status code.
+        - Response data contains an error message about invalid registration for General exam.
+    """
+    with app.app_context():
+        # Get the test user created by the fixture
+        ham_user = User.query.filter_by(username="TESTUSER").first()
+
+        # Create pools for exam session
+        tech_pool = Pool(name="Tech Pool",
+                        element="2",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        gen_pool = Pool(name="General Pool",
+                        element="3",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        extra_pool = Pool(name="Extra Pool",
+                        element="4",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        db.session.add(tech_pool)
+        db.session.add(gen_pool)
+        db.session.add(extra_pool)
+        db.session.commit()
+        tech_id = tech_pool.id
+        gen_id = gen_pool.id
+        extra_id = extra_pool.id
+
+        # Create a valid exam registration and session
+        exam_session = ExamSession(
+            session_date=datetime.today(),
+            tech_pool_id=tech_id,
+            gen_pool_id=gen_id,
+            extra_pool_id=extra_id
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        exam_registration = ExamRegistration(
+            user_id=ham_user.id,
+            session_id=exam_session.id,
+            tech=True,
+            gen=False,
+            extra=False,
+            valid=True
+        )
+        db.session.add(exam_registration)
+        db.session.commit()
+
+        # Log in as the test user
+        response = login(client, ham_user.username, 'testpassword')
+        assert response.status_code == 200
+
+        # Send POST request to launch exam
+        response = client.post(
+            url_for('main.launch_exam'),
+            data={
+                'session_id': exam_session.id,
+                'exam_element': '3',
+                'exam_name': get_exam_name('3')
+            },
+            follow_redirects=True
+        )
+
+        # Assert error message is flashed
+        assert response.status_code == 200
+        assert b"You are not registered for the General exam." in response.data
+
+def test_launch_exam_invalid_extra_element(client, app):
+    """Test ID: UT-191
+    Negative test to ensure an error message is shown when a user tries to start 
+    an Extra exam without a valid registration for that element.
+
+    This test checks that the user cannot launch an Extra exam session if they 
+    do not have a valid registration for it.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Test user can log in successfully.
+        - Exam launch request for Extra element returns a 200 status code.
+        - Response data contains an error message about invalid registration for Extra exam.
+    """
+    with app.app_context():
+        # Get the test user created by the fixture
+        ham_user = User.query.filter_by(username="TESTUSER").first()
+
+        # Create pools for exam session
+        tech_pool = Pool(name="Tech Pool",
+                        element="2",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        gen_pool = Pool(name="General Pool",
+                        element="3",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        extra_pool = Pool(name="Extra Pool",
+                        element="4",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
+        db.session.add(tech_pool)
+        db.session.add(gen_pool)
+        db.session.add(extra_pool)
+        db.session.commit()
+        tech_id = tech_pool.id
+        gen_id = gen_pool.id
+        extra_id = extra_pool.id
+
+        # Create a valid exam registration and session
+        exam_session = ExamSession(
+            session_date=datetime.today(),
+            tech_pool_id=tech_id,
+            gen_pool_id=gen_id,
+            extra_pool_id=extra_id
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        exam_registration = ExamRegistration(
+            user_id=ham_user.id,
+            session_id=exam_session.id,
+            tech=True,
+            gen=False,
+            extra=False,
+            valid=True
+        )
+        db.session.add(exam_registration)
+        db.session.commit()
+
+        # Log in as the test user
+        response = login(client, ham_user.username, 'testpassword')
+        assert response.status_code == 200
+
+        # Send POST request to launch exam
+        response = client.post(
+            url_for('main.launch_exam'),
+            data={
+                'session_id': exam_session.id,
+                'exam_element': '4',
+                'exam_name': get_exam_name('4')
+            },
+            follow_redirects=True
+        )
+
+        # Assert error message is flashed
+        assert response.status_code == 200
+        assert b"You are not registered for the Extra exam." in response.data
+
+def test_launch_exam_sqlalchemy_error(client, app):
+    """Test ID: UT-192
+    Unit test to ensure that the SQLAlchemyError is handled correctly 
+    during the exam session creation process.
+
+    This test simulates a database error during the exam creation step.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Test user can log in successfully.
+        - Simulated SQLAlchemyError is raised during the transaction.
+        - Response data contains a flash message about the database error.
+    """
+    with app.app_context():
+        # Get the test user created by the fixture
+        ham_user = User.query.filter_by(username="TESTUSER").first()
+
+        # Create pools for exam session
+        tech_pool = Pool(name="Tech Pool", element="2",
+                         start_date=datetime.now(), end_date=datetime.now())
+        gen_pool = Pool(name="General Pool", element="3",
+                         start_date=datetime.now(), end_date=datetime.now())
+        extra_pool = Pool(name="Extra Pool", element="4",
+                          start_date=datetime.now(), end_date=datetime.now())
+        db.session.add_all([tech_pool, gen_pool, extra_pool])
+        db.session.commit()
+
+        # Create a valid exam session
+        exam_session = ExamSession(
+            session_date=datetime.today(),
+            tech_pool_id=tech_pool.id,
+            gen_pool_id=gen_pool.id,
+            extra_pool_id=extra_pool.id  # Add extra_pool_id to avoid IntegrityError
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Create a valid exam registration
+        exam_registration = ExamRegistration(
+            user_id=ham_user.id,
+            session_id=exam_session.id,
+            tech=True,
+            valid=True
+        )
+        db.session.add(exam_registration)
+        db.session.commit()
+
+        # Log in as the test user
+        response = login(client, ham_user.username, 'testpassword')
+        assert response.status_code == 200
+
+        # Mock the database commit to raise SQLAlchemyError
+        with patch('openwaves.db.session.commit', side_effect=SQLAlchemyError):
+            response = client.post(
+                url_for('main.launch_exam'),
+                data={
+                    'session_id': exam_session.id,
+                    'exam_element': '2',
+                    'exam_name': 'Technician'
+                },
+                follow_redirects=True
+            )
+
+            # Assert error message is flashed
+            assert response.status_code == 200
+            assert b"A database error occurred while creating the exam session." in response.data
+
+def test_launch_exam_generic_exception(client, app):
+    """Test ID: UT-193
+    Unit test to ensure that a generic exception is handled correctly 
+    during the exam session creation process.
+
+    This test simulates a generic exception during the transaction.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Test user can log in successfully.
+        - Simulated generic Exception is raised during the transaction.
+        - Response data contains a flash message about an unexpected error.
+    """
+    with app.app_context():
+        # Get the test user created by the fixture
+        ham_user = User.query.filter_by(username="TESTUSER").first()
+
+        # Create pools for exam session
+        tech_pool = Pool(name="Tech Pool", element="2",
+                         start_date=datetime.now(), end_date=datetime.now())
+        gen_pool = Pool(name="General Pool", element="3",
+                         start_date=datetime.now(), end_date=datetime.now())
+        extra_pool = Pool(name="Extra Pool", element="4",
+                          start_date=datetime.now(), end_date=datetime.now())
+        db.session.add_all([tech_pool, gen_pool, extra_pool])
+        db.session.commit()
+
+        # Create a valid exam session
+        exam_session = ExamSession(
+            session_date=datetime.today(),
+            tech_pool_id=tech_pool.id,
+            gen_pool_id=gen_pool.id,
+            extra_pool_id=extra_pool.id  # Add extra_pool_id to avoid IntegrityError
+        )
+        db.session.add(exam_session)
+        db.session.commit()
+
+        # Create a valid exam registration
+        exam_registration = ExamRegistration(
+            user_id=ham_user.id,
+            session_id=exam_session.id,
+            tech=True,
+            valid=True
+        )
+        db.session.add(exam_registration)
+        db.session.commit()
+
+        # Log in as the test user
+        response = login(client, ham_user.username, 'testpassword')
+        assert response.status_code == 200
+
+        # Mock the database commit to raise a generic Exception
+        with patch('openwaves.db.session.commit', side_effect=Exception):
+            response = client.post(
+                url_for('main.launch_exam'),
+                data={
+                    'session_id': exam_session.id,
+                    'exam_element': '2',
+                    'exam_name': 'Technician'
+                },
+                follow_redirects=True
+            )
+
+            # Assert error message is flashed
+            assert response.status_code == 200
+            assert b"An unexpected error occurred. Please try again later." in response.data

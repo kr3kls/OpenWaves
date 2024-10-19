@@ -355,7 +355,6 @@ def launch_exam(): # pylint: disable=R0911
                                              session_id=session_id,
                                              element=exam_element).first()
         if existing_exam:
-            # flash(f'You already have an exam in progress for session {session_id}.', 'warning')
             return redirect(url_for('main.take_exam', exam_id=existing_exam.id))
 
         # Get the Exam Registration for the user and session
@@ -376,9 +375,9 @@ def launch_exam(): # pylint: disable=R0911
         # Check if the user is registered for the correct exam element
         if (exam_element == '2' and exam_registration.tech):
             pool_id = exam_session.tech_pool_id
-        elif (exam_element == '3' and not exam_registration.gen):
+        elif (exam_element == '3' and exam_registration.gen):
             pool_id = exam_session.gen_pool_id
-        elif (exam_element == '4' and not exam_registration.extra):
+        elif (exam_element == '4' and exam_registration.extra):
             pool_id = exam_session.extra_pool_id
         else:
             flash(f'You are not registered for the {exam_name} exam.', 'danger')
