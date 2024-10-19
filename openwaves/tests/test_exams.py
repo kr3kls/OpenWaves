@@ -5,15 +5,15 @@
 
 from io import BytesIO
 from datetime import datetime
+from unittest.mock import patch
 from flask import url_for
 from sqlalchemy.exc import SQLAlchemyError
-from unittest.mock import patch
 from openwaves import db
 from openwaves.imports import User, ExamSession, ExamRegistration, Exam, ExamAnswer, Pool, \
                             get_exam_name
 from openwaves.tests.test_auth import login, logout
 
-def test_launch_exam_success(client, app, ve_user):
+def test_launch_exam_success(client, app, ve_user): # pylint: disable=R0914
     """Test ID: UT-185
     Functional test to ensure a new exam session is successfully created.
 
@@ -201,11 +201,11 @@ def test_launch_exam_no_registration(client, app):
 
         # Assert error message is flashed
         assert response.status_code == 200
-        assert b"You are not registered for this exam session or your registration is invalid." in response.data
+        assert b"You are not registered for this exam session or your registration is invalid." \
+            in response.data
 
         # Assert redirection to sessions page
         assert b"sessions" in response.data
-
 
 def test_launch_exam_missing_input(client, app):
     """Test ID: UT-187
@@ -685,3 +685,63 @@ def test_launch_exam_generic_exception(client, app):
             # Assert error message is flashed
             assert response.status_code == 200
             assert b"An unexpected error occurred. Please try again later." in response.data
+
+def test_take_exam_role_not_allowed(client, ve_user):
+    """Test ID: UT-194
+    Negative test: Ensure that users with the VE role cannot access the take exam page.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - The response status code is 302 (redirect).
+        - The response redirects to the logout page.
+        - An 'Access denied' message is flashed.
+    """
+    login(client, ve_user.username, 'vepassword')
+
+    response = client.get(
+        url_for('main.take_exam', exam_id=1),
+        follow_redirects=True
+    )
+
+    assert response.status_code == 200
+    assert b'Access denied' in response.data
+
+def test_take_exam_invalid_exam_id(client, app):
+    """Test ID: UT-195
+    Unit test to ensure that an invalid exam ID is handled correctly
+    when trying to take an exam.
+
+    This test simulates a user attempting to access an exam with a non-existent ID.
+
+    Args:
+        client: The test client instance.
+        app: The Flask application instance.
+
+    Asserts:
+        - Test user can log in successfully.
+        - The exam retrieval fails due to an invalid ID.
+        - Response data contains a flash message about the invalid exam ID.
+        - The user is redirected to the sessions page.
+    """
+    with app.app_context():
+        # Get the test user created by the fixture
+        ham_user = User.query.filter_by(username="TESTUSER").first()
+
+        # Log in as the test user
+        response = login(client, ham_user.username, 'testpassword')
+        assert response.status_code == 200
+
+        # Send a GET request to access an exam with a non-existent ID (e.g., 9999)
+        response = client.get(
+            url_for('main.take_exam', exam_id=9999),
+            follow_redirects=True
+        )
+
+        # Assert error message is flashed
+        assert response.status_code == 200
+        assert b"Invalid exam ID. Please try again." in response.data
+
+        # Assert redirection to the sessions page
+        assert b"Exam Sessions" in response.data
