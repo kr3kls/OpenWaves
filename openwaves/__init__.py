@@ -1,4 +1,8 @@
-# __init__.py
+"""File: __init__.py
+
+    This file contains the initialization methods for the application.
+"""
+
 import os
 import secrets
 from flask import Flask, g
@@ -15,10 +19,15 @@ load_dotenv()
 db = SQLAlchemy()
 login_manager = LoginManager()
 
-def create_app():
+def create_app(test_config=None):
     """Standard method to create Flask app."""
     app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
     app.config.from_object(Config)
+
+    # Apply test config if provided
+    if test_config:
+        app.config.update(test_config)
+
     _csrf = CSRFProtect(app)
 
     # Initialize extensions with the app

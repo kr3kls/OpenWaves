@@ -15,8 +15,10 @@ function makeRequest(url, method, body = null, csrfToken = null) {
         return response.json();
     });
 }
-// Export for testing
-module.exports = { makeRequest };
+// Conditionally export for testing if module.exports exists (Node.js)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { makeRequest };
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     // Function to set date in modal
