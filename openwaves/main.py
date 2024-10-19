@@ -428,7 +428,7 @@ def launch_exam(): # pylint: disable=R0911
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-@main.route('/exam/<int:exam_id>', methods=['GET', 'POST'])
+@main.route('/exam/<int:exam_id>', methods=['POST'])
 @login_required
 def take_exam(exam_id):
     """
