@@ -178,7 +178,7 @@ class ExamRegistration(db.Model): # pylint: disable=R0903
     tech = db.Column(db.Boolean, default=False)
     gen = db.Column(db.Boolean, default=False)
     extra = db.Column(db.Boolean, default=False)
-    valid = db.Column(db.Boolean, default=True)
+    valid = db.Column(db.Boolean, default=True) # default to true until additional function is built
 
     def __repr__(self):
         """Return a string representation of the registration.
@@ -235,7 +235,7 @@ class Exam(db.Model): # pylint: disable=R0903
     open = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
-        """Return a string representation of the diagram.
+        """Return a string representation of the exam.
 
         Returns:
             str: A string showing the Exam information.
