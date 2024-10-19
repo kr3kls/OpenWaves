@@ -22,21 +22,17 @@ def app():
     database after each test is done.
     """
 
-    # Set the correct root directory to openwaves/ (the application root)
-    app = create_app() # pylint: disable=W0621
+    # Set up the Flask app with test configurations
+    app = create_app({
+        "TESTING": True,
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///test_db.sqlite",
+        "WTF_CSRF_ENABLED": False,
+        "SECRET_KEY": "test_secret_key"
+    })
 
     # Set the correct root path and template folder for testing
     app.root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
-    # Force Flask to use the correct template folder (this might be redundant but ensures no issues)
     app.jinja_loader.searchpath = [os.path.join(app.root_path, 'templates')]
-
-    app.config.update({
-        "TESTING": True,
-        "WTF_CSRF_ENABLED": False,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",  # In-memory database for testing
-        "SECRET_KEY": "test_secret_key"
-    })
 
     # Push the app context before the test
     ctx = app.app_context()

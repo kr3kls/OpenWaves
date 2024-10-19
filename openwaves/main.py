@@ -222,8 +222,7 @@ def register():
                 user_id=current_user.id,
                 tech=(exam_element == '2'),
                 gen=(exam_element == '3'),
-                extra=(exam_element == '4'),
-                valid=False
+                extra=(exam_element == '4')
             )
             db.session.add(new_registration)
 
@@ -372,7 +371,7 @@ def launch_exam(): # pylint: disable=R0911
             return redirect(url_for(PAGE_SESSIONS))
 
         # Get Exam Session
-        exam_session = ExamSession.query.get(session_id)
+        exam_session = db.session.get(ExamSession, session_id)
 
         # Check if the user is registered for the correct exam element
         if (exam_element == '2' and exam_registration.tech):
@@ -399,6 +398,7 @@ def launch_exam(): # pylint: disable=R0911
 
             # Add the questions to the exam - TODO: Change this to the algorithm
             questions = Question.query.filter_by(pool_id=pool_id).limit(35).all()
+
             for question in questions:
                 new_answer = ExamAnswer(
                     exam_id=new_exam.id,
@@ -428,7 +428,7 @@ def launch_exam(): # pylint: disable=R0911
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
-@main.route('/exam/<int:exam_id>', methods=['POST'])
+@main.route('/exam/<int:exam_id>', methods=['GET'])
 @login_required
 def take_exam(exam_id):
     """
@@ -436,7 +436,7 @@ def take_exam(exam_id):
     """
     if current_user.role == 1:
          # Check if exam_id exists in the Exam table
-        exam = Exam.query.get(exam_id)
+        exam = db.session.get(Exam, exam_id)
         if not exam:
             flash('Invalid exam ID. Please try again.', 'danger')
             return redirect(url_for(PAGE_SESSIONS))

@@ -249,7 +249,10 @@ def test_upload_diagram_missing_file(client, app, ve_user):
 
     # Create a pool for testing
     with app.app_context():
-        new_pool = Pool(name="Test Pool", element="2", start_date=datetime.now(), end_date=datetime.now())
+        new_pool = Pool(name="Test Pool",
+                        element="2",
+                        start_date=datetime.now(),
+                        end_date=datetime.now())
         db.session.add(new_pool)
         db.session.commit()
         pool_id = new_pool.id
