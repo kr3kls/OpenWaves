@@ -345,7 +345,7 @@ def launch_exam(): # pylint: disable=R0911
         exam_element = request.form.get('exam_element')
         exam_name = get_exam_name(exam_element)
 
-        # Check for missing input data 
+        # Check for missing input data
         if not session_id or not exam_element or not exam_name:
             flash('Invalid exam request. Missing required information.', 'danger')
             return redirect(url_for(PAGE_SESSIONS))
