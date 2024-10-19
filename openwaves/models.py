@@ -178,7 +178,7 @@ class ExamRegistration(db.Model): # pylint: disable=R0903
     tech = db.Column(db.Boolean, default=False)
     gen = db.Column(db.Boolean, default=False)
     extra = db.Column(db.Boolean, default=False)
-    valid = db.Column(db.Boolean, default=False)
+    valid = db.Column(db.Boolean, default=True) # default to true until additional function is built
 
     def __repr__(self):
         """Return a string representation of the registration.
@@ -187,3 +187,87 @@ class ExamRegistration(db.Model): # pylint: disable=R0903
             str: A string showing the registration info.
         """
         return f"ExamRegistration('{self.user_id}', '{self.session_id}')"
+
+class ExamDiagram(db.Model): # pylint: disable=R0903
+    """Database model for exam diagrams.
+    
+    Represents a diagram for an exam question.
+    
+    Attributes:
+        id (int): The primary key for the exam diagram.
+        pool_id (int): The foreign key for the pool's id in Pool.
+        name (str): The diagram name
+        path (str): The path to the diagram file.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    path = db.Column(db.String(100), nullable=False)
+
+    def __repr__(self):
+        """Return a string representation of the diagram.
+
+        Returns:
+            str: A string showing the diagram path.
+        """
+        return f"ExamDiagram('{self.path}')"
+
+class Exam(db.Model): # pylint: disable=R0903
+    """Database model for exams.
+    
+    Represents an exam that is part of a session, associated with a user and a question pool.
+
+    Attributes:
+        id (int): The primary key for the exam.
+        user_id (int): The foreign key referencing the user's id in the User model.
+        pool_id (int): The foreign key referencing the pool's id in the Pool model.
+        session_id (int): The foreign key referencing the session's id in the ExamSession model.
+        element (int): The element number for the exam.
+        open (bool): Indicates whether the exam is open (default is True).
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('exam_session.id'), nullable=False)
+    element = db.Column(db.Integer, nullable=False)
+    open = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        """Return a string representation of the exam.
+
+        Returns:
+            str: A string showing the Exam information.
+        """
+        return f"Exam('{self.id}', user_id: '{self.user_id}', pool: '{self.pool_id}', " \
+            + f"session: '{self.session_id}')"
+
+class ExamAnswer(db.Model): # pylint: disable=R0903
+    """Database model for exam answers.
+    
+    Represents an answer to an exam question.
+
+    Attributes:
+        id (int): The primary key for the exam answer.
+        exam_id (int): The foreign key referencing the exam's id in the Exam model.
+        question_id (int): The foreign key referencing the question's id in the Question model.
+        question_number (int): The number of the question in the exam.
+        correct_answer (int): The correct answer to the question.
+        answer (int, optional): The answer provided by the user.
+    """
+
+    id = db.Column(db.Integer, primary_key=True)
+    exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
+    question_number = db.Column(db.Integer(), nullable=False)
+    correct_answer = db.Column(db.Integer(), nullable=False)
+    answer = db.Column(db.Integer(), nullable=True)
+
+    def __repr__(self):
+        """Return a string representation of the answer.
+
+        Returns:
+            str: A string showing the answer to the question.
+        """
+        return f"ExamAnswer('{self.answer}')"

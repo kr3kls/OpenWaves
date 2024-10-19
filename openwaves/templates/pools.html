@@ -19,7 +19,7 @@
             {% if question_pools|length > 0 %}
             <tbody>
                 {% for pool in question_pools %}
-                <tr>
+                <tr class="pool-row" data-id="{{ pool.id }}">
                     <td>{{ pool.id }}</td>
                     <td>{{ pool.name }}</td>
                     <td>{{ pool.element }}</td>
@@ -66,14 +66,93 @@
                         <button class="button is-small is-danger delete-pool-button" data-name="{{ pool.name }}" data-id="{{ pool.id }}">Delete</button>
                     </td>
                 </tr>
-            {% endfor %}
+                <tr class="expandable-row" data-id="{{ pool.id }}">
+                    <td colspan="7">
+                        <table class="table is-striped is-fullwidth">
+                            <thead>
+                                <tr>
+                                    <th>Diagram ID</th>
+                                    <th>Diagram Name</th>
+                                    <th>Image</th>
+                                </tr>
+                            </thead>
+                            <div id="fullscreen-overlay" class="fullscreen-overlay">
+                                <img id="fullscreen-image" class="fullscreen-image" src="" alt="Blown-up Diagram">
+                            </div>
+                            <tbody>
+                                {% if pool.diagrams|length > 0 %}
+                                {% for diagram in pool.diagrams %}
+                                <tr>
+                                    <td>{{ diagram.id }}</td>
+                                    <td>{{ diagram.name }}</td>
+                                    <td><img src="{{ url_for('static', filename='images/' + diagram.path) }}" alt="{{ diagram.name }}" class="pool-diagram thumbnail-image"></td>
+                                    <td>
+                                        <button class="button is-small is-danger delete-diagram-button" data-name="{{ diagram.path }}" data-id="{{ diagram.id }}">Delete</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td colspan="4">
+                                        <button class="button is-small is-light-button-color upload-diagram-button" data-name="{{ pool.name }}" data-id="{{ pool.id }}">Upload</button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4">No diagrams found.</td>
+                                    <td>
+                                        <button class="button is-small is-light-button-color upload-diagram-button" data-name="{{ pool.name }}" data-id="{{ pool.id }}">Upload</button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                        </table>
+                        <!-- Modal for CSV and Image upload for this pool -->
+                        <div class="modal" id="upload-modal-{{ pool.id }}">
+                            <div class="modal-background"></div>
+                            <div class="modal-card">
+                                <header class="modal-card-head">
+                                    <p class="modal-card-title">Upload Diagram for {{ pool.name }}</p>
+                                    <button class="delete close-modal" aria-label="close"></button>
+                                </header>
+                                <section class="modal-card-body">
+                                    <form id="upload-form-{{ pool.id }}" enctype="multipart/form-data">
+                                        {% if config['WTF_CSRF_ENABLED'] %}
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% endif %}
+
+                                        <!-- Diagram Name Field (Readonly) -->
+                                        <div class="field">
+                                            <label class="label">Diagram Name</label>
+                                            <div class="control">
+                                                <input class="input" type="text" name="diagram_name" value="{{ diagram_name }}">
+                                            </div>
+                                            <p class="help">Please enter the diagram name based on the element and current number (e.g., T-1, G-1, E-1).</p>
+                                        </div>
+
+                                        <!-- Upload Image File Field -->
+                                        <div class="field">
+                                            <label class="label">Upload Image File</label>
+                                            <div class="control">
+                                                <input class="input" type="file" name="file" accept="image/*" required>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </section>
+                                <footer class="modal-card-foot">
+                                    <button class="button is-button-color submit-upload" data-pool-id="{{ pool.id }}">Upload</button>
+                                    <button class="button is-light-button-color close-modal">Cancel</button>
+                                </footer>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </td>
+                </tr>                
             </tbody>
             {% else %}
-                <tbody>
-                    <tr>
-                        <td colspan="6">No question pools found.</td>
-                    </tr>
-                </tbody>
+            <tbody>
+                <tr>
+                    <td colspan="6">No question pools found.</td>
+                </tr>
+            </tbody>
             {% endif %}
             </table>
         </div>
@@ -89,7 +168,7 @@
             <div class="modal-card">
                 <header class="modal-card-head">
                     <p class="modal-card-title">Create Question Pool</p>
-                    <button class="delete" aria-label="close"></button>
+                    <button class="delete close-modal" aria-label="close"></button>
                 </header>
                 <section class="modal-card-body">
                     <form id="create-pool-form">

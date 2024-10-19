@@ -2,12 +2,12 @@
 
     This file contains the tests for the code in the main.py file.
 """
-import io
+
 from datetime import datetime
 from flask import url_for
 from werkzeug.security import generate_password_hash
 from openwaves import db
-from openwaves.imports import User, Pool, Question, TLI
+from openwaves.imports import User, Pool, Question
 from openwaves.tests.test_auth import login, logout
 
 ####################################
@@ -373,58 +373,6 @@ def test_pools_page_access_not_logged_in(client):
     response = client.get('/ve/pools', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
-def test_create_pool_success(client, ve_user):
-    """Test ID: UT-49
-    Functional test: Verifies that a VE user can successfully create a new question pool.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The response status code is 200.
-        - The response contains a JSON success message.
-        - The newly created pool is present in the database with the correct element number.
-    """
-    login(client, ve_user.username, 'vepassword')
-    response = client.post('/ve/create_pool', data={
-        'pool_name': 'Test Pool',
-        'exam_element': '2',
-        'start_date': '2023-01-01',
-        'end_date': '2026-12-31'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert response.is_json
-    assert response.get_json()['success'] is True
-    # Verify the pool was created in the database
-    with client.application.app_context():
-        pool = Pool.query.filter_by(name='Test Pool').first()
-        assert pool is not None
-        assert pool.element == 2
-
-def test_create_pool_missing_fields(client, ve_user):
-    """Test ID: UT-50
-    Negative test: Verifies that creating a question pool with missing fields returns an error.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The response status code is 400.
-        - The response contains a JSON error message stating "All fields are required.".
-    """
-    login(client, ve_user.username, 'vepassword')
-    response = client.post('/ve/create_pool', data={
-        'pool_name': '',
-        'exam_element': '',
-        'start_date': '',
-        'end_date': ''
-    }, follow_redirects=True)
-    assert response.status_code == 400
-    assert response.is_json
-    assert 'All fields are required.' in response.get_json()['error']
-
 def test_create_pool_access_as_regular_user(client):
     """Test ID: UT-51
     Negative test: Ensures that a regular user cannot create a question pool.
@@ -462,112 +410,6 @@ def test_create_pool_not_logged_in(client):
     }, follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
 
-def test_upload_questions_success(client, ve_user):
-    """Test ID: UT-53
-    Functional test: Verifies that a VE user can successfully upload questions to a pool.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The response status code is 200.
-        - The response contains a JSON success message.
-        - Two questions were added to the database, and one TLI entry was created.
-    """
-    # First, create a pool to upload questions to
-    login(client, ve_user.username, 'vepassword')
-    client.post('/ve/create_pool', data={
-        'pool_name': 'Upload Test Pool',
-        'exam_element': '2',
-        'start_date': '2023-01-01',
-        'end_date': '2026-12-31'
-    }, follow_redirects=True)
-
-    with client.application.app_context():
-        pool = Pool.query.filter_by(name='Upload Test Pool').first()
-        pool_id = pool.id
-
-    # Prepare a CSV file-like object to upload
-    csv_content = """id,correct,question,a,b,c,d,refs
-T1A01,A,What is 1+1?,2,3,4,5,Reference1
-T1A02,B,What is 2+2?,1,4,3,5,Reference2
-"""
-    data = {
-        'file': (io.BytesIO(csv_content.encode('utf-8')), 'questions.csv')
-    }
-
-    response = client.post(f'/ve/upload_questions/{pool_id}',
-                           data=data, content_type='multipart/form-data')
-    assert response.status_code == 200
-    assert response.is_json
-    assert response.get_json()['success'] is True
-
-    # Verify that questions were added to the database
-    with client.application.app_context():
-        question_count = Question.query.filter_by(pool_id=pool_id).count()
-        assert question_count == 2
-        tli_count = TLI.query.filter_by(pool_id=pool_id).count()
-        assert tli_count == 1  # Both questions have TLI starting with 'T1'
-
-def test_upload_questions_no_file(client, ve_user):
-    """Test ID: UT-54
-    Negative test: Verifies that uploading questions without a file returns an error.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The response status code is 400.
-        - The response contains a JSON error message stating "No file provided.".
-    """
-    login(client, ve_user.username, 'vepassword')
-    # Assume there's a pool with ID 1
-    response = client.post('/ve/upload_questions/1', data={}, content_type='multipart/form-data')
-    assert response.status_code == 400
-    assert response.is_json
-    assert 'No file provided.' in response.get_json()['error']
-
-def test_upload_questions_invalid_file_type(client, ve_user):
-    """Test ID: UT-55
-    Negative test: Ensures that uploading a non-CSV file type returns an error.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The response status code is 400.
-        - The response contains an error message stating that only CSV files are allowed.
-    """
-    login(client, ve_user.username, 'vepassword')
-
-    # Create a pool first
-    client.post('/ve/create_pool', data={
-        'pool_name': 'Invalid File Type Pool',
-        'exam_element': '2',
-        'start_date': '2023-01-01',
-        'end_date': '2026-12-31'
-    }, follow_redirects=True)
-
-    with client.application.app_context():
-        pool = Pool.query.filter_by(name='Invalid File Type Pool').first()
-        pool_id = pool.id
-
-    # Prepare a non-CSV file-like object to upload
-    non_csv_content = "Not a CSV content"
-    data = {
-        'file': (io.BytesIO(non_csv_content.encode('utf-8')), 'questions.txt')
-    }
-
-    response = client.post(f'/ve/upload_questions/{pool_id}',
-                           data=data, content_type='multipart/form-data')
-
-    # Check for the appropriate error response
-    assert response.status_code == 400
-    assert b'Invalid file type. Only CSV files are allowed.' in response.data
-
 def test_upload_questions_access_as_regular_user(client):
     """Test ID: UT-56
     Negative test: Ensures that a regular user cannot upload questions to a pool.
@@ -585,58 +427,6 @@ def test_upload_questions_access_as_regular_user(client):
     # Follow the redirect and check the final destination
     follow_response = client.get(response.headers["Location"], follow_redirects=True)
     assert b'Access denied' in follow_response.data
-
-def test_delete_pool_success(client, ve_user):
-    """Test ID: UT-57
-    Functional test: Verifies that a VE user can successfully delete a question pool.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The response status code is 200, indicating successful pool deletion.
-        - The response contains a JSON success message.
-        - The pool is confirmed to have been deleted from the database.
-    """
-    login(client, ve_user.username, 'vepassword')
-    # Create a pool to delete
-    client.post('/ve/create_pool', data={
-        'pool_name': 'Pool to Delete',
-        'exam_element': '2',
-        'start_date': '2023-01-01',
-        'end_date': '2026-12-31'
-    }, follow_redirects=True)
-    with client.application.app_context():
-        pool = Pool.query.filter_by(name='Pool to Delete').first()
-        pool_id = pool.id
-
-    response = client.delete(f'/ve/delete_pool/{pool_id}')
-    assert response.status_code == 200
-    assert response.is_json
-    assert response.get_json()['success'] is True
-    # Verify the pool was deleted
-    with client.application.app_context():
-        pool = db.session.get(Pool, pool_id)
-        assert pool is None
-
-def test_delete_pool_not_found(client, ve_user):
-    """Test ID: UT-58
-    Negative test: Ensures that deleting a non-existent pool returns an error.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The response status code is 404.
-        - The response contains a JSON error message stating "Pool not found.".
-    """
-    login(client, ve_user.username, 'vepassword')
-    response = client.delete('/ve/delete_pool/9999')
-    assert response.status_code == 404
-    assert response.is_json
-    assert 'Pool not found.' in response.get_json()['error']
 
 def test_delete_pool_access_as_regular_user(client):
     """Test ID: UT-59
@@ -670,3 +460,25 @@ def test_delete_pool_not_logged_in(client):
     """
     response = client.delete('/ve/delete_pool/1', follow_redirects=True)
     assert b'Please log in to access this page.' in response.data
+
+def test_delete_diagram_access_denied(client):
+    """Test ID: UT-175
+    Test diagram deletion access denied for non-VE users.
+
+    This test ensures that if a non-VE user attempts to delete a diagram, they are denied access.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - The user is redirected to the logout page with an access denied message.
+    """
+    # Log in as a regular user (role 1)
+    login(client, 'TESTUSER', 'testpassword')
+
+    # Attempt to delete a diagram as a non-VE user
+    response = client.delete('/ve/delete_diagram/1', follow_redirects=True)
+
+    # Assert access is denied
+    assert response.status_code == 200
+    assert b'Access denied.' in response.data

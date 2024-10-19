@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="box">
+    <!-- Exam question container -->
+    <div class="columns is-centered">
+        <div class="column is-half">
+            <!-- Diagram -->
+            <figure class="image is-4by3">
+                <img src="{{ url_for('static', filename='images/diagrams/1_T1.jpg') }}" alt="Figure T-1">
+            </figure>
+
+            <!-- Question -->
+            <h2 class="title is-5">Q3: What is component 1 in figure T-1?</h2>
+
+            <!-- Answer options -->
+            <form action="{{ url_for('main.profile') }}" method="POST">
+                {% if config['WTF_CSRF_ENABLED'] %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
+                <div class="control">
+                    <label class="radio">
+                        <input type="radio" name="answer" value="A">
+                        A. Resistor
+                    </label>
+                    <br>
+                    <label class="radio">
+                        <input type="radio" name="answer" value="B">
+                        B. Transistor
+                    </label>
+                    <br>
+                    <label class="radio">
+                        <input type="radio" name="answer" value="C">
+                        C. Battery
+                    </label>
+                    <br>
+                    <label class="radio">
+                        <input type="radio" name="answer" value="D">
+                        D. Connector
+                    </label>
+                </div>
+                <br>
+                <!-- Navigation buttons -->
+                <div class="buttons is-centered">
+                    <button type="button" class="button is-light-button-color">Back</button>
+                    <button type="submit" class="button is-button-color">Next</button>
+                    <button type="button" class="button is-light-button-color">Review</button>
+                </div>
+            </form>
+            <br>
+            <h1 class="mt-3 is-1">Question ID: T6C02, References </h1>
+        </div>
+    </div>
+</div>
+{% endblock %}

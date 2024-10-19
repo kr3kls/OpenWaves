@@ -3,11 +3,11 @@ name: Python Flask CI
 on:
   push:
     branches:
-      - main
-      - week5
+      - week8
   pull_request:
     branches:
       - main
+      - Sprint2
 
 jobs:
   sonarcloud:
@@ -42,7 +42,7 @@ jobs:
         run: tox -e py
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 

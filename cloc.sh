@@ -1,0 +1,1 @@
+cloc --exclude-dir=node_modules,__pycache__,pytest_cache,.tox,.venv,build,coverage,instance,openwaves.egg-info,package-lock.json .

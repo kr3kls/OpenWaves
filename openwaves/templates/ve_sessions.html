@@ -3,10 +3,9 @@
 {% block content %}
 <div class="column is-8 is-offset-2">
     <div class="box">
-        <h3 class="title has-text-centered has-text-dark">Test Sessions</h3>
+        <h3 class="title has-text-centered has-text-dark">Exam Sessions</h3>
         <div class="table-container has-text-centered">
             <table class="table is-striped is-hoverable is-fullwidth">
-            {% if test_sessions|length > 0 %}
             <thead>
                 <tr>
                     <th>Date</th>
@@ -18,8 +17,8 @@
                     <th>Status</th>
                 </tr>
             </thead>
-            {% endif %}
             <tbody>
+                {% if test_sessions|length > 0 %}
                 {% for test_session in test_sessions %}
                 <tr>
                     <td>{{ test_session.session_date.strftime('%m/%d/%Y') }}</td>
@@ -52,6 +51,11 @@
                     {% endif %}
                 </tr>
             {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7">No exam sessions found.</td>
+                </tr>
+            {% endif %}
             </tbody>
             </table>
         </div>

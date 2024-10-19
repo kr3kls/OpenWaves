@@ -3,17 +3,22 @@
     This file contains the main routes and view functions for the application.
 """
 
+import os
 import csv
 from datetime import datetime
 from io import TextIOWrapper
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, \
+    current_app as app
 from flask_login import login_required, current_user
+from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
 from .imports import db, Pool, Question, TLI, ExamSession, ExamRegistration, get_exam_name, \
-    is_already_registered, remove_exam_registration
+    is_already_registered, remove_exam_registration, load_question_pools, allowed_file, \
+    ExamDiagram, Exam, ExamAnswer
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_SESSIONS = 'main.sessions'
+PAGE_POOLS = 'main.pools'
 MSG_ACCESS_DENIED = 'Access denied.'
 
 main = Blueprint('main', __name__)
@@ -218,8 +223,7 @@ def register():
                 user_id=current_user.id,
                 tech=(exam_element == '2'),
                 gen=(exam_element == '3'),
-                extra=(exam_element == '4'),
-                valid=False
+                extra=(exam_element == '4')
             )
             db.session.add(new_registration)
 
@@ -300,6 +304,160 @@ def cancel_registration():
     flash(MSG_ACCESS_DENIED, "danger")
     return redirect(url_for(PAGE_LOGOUT))
 
+@main.route('/launch-exam', methods=['POST'])
+@login_required
+def launch_exam(): # pylint: disable=R0911
+    """
+    Start a new exam session for the user.
+
+    This route handles the POST request to initiate an exam session for a user who 
+    has registered for a specific exam element (Tech, General, Extra) within an exam session. 
+    The user must have a role of 1 (HAM Candidate) to take the exam. The system checks for 
+    the validity of the exam session, user registration, and ensures the user has not 
+    already started an exam session for the requested exam element. If all conditions are met, 
+    a new exam session is created, and 35 questions from the relevant pool are assigned to 
+    the user.
+
+    Args:
+        None (input data is taken from the form submission via POST request):
+        - session_id (str): The ID of the exam session.
+        - exam_element (str): The exam element to be taken ('tech' = Technician, 
+          'gen' = General, 'extra' = Extra).
+
+    Returns:
+        Redirect:
+        - If successful, redirects to the 'take_exam' route for the user to begin the exam.
+        - If the session is not found, input data is missing, or the user is not registered 
+          for the requested exam element, an error message is flashed, and the user is 
+          redirected to the sessions page.
+        - If the user has already started the exam for the requested element, they are redirected 
+          to the existing exam session.
+        - In case of any database or server errors, a generic error message is flashed, and the 
+          user is redirected to the sessions page.
+
+    Raises:
+        SQLAlchemyError: Raised when an error related to the database occurs during the 
+        transaction, which results in rolling back the session.
+        Exception: Catches general exceptions and logs an error.
+    """
+    if current_user.role == 1:
+        # Get the session ID and exam element from the form data
+        session_id = request.form.get('session_id')
+        exam_element = request.form.get('exam_element')
+        exam_name = get_exam_name(exam_element)
+
+        # Check for missing input data
+        if not session_id or not exam_element or not exam_name:
+            flash('Invalid exam request. Missing required information.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Check if an exam session already exists for this session and user
+        existing_exam = Exam.query.filter_by(user_id=current_user.id,
+                                             session_id=session_id,
+                                             element=exam_element).first()
+        if existing_exam:
+            return redirect(url_for('main.take_exam', exam_id=existing_exam.id))
+
+        # Get the Exam Registration for the user and session
+        exam_registration = ExamRegistration.query.filter_by(
+            user_id=current_user.id,
+            session_id=session_id,
+            valid=True
+        ).first()
+
+        if not exam_registration:
+            flash('You are not registered for this exam session or your registration is invalid.',
+                  'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Get Exam Session
+        exam_session = db.session.get(ExamSession, session_id)
+
+        # Check if the user is registered for the correct exam element
+        if (exam_element == '2' and exam_registration.tech):
+            pool_id = exam_session.tech_pool_id
+        elif (exam_element == '3' and exam_registration.gen):
+            pool_id = exam_session.gen_pool_id
+        elif (exam_element == '4' and exam_registration.extra):
+            pool_id = exam_session.extra_pool_id
+        else:
+            flash(f'You are not registered for the {exam_name} exam.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        try:
+            # Create a new exam session
+            new_exam = Exam(
+                user_id=current_user.id,
+                pool_id=pool_id,
+                session_id=session_id,
+                element=exam_element,
+                open=True
+            )
+            db.session.add(new_exam)
+            db.session.commit()
+
+            # Add the questions to the exam - TODO: Change this to the algorithm
+            questions = Question.query.filter_by(pool_id=pool_id).limit(35).all()
+
+            for question in questions:
+                new_answer = ExamAnswer(
+                    exam_id=new_exam.id,
+                    question_id=question.id,
+                    question_number=question.number,
+                    correct_answer=question.correct_answer
+                )
+                db.session.add(new_answer)
+            db.session.commit()
+
+            return redirect(url_for('main.take_exam', exam_id=new_exam.id))
+
+        except SQLAlchemyError as db_error:
+            db.session.rollback()
+            flash('A database error occurred while creating the exam session. Please try again.',
+                  'danger')
+            app.logger.error(f'Database error creating exam session: {str(db_error)}')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        except Exception as e: # pylint: disable=W0718
+            db.session.rollback()
+            flash('An unexpected error occurred. Please try again later.', 'danger')
+            app.logger.error(f'Error creating exam session: {str(e)}')
+            return redirect(url_for(PAGE_SESSIONS))
+
+    # If no HC account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
+
+@main.route('/exam/<int:exam_id>', methods=['GET'])
+@login_required
+def take_exam(exam_id):
+    """
+    Route to take an exam.
+    """
+    if current_user.role == 1:
+         # Check if exam_id exists in the Exam table
+        exam = db.session.get(Exam, exam_id)
+        if not exam:
+            flash('Invalid exam ID. Please try again.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
+        # Use the exam.id property to load the answers from the ExamAnswer table
+        exam_answers = ExamAnswer.query.filter_by(exam_id=exam.id).all()
+
+        # Load the questions from the Questions table based on the question_id in ExamAnswers
+        question_ids = [answer.question_id for answer in exam_answers]
+        questions = Question.query.filter(Question.id.in_(question_ids)).all()
+
+        return render_template('exam.html',
+                               exam=exam,
+                               exam_answers=exam_answers,
+                               questions=questions)
+
+    # If no HC account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
+
+
 ##########################################
 #                                        #
 #     VE (Volunteer Examiner) Routes     #
@@ -342,7 +500,7 @@ def pools():
         # If a VE account exists
 
         # Get all question pools from the database
-        question_pools = Pool.query.order_by(Pool.element.asc(), Pool.start_date.asc()).all()
+        question_pools = load_question_pools()
         for question_pool in question_pools:
             question_count = Question.query.filter_by(pool_id=question_pool.id).count()
             question_pool.question_count = question_count
@@ -466,10 +624,24 @@ def upload_questions(pool_id):
 @main.route('/ve/delete_pool/<int:pool_id>', methods=['DELETE'])
 @login_required
 def delete_pool(pool_id):
-    """Delete a question pool and all associated questions."""
-    # Check if the current user has role 2
+    """
+    Deletes a question pool, all associated questions, and any diagrams linked to the pool.
+
+    This route handles the deletion of an exam pool, ensuring that the pool's questions 
+    and diagrams are removed from both the database and the server. Only users with 
+    role 2 can perform this operation.
+
+    Args:
+        pool_id (int): The ID of the pool to be deleted.
+
+    Returns:
+        - 200 JSON response: {"success": True} on successful deletion.
+        - 404 JSON response: {"error": "Pool not found."} if the pool ID is invalid.
+        - 404 JSON response: {"error": "Diagram file not found."} if any associated diagram 
+          file is missing from the server.
+        - Redirect to the logout page if the user does not have the appropriate role.
+    """
     if current_user.role == 2:
-        # If a VE account exists
         # Find the pool by ID
         pool = db.session.get(Pool, pool_id)
         if not pool:
@@ -478,6 +650,21 @@ def delete_pool(pool_id):
         # Delete all questions associated with the pool
         Question.query.filter_by(pool_id=pool_id).delete()
         TLI.query.filter_by(pool_id=pool_id).delete()
+
+        # Delete all diagrams associated with the pool
+        diagrams = ExamDiagram.query.filter_by(pool_id=pool_id).all()
+        upload_folder = app.config['UPLOAD_FOLDER']
+
+        for diagram in diagrams:
+            # Delete the diagram file from the server
+            file_path = os.path.join(upload_folder, os.path.basename(diagram.path))
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            else:
+                app.logger.error(f"File does not exist: {file_path}")
+
+            # Delete the diagram from the database
+            db.session.delete(diagram)
 
         # Delete the pool itself
         db.session.delete(pool)
@@ -635,6 +822,136 @@ def close_session(session_id):
         # Set the end time to the current time and mark the session as closed
         session.end_time = datetime.now()
         session.status = False
+        db.session.commit()
+
+        return jsonify({"success": True}), 200
+
+    # If no VE account exists, redirect to the logout page
+    flash(MSG_ACCESS_DENIED, "danger")
+    return redirect(url_for(PAGE_LOGOUT))
+
+# Route to upload exam diagrams
+@main.route('/ve/upload_diagram/<int:pool_id>', methods=['POST'])
+@login_required
+def upload_diagram(pool_id):
+    """
+    Uploads an exam diagram to the server and stores its metadata in the database.
+
+    This route handles the process of uploading a diagram file associated with 
+    a specific exam pool. It ensures that the uploaded file is valid, saves the 
+    file securely, and stores the diagram's metadata (including the path) in the 
+    database. 
+
+    Args:
+        pool_id (int): The ID of the exam pool to which the diagram belongs.
+
+    Returns:
+        - Redirects back to the pools page or the referrer upon success or failure.
+    """
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.referrer or url_for(PAGE_POOLS))
+
+
+    file = request.files['file']
+    diagram_name = request.form.get('diagram_name')
+
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.referrer or url_for(PAGE_POOLS))
+
+    if file and allowed_file(file.filename):
+        # Secure the filename to prevent issues with directory traversal
+        filename = secure_filename(f"{pool_id}_{file.filename}")
+
+        # Construct the full path to save the file using current_app
+        upload_folder = app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_folder, filename)
+
+        # Relative path to store in the database
+        relative_path = f"diagrams/{filename}"
+
+        # Debugging output to verify the path
+        app.logger.info(f"File path to save: {file_path}")
+        app.logger.info(f"Path to store in database: {relative_path}")
+
+        # Ensure the directory exists
+        if not os.path.exists(upload_folder):
+            app.logger.error(f"Directory does not exist: {upload_folder}")
+            flash('Upload directory does not exist.')
+            return redirect(request.referrer or url_for(PAGE_POOLS))
+
+        app.logger.info(f"Directory exists: {upload_folder}")
+
+        try:
+            # Save the file to the designated folder
+            file.save(file_path)
+
+            # Store the diagram information in the database
+            new_diagram = ExamDiagram(
+                pool_id=pool_id,
+                name=diagram_name,
+                path=relative_path  # Store the relative path, not the full path
+            )
+            db.session.add(new_diagram)
+            db.session.commit()
+
+            flash('Diagram uploaded successfully')
+            return redirect(url_for(PAGE_POOLS, pool_id=pool_id))
+
+        except SQLAlchemyError as e:
+            db.session.rollback()  # Rollback the session in case of an error
+            app.logger.error(f"Error saving diagram to the database: {e}")
+            flash('An error occurred while saving the diagram to the database.')
+
+            return redirect(request.referrer or url_for(PAGE_POOLS))
+
+    else:
+        flash('Invalid file type. Allowed types: png, jpg, jpeg, gif')
+        return redirect(request.referrer or url_for(PAGE_POOLS))
+
+# Route to delete diagrams
+@main.route('/ve/delete_diagram/<int:diagram_id>', methods=['DELETE'])
+@login_required
+def delete_diagram(diagram_id):
+    """
+    Deletes an exam diagram from both the server and the database.
+
+    This route handles the deletion of a diagram associated with an exam pool. 
+    It ensures that only users with the appropriate role (role 2) can perform 
+    the deletion. The method checks for the existence of the diagram, removes 
+    the file from the server, deletes the diagram record from the database, 
+    and handles any errors that may occur during the process.
+
+    Args:
+        diagram_id (int): The ID of the diagram to be deleted.
+
+    Returns:
+        - 200 JSON response: {"success": True} on successful deletion.
+        - 404 JSON response: {"error": "Diagram not found."} if the diagram ID is invalid.
+        - 404 JSON response: {"error": "Diagram file not found."} if the file does not exist on 
+          the server.
+        - Redirect to the logout page if the user does not have the appropriate role.
+    """
+    # Check if the current user has role 2
+    if current_user.role == 2:
+        # If a VE account exists
+        # Find the diagram by ID
+        diagram = db.session.get(ExamDiagram, diagram_id)
+        if not diagram:
+            return jsonify({"error": "Diagram not found."}), 404
+
+        # Delete the diagram file from the server
+        upload_folder = app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_folder, os.path.basename(diagram.path))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        else:
+            app.logger.error(f"File does not exist: {file_path}")
+            return jsonify({"error": "Diagram file not found."}), 404
+
+        # Delete the diagram itself
+        db.session.delete(diagram)
         db.session.commit()
 
         return jsonify({"success": True}), 200
