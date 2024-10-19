@@ -23,7 +23,7 @@ def app():
     """
 
     # Set up the Flask app with test configurations
-    app = create_app({
+    app = create_app({ # pylint: disable=W0621
         "TESTING": True,
         "SQLALCHEMY_DATABASE_URI": "sqlite:///test_db.sqlite",
         "WTF_CSRF_ENABLED": False,
