@@ -201,7 +201,7 @@ class ExamDiagram(db.Model): # pylint: disable=R0903
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
     name = db.Column(db.String(100), nullable=False)
     path = db.Column(db.String(100), nullable=False)
 
@@ -229,7 +229,7 @@ class Exam(db.Model): # pylint: disable=R0903
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    pool_id = db.Column(db.Integer, db.ForeignKey('pool.id'), nullable=False)
+    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
     session_id = db.Column(db.Integer, db.ForeignKey('exam_session.id'), nullable=False)
     element = db.Column(db.Integer, nullable=False)
     open = db.Column(db.Boolean, default=True)
