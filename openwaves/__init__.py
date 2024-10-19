@@ -1,4 +1,8 @@
-# __init__.py
+"""File: __init__.py
+
+    This file contains the initialization methods for the application.
+"""
+
 import os
 import secrets
 from flask import Flask, g
