@@ -14,35 +14,41 @@
                 </tr>
             </thead>
             <tbody>
-                {% for account in ve_accounts %}
-                <tr>
-                    <td>{{ account.username }}</td>  <!-- Displaying Username instead of Email -->
-                    <td>
-                        {% if account.active %}
-                            <span class="tag is-success">Active</span>
-                        {% else %}
-                            <span class="tag is-danger">Disabled</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <form action="{{ url_for('auth.toggle_account_status', account_id=account.id) }}" method="post">
-                            {% if config['WTF_CSRF_ENABLED'] %}
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if ve_accounts|length > 0 %}
+                    {% for account in ve_accounts %}
+                    <tr>
+                        <td>{{ account.username }}</td>  <!-- Displaying Username instead of Email -->
+                        <td>
+                            {% if account.active %}
+                                <span class="tag is-success">Active</span>
+                            {% else %}
+                                <span class="tag is-danger">Disabled</span>
                             {% endif %}
-                            
-                            {% if account.username != current_user.username %}
-                            <button class="button is-small is-light-button-color" type="submit">
-                                {% if account.active %}
-                                    Disable
-                                {% else %}
-                                    Enable
+                        </td>
+                        <td>
+                            <form action="{{ url_for('auth.toggle_account_status', account_id=account.id) }}" method="post">
+                                {% if config['WTF_CSRF_ENABLED'] %}
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 {% endif %}
-                            </button>
-                            {% endif %}
-                        </form>
-                    </td>
+                                
+                                {% if account.username != current_user.username %}
+                                <button class="button is-small is-light-button-color" type="submit">
+                                    {% if account.active %}
+                                        Disable
+                                    {% else %}
+                                        Enable
+                                    {% endif %}
+                                </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="3">No VE accounts found.</td>
                 </tr>
-                {% endfor %}
+                {% endif %}
             </tbody>
         </table>
 

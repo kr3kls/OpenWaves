@@ -252,8 +252,8 @@ def ve_management():
         flash("Access denied.", "danger")
         return redirect(url_for(PAGE_LOGOUT))
 
-    ve_profiles = User.query.filter(User.role == 2)  # Query to fetch all VE accounts
-    return render_template('ve_management.html', ve_profiles=ve_profiles)
+    ve_accounts = User.query.filter(User.role == 2).all()  # Query to fetch all VE accounts
+    return render_template('ve_management.html', ve_accounts=ve_accounts)
 
 @auth.route('/toggle_account_status/<int:account_id>', methods=['POST'])
 @login_required
