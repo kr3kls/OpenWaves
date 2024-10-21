@@ -1,38 +1,14 @@
-/* Navbar background */
-.navbar {
-    background-color: #1F2D38;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 10;
-}
-
-/* Navbar items default text color */
-.navbar-item {
-    color: white !important;  /* Ensure white text */
-}
-
-/* Hover state for navbar items */
-.navbar-item:hover {
-    background-color: white !important;  /* White background on hover */
-    color: #1F2D38 !important;  /* Dark text on hover */
-}
-
-/* Navbar menu background when expanded */
-.navbar-menu {
-    background-color: #1F2D38;
-}
-
-/* Hero background */
-.hero {
+body {
     background-color: #1F2D38;
     background-image: url('../images/background.webp');
     background-size: cover;
     background-position: center center;
-    background-repeat: no-repeat;
-    position: relative;
-    z-index: 1;
+    background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    padding-top: 4rem; /* Adjust for fixed navbar height */
 }
 
 /* Footer styling */
@@ -42,11 +18,49 @@ footer {
     padding: 1rem;
     text-align: center;
     font-size: 0.9rem;
-    position: absolute;
-    bottom: 0;
+    margin-top: auto;
+}
+
+/* Hide expandable rows initially */
+.expandable-row {
+    display: none;
+    background-color: #f4f4f4;
+    color: #444;
+    text-align: center;
+}
+
+/* Class to show the row */
+.expandable-row.show {
+    display: table-row;
+}
+
+/* Fullscreen overlay for the blown-up image */
+.fullscreen-overlay {
+    display: none; 
+    position: fixed;
+    top: 0;
     left: 0;
     width: 100%;
-    z-index: 10;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); 
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* Enlarged image styling */
+.fullscreen-image {
+    max-width: 90%;
+    max-height: 90%;
+    border: 2px solid white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    cursor: pointer; 
+}
+
+/* Hero background */
+.hero {
+    position: relative;
+    z-index: 1;
 }
 
 /* Ensure padding to prevent content overlap with navbar */
@@ -76,6 +90,38 @@ footer {
     background-color: #262C37;
 }
 
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+/* Navbar background */
+.navbar {
+    background-color: #1F2D38;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+/* Navbar items default text color */
+.navbar-item {
+    color: white !important;  /* Ensure white text */
+}
+
+/* Hover state for navbar items */
+.navbar-item:hover {
+    background-color: white !important;  /* White background on hover */
+    color: #1F2D38 !important;  /* Dark text on hover */
+}
+
+/* Navbar menu background when expanded */
+.navbar-menu {
+    background-color: #1F2D38;
+}
+
 /* Hide password fields initially */
 #new-password-field, #confirm-password-field, #save-button {
     display: none;
@@ -88,47 +134,11 @@ footer {
     text-align: center; /* Center text within the labels */
 }
 
-/* Hide expandable rows initially */
-.expandable-row {
-    display: none;
-    background-color: #f4f4f4;
-    color: #444;
-    text-align: center;
-}
-
-/* Class to show the row */
-.expandable-row.show {
-    display: table-row;
-}
-
 .pool-diagram {
     display: block;
     margin-left: auto;
     margin-right: auto;
     max-width: 100px;
-}
-
-/* Fullscreen overlay for the blown-up image */
-.fullscreen-overlay {
-    display: none; 
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8); 
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-/* Enlarged image styling */
-.fullscreen-image {
-    max-width: 90%;
-    max-height: 90%;
-    border: 2px solid white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    cursor: pointer; 
 }
 
 /* Thumbnail image styling */
