@@ -14,7 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
 from .imports import db, Pool, Question, TLI, ExamSession, ExamRegistration, get_exam_name, \
     is_already_registered, remove_exam_registration, load_question_pools, allowed_file, \
-    ExamDiagram, Exam, ExamAnswer
+    requires_diagram, ExamDiagram, Exam, ExamAnswer
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_SESSIONS = 'main.sessions'
@@ -396,13 +396,14 @@ def launch_exam(): # pylint: disable=R0911
         db.session.commit()
 
         # Add the questions to the exam - TODO: Change this to the algorithm
-        questions = Question.query.filter_by(pool_id=pool_id).limit(35).all()
+        #questions = Question.query.filter_by(pool_id=pool_id).limit(35).all()
+        questions = Question.query.filter_by(pool_id=pool_id, id=239).limit(35).all()
 
-        for index, question in enumerate(questions):
+        for q_index, question in enumerate(questions):
             new_answer = ExamAnswer(
                 exam_id=new_exam.id,
                 question_id=question.id,
-                question_number=index + 1,
+                question_number=q_index + 1,
                 correct_answer=question.correct_answer
             )
             db.session.add(new_answer)
@@ -471,13 +472,16 @@ def take_exam(exam_id):
     current_answer = exam_answers[current_question_index]
     current_question = Question.query.get(current_answer.question_id)
 
+    diagram = requires_diagram(current_question)
+
     return render_template(
         'exam.html',
         exam=exam,
         question=current_question,
         answer=current_answer,
         current_index=current_question_index,
-        total_questions=len(exam_answers)
+        total_questions=len(exam_answers),
+        diagram=diagram
     )
 
 @main.route('/exam/<int:exam_id>/review', methods=['GET'])

@@ -6,9 +6,9 @@
     <div class="columns is-centered">
         <div class="column is-half">
             <!-- Diagram (if available) -->
-            {% if question.diagram_id %}
+            {% if diagram %}
                 <figure class="image is-4by3">
-                    <img src="{{ url_for('static', filename=question.diagram.path) }}" alt="{{ question.diagram.name }}">
+                    <img src="{{ url_for('static', filename='images/'+diagram.path) }}" alt="{{ diagram.name }}">
                 </figure>
             {% endif %}
 

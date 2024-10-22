@@ -69,3 +69,13 @@ def load_question_pools():
 def allowed_file(filename):
     """Check if a given filename has an allowed extension."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in Config.ALLOWED_EXTENSIONS
+
+# Helper function to check if a question requires a diagram
+def requires_diagram(question):
+    """Check if a question requires a diagram."""
+    diagrams = ExamDiagram.query.filter_by(pool_id=question.pool_id).all()
+    for diagram in diagrams:
+        if diagram.name in question.question:
+            return diagram
+
+    return None
