@@ -3,8 +3,8 @@
 {% block content %}
 <div class="column is-8 is-offset-2 mt-5">
     <div class="box has-text-centered">
-        <h1 class="title has-text-dark">Test</h1>
-        <p><strong>Test Session:</strong> {{ exam.session_id }}</p>
+        <h1 class="title has-text-dark">{{ exam_name }} Exam: Element {{ exam.element }}</h1>
+        <p><strong>Exam Session:</strong> {{ exam.session_id }}</p>
         
         <!-- Review Table -->
         <div class="table-container mt-3">

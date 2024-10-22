@@ -43,7 +43,9 @@
                         {% if current_index == total_questions - 1 %}disabled{% endif %}>
                         Next
                     </button>
-                    <a href="{{ url_for('main.review_exam', exam_id=exam.id) }}" class="button is-light-button-color">Review Exam</a>
+                    <button type="submit" name="review" class="button is-light-button-color">
+                        Review
+                    </button>
                 </div>
             </form>
         </div>

@@ -396,8 +396,7 @@ def launch_exam(): # pylint: disable=R0911
         db.session.commit()
 
         # Add the questions to the exam - TODO: Change this to the algorithm
-        #questions = Question.query.filter_by(pool_id=pool_id).limit(35).all()
-        questions = Question.query.filter_by(pool_id=pool_id, id=239).limit(35).all()
+        questions = Question.query.filter_by(pool_id=pool_id).limit(35).all()
 
         for q_index, question in enumerate(questions):
             new_answer = ExamAnswer(
@@ -462,6 +461,8 @@ def take_exam(exam_id):
             current_question_index += 1
         elif 'back' in request.form:
             current_question_index -= 1
+        elif 'review' in request.form:
+            return redirect(url_for('main.review_exam', exam_id=exam.id))
 
     # Get the current question based on the index
     if current_question_index < 0:
@@ -501,8 +502,16 @@ def review_exam(exam_id):
         flash('Invalid or closed exam ID.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
 
+    if exam.user_id != current_user.id:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Get the exam name
+    exam_name = get_exam_name(f'{exam.element}')
+
     # Retrieve all answers related to the exam
-    exam_answers = ExamAnswer.query.filter_by(exam_id=exam.id).order_by(ExamAnswer.question_number).all()
+    exam_answers = \
+        ExamAnswer.query.filter_by(exam_id=exam.id).order_by(ExamAnswer.question_number).all()
 
     # Get the associated questions for review
     question_ids = [answer.question_id for answer in exam_answers]
@@ -515,7 +524,8 @@ def review_exam(exam_id):
         'review.html',
         exam=exam,
         exam_answers=exam_answers,
-        questions=question_dict
+        questions=question_dict,
+        exam_name=exam_name
     )
 
 ##########################################
