@@ -23,7 +23,7 @@
                     <tr>
                         <td>{{ answer.question_number }}</td>
                         <td>{{ question.question }}</td>
-                        <td>{{ 'A' if answer.answer == 1 else 'B' if answer.answer == 2 else 'C' if answer.answer == 3 else 'D' if answer.answer == 4 else ''}}</td>
+                        <td>{{ 'A' if answer.answer == 0 else 'B' if answer.answer == 1 else 'C' if answer.answer == 2 else 'D' if answer.answer == 3 else ''}}</td>
                         <td>
                             <a href="{{ url_for('main.take_exam', exam_id=exam.id, index=answer.question_number - 1) }}" class="button is-small is-light-button-color">
                                 View
@@ -36,7 +36,7 @@
         </div>
 
         <!-- Finished Button -->
-        <button class="button is-dark mt-4">Finished</button>
+        <a href="{{ url_for('main.finish_exam', exam_id=exam.id) }}" class="button is-dark mt-4">Finished</a>
     </div>
 </div>
 {% endblock %}

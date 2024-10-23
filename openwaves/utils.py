@@ -79,3 +79,20 @@ def requires_diagram(question):
             return diagram
 
     return None
+
+# Helper function to get the exam score
+def get_exam_score(exam_answers, element):
+    """Calculate the exam score based on the given questions."""
+    score = 0
+    score_max = 35 if element in [2, 3] else 50 if element == 4 else None
+    for answer in exam_answers:
+        if answer.answer == answer.correct_answer:
+            score += 1
+    str_score = f'Score: {score}/{score_max}'
+    if score_max == 35 and score >= 26:
+        str_score += ' (Pass)'
+    elif score_max == 50 and score >= 37:
+        str_score += ' (Pass)'
+    else:
+        str_score += ' (Fail)'
+    return str_score

@@ -5,6 +5,7 @@
 
 import os
 import csv
+from collections import defaultdict
 from datetime import datetime
 from io import TextIOWrapper
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, \
@@ -14,7 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
 from .imports import db, Pool, Question, TLI, ExamSession, ExamRegistration, get_exam_name, \
     is_already_registered, remove_exam_registration, load_question_pools, allowed_file, \
-    requires_diagram, ExamDiagram, Exam, ExamAnswer
+    requires_diagram, get_exam_score, ExamDiagram, Exam, ExamAnswer
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_SESSIONS = 'main.sessions'
@@ -117,42 +118,66 @@ def sessions():
         return redirect(url_for(PAGE_LOGOUT))
 
     # Get all test sessions from the database
-    exam_sessions = \
-        db.session.query(ExamSession).order_by(ExamSession.session_date.desc()).all()
+    # Combine the query for exam sessions, registrations, and completed exams
+    combined_query = (
+        db.session.query(ExamSession, ExamRegistration, Exam)
+        .outerjoin(ExamRegistration, (ExamRegistration.session_id == ExamSession.id) &
+                                    (ExamRegistration.user_id == current_user.id))
+        .outerjoin(Exam, (Exam.session_id == ExamSession.id) &
+                        (Exam.user_id == current_user.id))
+        .order_by(ExamSession.session_date.desc(), ExamSession.id.desc())
+        .all()
+    )
 
-    # Get the current user's registrations
-    user_registrations = \
-        db.session.query(ExamRegistration).filter_by(user_id=current_user.id).all()
+    # Use a dictionary to aggregate data by session ID
+    session_dict = defaultdict(lambda: {
+        'tech_registered': False,
+        'gen_registered': False,
+        'extra_registered': False,
+        'tech_exam_completed': False,
+        'gen_exam_completed': False,
+        'extra_exam_completed': False
+    })
 
-    # Create a list to pass to the template with registration info
-    sessions_with_registrations = []
-    for session in exam_sessions:
-        # Find if the user is registered for this session and exam elements
-        tech_registered = any(reg.session_id == session.id and
-                                reg.tech for reg in user_registrations)
-        gen_registered = any(reg.session_id == session.id and
-                                reg.gen for reg in user_registrations)
-        extra_registered = any(reg.session_id == session.id and
-                                reg.extra for reg in user_registrations)
+    for session, registration, exam in combined_query:
+        session_id = session.id
 
-        sessions_with_registrations.append({
+        # Initialize or update the session entry in the dictionary
+        session_info = session_dict[session_id]
+        session_info.update({
             'id': session.id,
             'session_date': session.session_date,
-            'start_time': session.start_time,
-            'end_time': session.end_time,
-            'status': session.status,
-            'tech_pool_id': session.tech_pool_id,
-            'gen_pool_id': session.gen_pool_id,
-            'extra_pool_id': session.extra_pool_id,
-            'tech_registered': tech_registered,
-            'gen_registered': gen_registered,
-            'extra_registered': extra_registered
+            'status': 'Registration' if session.session_date.date() > datetime.now().date() or
+                    (session.session_date.date() == datetime.now().date() and session.start_time is None)
+                    else 'Open' if session.status else 'Closed'
         })
 
+        # Update registration status for each exam element
+        if registration:
+            session_info['tech_registered'] |= registration.tech
+            session_info['gen_registered'] |= registration.gen
+            session_info['extra_registered'] |= registration.extra
+
+        # Update exam completion status for each element
+        if exam:
+            if exam.element == 2:
+                session_info['tech_exam_completed'] |= True
+            elif exam.element == 3:
+                session_info['gen_exam_completed'] |= True
+            elif exam.element == 4:
+                session_info['extra_exam_completed'] |= True
+
+    # Convert the dictionary to a list for use in the template
+    sessions_with_registrations = list(session_dict.values())
+
+    print(sessions_with_registrations)
     current_date = datetime.now().date()
-    return render_template('sessions.html',
-                            exam_sessions=sessions_with_registrations,
-                            current_date=current_date)
+
+    return render_template(
+        'sessions.html',
+        exam_sessions=sessions_with_registrations,
+        current_date=current_date
+    )
 
 # Route to register for an exam session
 @main.route('/register', methods=['POST'])
@@ -396,7 +421,8 @@ def launch_exam(): # pylint: disable=R0911
         db.session.commit()
 
         # Add the questions to the exam - TODO: Change this to the algorithm
-        questions = Question.query.filter_by(pool_id=pool_id).limit(35).all()
+        score_max = 35 if int(exam_element) in [2, 3] else 50 if int(exam_element) == 4 else None
+        questions = Question.query.filter_by(pool_id=pool_id).limit(score_max).all()
 
         for q_index, question in enumerate(questions):
             new_answer = ExamAnswer(
@@ -435,7 +461,7 @@ def take_exam(exam_id):
 
     # Retrieve the exam
     exam = db.session.get(Exam, exam_id)
-    if not exam:
+    if not exam or not exam.open:
         flash('Invalid exam ID. Please try again.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
 
@@ -526,6 +552,101 @@ def review_exam(exam_id):
         exam_answers=exam_answers,
         questions=question_dict,
         exam_name=exam_name
+    )
+
+@main.route('/exam/<int:exam_id>/finish', methods=['GET'])
+@login_required
+def finish_exam(exam_id):
+    """
+    Route to review the completed exam.
+    """
+    # Ensure the user has permission to review the exam
+    if current_user.role != 1:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Get the exam and related answers
+    exam = db.session.get(Exam, exam_id)
+    if not exam or not exam.open:
+        flash('Invalid or closed exam ID.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    if exam.user_id != current_user.id:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    exam.open = False
+    db.session.commit()
+
+    return redirect(url_for('main.exam_results',
+                            session_id=exam.session_id,
+                            exam_element=exam.element))
+
+@main.route('/exam/results', methods=['GET', 'POST'])
+@login_required
+def exam_results():
+    """
+    Route to review the completed exam.
+    """
+    # Handle both GET and POST methods
+    if request.method == 'POST':
+        session_id = request.form.get('session_id')
+        exam_element = request.form.get('exam_element')
+    else:
+        session_id = request.args.get('session_id')
+        exam_element = request.args.get('exam_element')
+
+    # Validate session ID and exam element
+    if not session_id or not exam_element:
+        flash('Invalid exam request.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Get the exam and related answers
+    exam = Exam.query.filter_by(session_id=session_id,element=exam_element).first()
+    if not exam:
+        flash('Invalid exam ID.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Close exams that were not finished
+    exam_session = db.session.get(ExamSession, exam.session_id)
+    if exam.open and exam_session.session_date.date() < datetime.now().date():
+        exam.open = False
+        db.session.commit()
+
+    # Make sure exam is complete
+    if exam.open:
+        flash('Exam is still in progress.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Ensure the user has permission to review the exam
+    # Any role 2 is ok, but only the role 1 user who took the exam can review it
+    if current_user.role == 1 and current_user.id != exam.user_id:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Get the exam answers
+    exam_answers = \
+        ExamAnswer.query.filter_by(exam_id=exam.id).order_by(ExamAnswer.question_number).all()
+
+    # Get the exam name
+    exam_name = get_exam_name(f'{exam.element}')
+
+    exam_score_string = get_exam_score(exam_answers, exam.element)
+
+    # Get the associated questions for review
+    question_ids = [answer.question_id for answer in exam_answers]
+    questions = Question.query.filter(Question.id.in_(question_ids)).all()
+
+    # Create a dictionary of questions by ID for easier lookup
+    question_dict = {question.id: question for question in questions}
+
+    return render_template(
+        'results.html',
+        exam=exam,
+        exam_answers=exam_answers,
+        questions=question_dict,
+        exam_name=exam_name,
+        exam_score_string=exam_score_string
     )
 
 ##########################################

@@ -6,5 +6,6 @@
 from .models import User, Question, Pool, TLI, ExamSession, ExamRegistration, \
     ExamDiagram, Exam, ExamAnswer # pylint: disable=W0611
 from .utils import update_user_password, get_exam_name, is_already_registered, \
-     remove_exam_registration, load_question_pools, allowed_file, requires_diagram # pylint: disable=W0611
+    remove_exam_registration, load_question_pools, allowed_file, requires_diagram, \
+    get_exam_score # pylint: disable=W0611
 from . import db # pylint: disable=W0611
