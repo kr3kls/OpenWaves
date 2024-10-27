@@ -618,7 +618,7 @@ def test_exam_results_post_request(client, user_to_toggle):
         - The exam results are displayed correctly.
     """
     # Set up mock data similar to the GET request test
-    pool, exam_session, exam, question, exam_answer = setup_mock_exam(user_to_toggle)
+    pool, exam_session, exam, question, exam_answer = setup_mock_exam(user_to_toggle) # pylint: disable=W0612
 
     # login user
     response = login(client, user_to_toggle.username, 'password')
@@ -666,7 +666,7 @@ def test_exam_results_in_progress_exam(client, user_to_toggle):
     Asserts:
         - The response redirects to the sessions page with an error message.
     """
-    pool, exam_session, exam, question, exam_answer = setup_mock_exam(user_to_toggle)
+    pool, exam_session, exam, question, exam_answer = setup_mock_exam(user_to_toggle) # pylint: disable=W0612
 
     # Set exam to open (in progress)
     exam.open = True
@@ -695,7 +695,7 @@ def test_exam_results_unauthorized_access(client, user_to_toggle):
     Asserts:
         - The response redirects to the logout page.
     """
-    pool, exam_session, exam, question, exam_answer = setup_mock_exam(user_to_toggle)
+    pool, exam_session, exam, question, exam_answer = setup_mock_exam(user_to_toggle) # pylint: disable=W0612
 
     # Change the exam's user_id to simulate unauthorized access
     exam.user_id = user_to_toggle.id + 1  # Different user
