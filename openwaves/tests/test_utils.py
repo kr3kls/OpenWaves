@@ -2,12 +2,27 @@
 
     This file contains the tests for the code in the utils.py file.
 """
-import pytest
 from unittest.mock import patch
+import pytest
 from openwaves import db
 from openwaves.models import User, ExamRegistration, ExamDiagram
 from openwaves.utils import update_user_password, get_exam_name, is_already_registered, \
-    remove_exam_registration, requires_diagram
+    remove_exam_registration, requires_diagram, get_exam_score
+
+class MockExamAnswer: # pylint: disable=R0903
+    """Mock class for simulating ExamAnswer objects in unit tests.
+
+    This class is designed to create mock instances of ExamAnswer objects
+    to be used in unit testing. It allows for easy instantiation of objects 
+    with attributes that simulate actual ExamAnswer records from the database.
+
+    Attributes:
+        answer (int): The user's selected answer for the exam question.
+        correct_answer (int): The correct answer for the exam question.
+    """
+    def __init__(self, answer, correct_answer):
+        self.answer = answer
+        self.correct_answer = correct_answer
 
 def test_update_user_password(app):
     """Test ID: UT-30
@@ -302,3 +317,132 @@ def test_requires_diagram_none_question():
 
         result = requires_diagram(question)
         assert result is None
+
+def test_get_exam_score_pass_tech_exam():
+    """Test ID: UT-201
+    Test the get_exam_score function for a passing score on the Technician exam (element 2).
+
+    This test checks that the function correctly calculates a passing score 
+    when the score is 26 or higher out of 35.
+
+    Asserts:
+        - The score string includes 'Pass' when the score is 26 or higher.
+    """
+    exam_answers = [MockExamAnswer(answer=1, correct_answer=1) for _ in range(26)] + \
+                   [MockExamAnswer(answer=0, correct_answer=1) for _ in range(9)]
+
+    result = get_exam_score(exam_answers, 2)
+    assert result == 'Score: 26/35 (Pass)'
+
+def test_get_exam_score_fail_tech_exam():
+    """Test ID: UT-202
+    Test the get_exam_score function for a failing score on the Technician exam (element 2).
+
+    This test checks that the function correctly calculates a failing score 
+    when the score is below 26 out of 35.
+
+    Asserts:
+        - The score string includes 'Fail' when the score is below 26.
+    """
+    exam_answers = [MockExamAnswer(answer=1, correct_answer=1) for _ in range(25)] + \
+                   [MockExamAnswer(answer=0, correct_answer=1) for _ in range(10)]
+
+    result = get_exam_score(exam_answers, 2)
+    assert result == 'Score: 25/35 (Fail)'
+
+def test_get_exam_score_pass_general_exam():
+    """Test ID: UT-203
+    Test the get_exam_score function for a passing score on the General exam (element 3).
+
+    This test checks that the function correctly calculates a passing score 
+    when the score is 26 or higher out of 35.
+
+    Asserts:
+        - The score string includes 'Pass' when the score is 26 or higher.
+    """
+    exam_answers = [MockExamAnswer(answer=1, correct_answer=1) for _ in range(30)] + \
+                   [MockExamAnswer(answer=0, correct_answer=1) for _ in range(5)]
+
+    result = get_exam_score(exam_answers, 3)
+    assert result == 'Score: 30/35 (Pass)'
+
+def test_get_exam_score_fail_general_exam():
+    """Test ID: UT-204
+    Test the get_exam_score function for a failing score on the General exam (element 3).
+
+    This test checks that the function correctly calculates a failing score 
+    when the score is below 26 out of 35.
+
+    Asserts:
+        - The score string includes 'Fail' when the score is below 26.
+    """
+    exam_answers = [MockExamAnswer(answer=1, correct_answer=1) for _ in range(20)] + \
+                   [MockExamAnswer(answer=0, correct_answer=1) for _ in range(15)]
+
+    result = get_exam_score(exam_answers, 3)
+    assert result == 'Score: 20/35 (Fail)'
+
+def test_get_exam_score_pass_extra_exam():
+    """Test ID: UT-205
+    Test the get_exam_score function for a passing score on the Extra exam (element 4).
+
+    This test checks that the function correctly calculates a passing score 
+    when the score is 37 or higher out of 50.
+
+    Asserts:
+        - The score string includes 'Pass' when the score is 37 or higher.
+    """
+    exam_answers = [MockExamAnswer(answer=1, correct_answer=1) for _ in range(37)] + \
+                   [MockExamAnswer(answer=0, correct_answer=1) for _ in range(13)]
+
+    result = get_exam_score(exam_answers, 4)
+    assert result == 'Score: 37/50 (Pass)'
+
+def test_get_exam_score_fail_extra_exam():
+    """Test ID: UT-206
+    Test the get_exam_score function for a failing score on the Extra exam (element 4).
+
+    This test checks that the function correctly calculates a failing score 
+    when the score is below 37 out of 50.
+
+    Asserts:
+        - The score string includes 'Fail' when the score is below 37.
+    """
+    exam_answers = [MockExamAnswer(answer=1, correct_answer=1) for _ in range(36)] + \
+                   [MockExamAnswer(answer=0, correct_answer=1) for _ in range(14)]
+
+    result = get_exam_score(exam_answers, 4)
+    assert result == 'Score: 36/50 (Fail)'
+
+def test_get_exam_score_invalid_element():
+    """Test ID: UT-207
+    Test the get_exam_score function with an invalid exam element.
+
+    This test checks that the function returns None when an invalid exam 
+    element is provided.
+
+    Asserts:
+        - The score string indicates 'None' when the element is invalid.
+    """
+    exam_answers = [MockExamAnswer(answer=1, correct_answer=1) for _ in range(10)]
+
+    result = get_exam_score(exam_answers, 1)
+    assert result == 'Score: 10/None (Fail)'
+
+def test_get_exam_score_no_answers():
+    """Test ID: UT-208
+    Test the get_exam_score function with an empty list of exam answers.
+
+    This test checks that the function handles an empty list of exam answers 
+    correctly and returns a score of 0.
+
+    Asserts:
+        - The score string indicates 0/35 or 0/50 based on the exam element.
+    """
+    result_tech = get_exam_score([], 2)
+    result_general = get_exam_score([], 3)
+    result_extra = get_exam_score([], 4)
+
+    assert result_tech == 'Score: 0/35 (Fail)'
+    assert result_general == 'Score: 0/35 (Fail)'
+    assert result_extra == 'Score: 0/50 (Fail)'
