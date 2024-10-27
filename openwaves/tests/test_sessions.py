@@ -484,7 +484,7 @@ def test_ve_sessions_pool_categorization(client, ve_user):
     db.session.commit()
 
     # Access the VE sessions route
-    response = client.get(url_for('main.ve_sessions'))
+    response = client.get(url_for('main_ve.ve_sessions'))
 
     # Assert that the response contains the correct pool options
     assert response.status_code == 200

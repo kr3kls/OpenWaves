@@ -13,7 +13,7 @@ from .imports import User, update_user_password, db
 auth = Blueprint('auth', __name__)
 
 PAGE_ACCOUNT = 'main.profile'
-PAGE_VE_PROFILE = 'main.ve_profile'
+PAGE_VE_PROFILE = 'main_ve.ve_profile'
 PAGE_LOGIN = 'auth.login'
 PAGE_LOGOUT = 'auth.logout'
 PASS_ENCRYPTION = 'pbkdf2:sha256'

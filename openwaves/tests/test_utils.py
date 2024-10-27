@@ -2,11 +2,12 @@
 
     This file contains the tests for the code in the utils.py file.
 """
-
+import pytest
+from unittest.mock import patch
 from openwaves import db
-from openwaves.models import User, ExamRegistration
+from openwaves.models import User, ExamRegistration, ExamDiagram
 from openwaves.utils import update_user_password, get_exam_name, is_already_registered, \
-    remove_exam_registration
+    remove_exam_registration, requires_diagram
 
 def test_update_user_password(app):
     """Test ID: UT-30
@@ -186,3 +187,118 @@ def test_remove_exam_registration_none_both():
     """
     # Attempt to remove registration when both arguments are None
     remove_exam_registration(None, None)
+
+@pytest.mark.usefixtures("app")
+def test_requires_diagram_matching_diagram():
+    """Test ID: UT-196
+    Test the requires_diagram function with a question that has a matching diagram.
+
+    This test ensures that the function correctly identifies when a diagram is required
+    for a given question, based on matching diagram names.
+
+    Asserts:
+        - The function returns a diagram object if a matching diagram is found.
+        - The diagram name matches the expected diagram in the question.
+    """
+    question = type('Question', (), {})()
+    question.pool_id = 1
+    question.question = "Refer to diagram D-1"
+
+    # Mock the filter_by method on the ExamDiagram query
+    with patch('openwaves.models.ExamDiagram.query') as mock_query:
+        mock_filter_by = mock_query.filter_by.return_value
+        mock_filter_by.all.return_value = \
+            [ExamDiagram(pool_id=1, name="D-1", path="path/to/diagram.jpg")]
+
+        result = requires_diagram(question)
+
+        assert result is not None
+        assert result.name == "D-1"
+
+@pytest.mark.usefixtures("app")
+def test_requires_diagram_no_matching_diagram():
+    """Test ID: UT-197
+    Test the requires_diagram function with a question that does not have a matching diagram.
+
+    This test ensures that the function correctly returns None when a question does not 
+    require a diagram, even if diagrams exist for the pool ID.
+
+    Asserts:
+        - The function returns None when no matching diagram is found.
+    """
+    question = type('Question', (), {})()
+    question.pool_id = 1
+    question.question = "No diagram needed"
+
+    diagrams = [ExamDiagram(pool_id=1, name="D-1", path="path/to/diagram.jpg")]
+    with patch('openwaves.utils.ExamDiagram.query.filter_by') as mock_query:
+        mock_query.return_value.all.return_value = diagrams
+
+        result = requires_diagram(question)
+        assert result is None
+
+@pytest.mark.usefixtures("app")
+def test_requires_diagram_no_diagrams():
+    """Test ID: UT-198
+    Test the requires_diagram function when no diagrams are available for the given pool ID.
+
+    This test checks if the function correctly handles cases where there are no diagrams 
+    associated with the specified pool ID.
+
+    Asserts:
+        - The function returns None when no diagrams are found for the given pool ID.
+    """
+    question = type('Question', (), {})()
+    question.pool_id = 1
+    question.question = "Refer to diagram D-1"
+
+    diagrams = []
+    with patch('openwaves.utils.ExamDiagram.query.filter_by') as mock_query:
+        mock_query.return_value.all.return_value = diagrams
+
+        result = requires_diagram(question)
+        assert result is None
+
+@pytest.mark.usefixtures("app")
+def test_requires_diagram_empty_question():
+    """Test ID: UT-199
+    Test the requires_diagram function with an empty question string.
+
+    This test verifies that the function correctly returns None when the question string is 
+    empty, even if diagrams exist for the pool ID.
+
+    Asserts:
+        - The function returns None when the question string is empty.
+    """
+    question = type('Question', (), {})()
+    question.pool_id = 1
+    question.question = ""
+
+    diagrams = [ExamDiagram(pool_id=1, name="D-1", path="path/to/diagram.jpg")]
+    with patch('openwaves.utils.ExamDiagram.query.filter_by') as mock_query:
+        mock_query.return_value.all.return_value = diagrams
+
+        result = requires_diagram(question)
+        assert result is None
+
+@pytest.mark.usefixtures("app")
+def test_requires_diagram_none_question():
+    """Test ID: UT-200
+    Test the requires_diagram function with a None value for the question string.
+
+    This test ensures that the function returns None when the question string is set to None,
+    even if diagrams exist for the pool ID.
+
+    Asserts:
+        - The function returns None when the question string is None.
+    """
+    question = type('Question', (), {})()
+    question.pool_id = 1
+    question.question = None
+
+    diagrams = [ExamDiagram(pool_id=1, name="D-1", path="path/to/diagram.jpg")]
+    with patch('openwaves.utils.ExamDiagram.query.filter_by') as mock_query:
+        mock_query.return_value.all.return_value = diagrams
+
+        result = requires_diagram(question)
+        assert result is None

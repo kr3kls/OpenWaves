@@ -77,7 +77,6 @@ def requires_diagram(question):
     for diagram in diagrams:
         if diagram.name in question.question:
             return diagram
-
     return None
 
 # Helper function to get the exam score
