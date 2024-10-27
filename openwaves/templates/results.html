@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-8 is-offset-2 mt-5">
+    <div class="box has-text-centered">
+        <h1 class="title has-text-dark">Results: {{ exam_score_string }}</h1>
+        <p><strong>Exam Session:</strong> {{ exam.session_id }}</p>
+        
+        <!-- Review Table -->
+        <div class="table-container mt-3">
+            <table class="table is-fullwidth is-striped">
+                <thead>
+                    <tr>
+                        <th>Number</th>
+                        <th>Question</th>
+                        <th>Your Answer</th>
+                        <th>Correct Answer</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for answer in exam_answers %}
+                    {% set question = questions[answer.question_id] %}
+                    <tr>
+                        <td>{{ answer.question_number }}</td>
+                        <td>{{ question.question }}</td>
+                        <td>{{ 'A' if answer.answer == 0 else 'B' if answer.answer == 1 else 'C' if answer.answer == 2 else 'D' if answer.answer == 3 else ''}}</td>
+                        <td>{{ 'A' if answer.correct_answer == 0 else 'B' if answer.correct_answer == 1 else 'C' if answer.correct_answer == 2 else 'D' if answer.correct_answer == 3 else ''}}</td>
+                        <td>
+                            {% if answer.answer == answer.correct_answer %}
+                                <span class="tag is-success">Correct</span>
+                            {% else %}
+                                <span class="tag is-danger">Incorrect</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Finished Button -->
+        <a href="{{ url_for('main.sessions') }}" class="button is-dark mt-4">Finished</a>
+    </div>
+</div>
+{% endblock %}

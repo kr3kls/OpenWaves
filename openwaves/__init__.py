@@ -65,9 +65,13 @@ def create_app(test_config=None):
     from .auth import auth as auth_blueprint  # pylint: disable=C0415,R0401
     app.register_blueprint(auth_blueprint, url_prefix='/auth')
 
-    # blueprint for non-auth parts of app
+    # blueprint for non-auth user parts of app
     from .main import main as main_blueprint  # pylint: disable=C0415,R0401
     app.register_blueprint(main_blueprint)
+
+    # blueprint for non-auth ve parts of app
+    from .main_ve import main_ve as main_ve_blueprint  # pylint: disable=C0415,R0401
+    app.register_blueprint(main_ve_blueprint)
 
     return app
 

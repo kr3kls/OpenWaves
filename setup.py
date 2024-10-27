@@ -1,3 +1,9 @@
+"""
+    file: setup.py
+
+    This file is used to install the package.
+"""
+
 from setuptools import setup, find_packages
 
 setup(
