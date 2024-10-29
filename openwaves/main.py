@@ -154,8 +154,14 @@ def sessions():
             session_info['gen_registered'] |= registration.gen
             session_info['extra_registered'] |= registration.extra
 
-        # Update exam completion status for each element
+        # Close exams that ended before submission
         if exam:
+            if session.end_time and exam.open:
+                exam.open = False
+                db.session.commit()
+
+        # Update exam completion status for each element
+        if exam and not exam.open:
             if exam.element == 2:
                 session_info['tech_exam_completed'] |= True
             elif exam.element == 3:
