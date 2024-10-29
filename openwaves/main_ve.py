@@ -459,11 +459,11 @@ def upload_diagram(pool_id): # pylint: disable=R0911
             app.logger.error(f"Error saving diagram to the database: {e}")
             flash('An error occurred while saving the diagram to the database.')
 
-            return redirect(request.referrer or url_for(PAGE_POOLS))
+            return redirect(url_for(PAGE_POOLS))
 
     else:
         flash('Invalid file type. Allowed types: png, jpg, jpeg, gif')
-        return redirect(request.referrer or url_for(PAGE_POOLS))
+        return redirect(url_for(PAGE_POOLS))
 
 # Route to delete diagrams
 @main_ve.route('/ve/delete_diagram/<int:diagram_id>', methods=['DELETE'])
