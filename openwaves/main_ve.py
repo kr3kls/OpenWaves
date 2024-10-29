@@ -406,14 +406,14 @@ def upload_diagram(pool_id): # pylint: disable=R0911
 
     if 'file' not in request.files:
         flash('No file part')
-        return redirect(request.referrer or url_for(PAGE_POOLS))
+        return redirect(url_for(PAGE_POOLS))
 
     file = request.files['file']
     diagram_name = request.form.get('diagram_name')
 
     if file.filename == '':
         flash('No selected file')
-        return redirect(request.referrer or url_for(PAGE_POOLS))
+        return redirect(url_for(PAGE_POOLS))
 
     if file and allowed_file(file.filename):
         # Secure the filename to prevent issues with directory traversal
@@ -434,7 +434,7 @@ def upload_diagram(pool_id): # pylint: disable=R0911
         if not os.path.exists(upload_folder):
             app.logger.error(f"Directory does not exist: {upload_folder}")
             flash('Upload directory does not exist.')
-            return redirect(request.referrer or url_for(PAGE_POOLS))
+            return redirect(url_for(PAGE_POOLS))
 
         app.logger.info(f"Directory exists: {upload_folder}")
 
