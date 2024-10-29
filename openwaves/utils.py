@@ -124,12 +124,11 @@ def generate_exam(pool_id):
 
     if pool.element in [2, 3]:
         if len(exam) < 35:
-            return []
+            return None
 
     if pool.element == 4:
         if len(exam) < 50:
-            return []
+            return None
 
     # Return the final exam object
-    print(exam)
     return exam

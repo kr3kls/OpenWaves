@@ -403,6 +403,13 @@ def launch_exam(): # pylint: disable=R0911
         return redirect(url_for(PAGE_SESSIONS))
 
     try:
+        # Get the questions for the exam
+        questions = generate_exam(pool_id)
+
+        if not questions:
+            flash('No questions found for the exam. Please try again later.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
         # Create a new exam session
         new_exam = Exam(
             user_id=current_user.id,
@@ -414,9 +421,7 @@ def launch_exam(): # pylint: disable=R0911
         db.session.add(new_exam)
         db.session.commit()
 
-        # Add the questions to the exam
-        questions = generate_exam(pool_id)
-
+        # Enumerate the questions and create exam answers
         for q_index, question in enumerate(questions):
             new_answer = ExamAnswer(
                 exam_id=new_exam.id,
