@@ -10,7 +10,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from .imports import db, Question, ExamSession, ExamRegistration, ExamAnswer, Exam, get_exam_name, \
-    is_already_registered, remove_exam_registration, requires_diagram, get_exam_score
+    is_already_registered, remove_exam_registration, requires_diagram, get_exam_score, generate_exam
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_SESSIONS = 'main.sessions'
@@ -165,8 +165,6 @@ def sessions():
 
     # Convert the dictionary to a list for use in the template
     sessions_with_registrations = list(session_dict.values())
-
-    print(sessions_with_registrations)
     current_date = datetime.now().date()
 
     return render_template(
@@ -416,9 +414,8 @@ def launch_exam(): # pylint: disable=R0911
         db.session.add(new_exam)
         db.session.commit()
 
-        # Add the questions to the exam - TODO: Change this to the algorithm
-        score_max = 35 if int(exam_element) in [2, 3] else 50 if int(exam_element) == 4 else None
-        questions = Question.query.filter_by(pool_id=pool_id).limit(score_max).all()
+        # Add the questions to the exam
+        questions = generate_exam(pool_id)
 
         for q_index, question in enumerate(questions):
             new_answer = ExamAnswer(
