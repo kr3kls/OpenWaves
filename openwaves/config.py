@@ -56,3 +56,5 @@ class Config:
     LOGIN_VIEW = 'auth.login'
     LOGIN_MESSAGE = "Please log in to access this page."
     LOGIN_MESSAGE_CATEGORY = 'danger'
+
+    SERVER_NAME = f"{os.getenv('SERVER_NAME', '127.0.0.1')}:{os.getenv('SERVER_PORT', '5000')}"
