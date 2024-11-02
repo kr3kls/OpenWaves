@@ -2,7 +2,7 @@
 
     Utility functions for user password management.
 """
-import random
+import secrets
 from werkzeug.security import generate_password_hash
 from openwaves.models import Pool, ExamDiagram, Question, TLI
 from . import db
@@ -128,7 +128,7 @@ def generate_exam(pool_id):
     for tli_code in tli_codes:
         tli_questions = questions_by_tli.get(tli_code)
         if tli_questions:
-            selected_question = random.choice(tli_questions)
+            selected_question = secrets.choice(tli_questions)
             exam.append(selected_question)
 
     # Ensure we have a complete exam
