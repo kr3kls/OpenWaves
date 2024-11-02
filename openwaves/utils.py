@@ -113,7 +113,7 @@ def generate_exam(pool_id):
     tli_codes = [tli.tli for tli in tlis]
 
     # Retrieve all questions matching the TLIs in a single query
-    questions = Question.query.filter(pool_id == pool_id).all()
+    questions = Question.query.filter_by(pool_id=pool_id).all()
 
     # Create a mapping of questions by TLI
     questions_by_tli = {tli_code: [] for tli_code in tli_codes}
