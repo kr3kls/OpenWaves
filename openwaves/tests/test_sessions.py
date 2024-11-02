@@ -637,7 +637,7 @@ def test_force_close_session_already_closed(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_delete_session_unauthorized_role(client, user_to_toggle):
-    """Test ID: UT-259
+    """Test ID: UT-232
     Test the delete_session route with an unauthorized user role.
 
     Asserts:
@@ -677,7 +677,7 @@ def test_delete_session_unauthorized_role(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_delete_session_not_found(client, ve_user):
-    """Test ID: UT-260
+    """Test ID: UT-233
     Test the delete_session route with a non-existent session ID.
 
     Asserts:
@@ -699,7 +699,7 @@ def test_delete_session_not_found(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_delete_session_with_exams(client, ve_user):
-    """Test ID: UT-261
+    """Test ID: UT-234
     Test the delete_session route when the session contains exams.
 
     Asserts:
@@ -744,7 +744,7 @@ def test_delete_session_with_exams(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_delete_session_successful(client, ve_user):
-    """Test ID: UT-262
+    """Test ID: UT-235
     Test the delete_session route for successful deletion.
 
     Asserts:

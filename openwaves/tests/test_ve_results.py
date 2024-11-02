@@ -313,7 +313,7 @@ def test_ve_session_results_invalid_session(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_ve_session_results_no_exams(client, ve_user):
-    """Test ID: UT-257
+    """Test ID: UT-236
     Test the ve_session_results route with a session that has no exams.
 
     Asserts:
@@ -357,7 +357,7 @@ def test_ve_session_results_no_exams(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_ve_session_results_pass_fail_logic(client, ve_user):
-    """Test ID: UT-258
+    """Test ID: UT-237
     Test the ve_session_results route to verify pass/fail logic.
 
     Asserts:
