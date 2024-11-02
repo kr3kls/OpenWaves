@@ -591,6 +591,11 @@ def exam_results():
     """
     Route to review the completed exam.
     """
+    # Ensure the user has role 1
+    if current_user.role != 1:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
     # Handle both GET and POST methods
     if request.method == 'POST':
         session_id = request.form.get('session_id')
@@ -605,12 +610,20 @@ def exam_results():
         return redirect(url_for(PAGE_SESSIONS))
 
     # Get the exam and related answers
-    exam = Exam.query.filter_by(session_id=session_id,element=exam_element).first()
+    exam = Exam.query.filter_by(user_id=current_user.id,
+                                session_id=session_id,
+                                element=exam_element
+                                ).first()
     if not exam:
         flash('Invalid exam ID.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
 
-    # Close exams that were not finished
+    # Ensure the user has permission to review the exam
+    if current_user.id != exam.user_id:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Close exams that were not finished and the session is closed
     exam_session = db.session.get(ExamSession, exam.session_id)
     if exam.open and exam_session.session_date.date() < datetime.now().date():
         exam.open = False
@@ -620,12 +633,6 @@ def exam_results():
     if exam.open:
         flash('Exam is still in progress.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
-
-    # Ensure the user has permission to review the exam
-    # Any role 2 is ok, but only the role 1 user who took the exam can review it
-    if current_user.role == 1 and current_user.id != exam.user_id:
-        flash(MSG_ACCESS_DENIED, "danger")
-        return redirect(url_for(PAGE_LOGOUT))
 
     # Get the exam answers
     exam_answers = \
@@ -649,5 +656,6 @@ def exam_results():
         exam_answers=exam_answers,
         questions=question_dict,
         exam_name=exam_name,
-        exam_score_string=exam_score_string
+        exam_score_string=exam_score_string,
+        hc=current_user
     )

@@ -12,13 +12,14 @@ from flask import Blueprint, jsonify, redirect, render_template, request, flash,
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
-from .imports import db, Pool, Question, TLI, ExamSession, ExamDiagram, load_question_pools, \
-    allowed_file
+from .imports import db, Pool, Question, TLI, ExamSession, ExamDiagram, Exam, ExamAnswer, User, \
+    load_question_pools, allowed_file, get_exam_name, get_exam_score
 
 main_ve = Blueprint('main_ve', __name__)
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_POOLS = 'main_ve.pools'
+PAGE_SESSIONS = 'main_ve.ve_sessions'
 MSG_ACCESS_DENIED = 'Access denied.'
 
 ##########################################
@@ -374,6 +375,11 @@ def close_session(session_id):
     if session is None:
         return jsonify({"error": "Session not found."}), 404
 
+    # Check for open exams
+    open_exams = Exam.query.filter_by(session_id=session_id, open=True).all()
+    if open_exams:
+        return jsonify({"error": "There are still open exams in this session."}), 400
+
     # Set the end time to the current time and mark the session as closed
     session.end_time = datetime.now()
     session.status = False
@@ -510,6 +516,90 @@ def delete_diagram(diagram_id):
 
     # Delete the diagram itself
     db.session.delete(diagram)
+    db.session.commit()
+
+    return jsonify({"success": True}), 200
+
+@main_ve.route('/ve/exam/results', methods=['POST'])
+@login_required
+def ve_exam_results():
+    """
+    Route to review the a completed exam.
+    """
+    # Check if the current user has role 2
+    if current_user.role != 2:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Get the form data
+    session_id = request.form.get('session_id')
+    exam_element = request.form.get('exam_element')
+    hc_id = request.form.get('hc_id')
+
+    # Validate form data
+    if not session_id or not exam_element or not hc_id:
+        flash('Invalid exam request.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Get the HC user
+    hc_user = db.sesson.get(User, hc_id)
+    if not hc_user:
+        flash('Invalid HC ID.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Get the exam and related answers
+    exam = Exam.query.filter_by(user_id=hc_id,session_id=session_id,element=exam_element).first()
+    if not exam:
+        flash('Invalid exam ID.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Make sure exam is complete
+    if exam.open:
+        flash('Exam is still in progress.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Get the exam answers
+    exam_answers = \
+        ExamAnswer.query.filter_by(exam_id=exam.id).order_by(ExamAnswer.question_number).all()
+
+    # Get the exam name
+    exam_name = get_exam_name(f'{exam.element}')
+
+    exam_score_string = get_exam_score(exam_answers, exam.element)
+
+    # Get the associated questions for review
+    question_ids = [answer.question_id for answer in exam_answers]
+    questions = Question.query.filter(Question.id.in_(question_ids)).all()
+
+    # Create a dictionary of questions by ID for easier lookup
+    question_dict = {question.id: question for question in questions}
+
+    return render_template(
+        'results.html',
+        exam=exam,
+        exam_answers=exam_answers,
+        questions=question_dict,
+        exam_name=exam_name,
+        exam_score_string=exam_score_string,
+        hc=hc_user
+    )
+
+@main_ve.route('/ve/force_close_session/<int:session_id>', methods=['POST'])
+@login_required
+def force_close_session(session_id):
+    """Force closes a session regardless of open exams."""
+    if current_user.role != 2:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Retrieve the session, and return a 404 error if not found
+    session = db.session.get(ExamSession, session_id)
+    if session is None:
+        return jsonify({"error": "Session not found."}), 404
+
+    # Set the end time to the current time and mark the session as closed
+    session.end_time = datetime.now()
+    session.status = False
     db.session.commit()
 
     return jsonify({"success": True}), 200

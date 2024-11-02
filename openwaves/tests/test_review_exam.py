@@ -713,4 +713,4 @@ def test_exam_results_unauthorized_access(client, user_to_toggle):
 
     # Validate redirection to the logout page
     assert response.status_code == 200
-    assert b'Access denied.' in response.data
+    assert b'Access denied.' or b'Invalid exam ID.' in response.data

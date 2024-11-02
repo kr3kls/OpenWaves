@@ -31,7 +31,7 @@
                     </td>
                     <td>
                         {% if test_session.status and test_session.end_time is none %}
-                            <button class="button is-small is-light-button-color close-session-button" data-id="{{ test_session.id }}">Close</button>
+                            <button class="button is-small is-light-button-color close-session-button" data-id="{{ test_session.id }}" data-force="false">Close</button>
                         {% else %}
                             {{ test_session.end_time.strftime('%I:%M %p') if test_session.end_time else '' }}
                         {% endif %}
