@@ -115,7 +115,8 @@ T2I35,C,What is 35+35?,1,70,4,5,Reference35
             session_date=datetime.today(),
             tech_pool_id=tech_id,
             gen_pool_id=gen_id,
-            extra_pool_id=extra_id
+            extra_pool_id=extra_id,
+            status=True
         )
         db.session.add(exam_session)
         db.session.commit()
@@ -147,6 +148,7 @@ T2I35,C,What is 35+35?,1,70,4,5,Reference35
         )
         # Assert redirection to 'take_exam' route
         assert response.status_code == 200
+        print(response.data)
         assert b"Question ID:" in response.data
 
         # Assert new exam and questions exist in the database

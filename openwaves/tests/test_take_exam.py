@@ -97,7 +97,9 @@ def test_take_exam_post_save_answer(client, user_to_toggle):
         session_date=datetime(2024, 10, 1),
         tech_pool_id=pool.id,
         gen_pool_id=pool.id,
-        extra_pool_id=pool.id
+        extra_pool_id=pool.id,
+        status=True
+
     )
     db.session.add(exam_session)
     db.session.commit()
@@ -155,6 +157,7 @@ def test_take_exam_post_save_answer(client, user_to_toggle):
 
     # Validate response and the saved answer
     assert response.status_code == 200
+    print(response.data)
     assert updated_answer.answer == 2
 
 @pytest.mark.usefixtures("app")
@@ -183,7 +186,8 @@ def test_take_exam_post_next_navigation(client, user_to_toggle):
         session_date=datetime(2024, 10, 1),
         tech_pool_id=pool.id,
         gen_pool_id=pool.id,
-        extra_pool_id=pool.id
+        extra_pool_id=pool.id,
+        status=True
     )
     db.session.add(exam_session)
     db.session.commit()
@@ -270,7 +274,8 @@ def test_take_exam_post_back_navigation(client, user_to_toggle):
         session_date=datetime(2024, 10, 1),
         tech_pool_id=pool.id,
         gen_pool_id=pool.id,
-        extra_pool_id=pool.id
+        extra_pool_id=pool.id,
+        status=True
     )
     db.session.add(exam_session)
     db.session.commit()
@@ -352,7 +357,8 @@ def test_take_exam_post_review_navigation(client, user_to_toggle):
         session_date=datetime(2024, 10, 1),
         tech_pool_id=pool.id,
         gen_pool_id=pool.id,
-        extra_pool_id=pool.id
+        extra_pool_id=pool.id,
+        status=True
     )
     db.session.add(exam_session)
     db.session.commit()
@@ -454,7 +460,8 @@ def test_take_exam_get_first_question(client, user_to_toggle):
         session_date=datetime(2024, 10, 1),
         tech_pool_id=pool.id,
         gen_pool_id=pool.id,
-        extra_pool_id=pool.id
+        extra_pool_id=pool.id,
+        status=True
     )
     db.session.add(exam_session)
     db.session.commit()
@@ -535,7 +542,8 @@ def test_take_exam_get_last_question(client, user_to_toggle):
         session_date=datetime(2024, 10, 1),
         tech_pool_id=pool.id,
         gen_pool_id=pool.id,
-        extra_pool_id=pool.id
+        extra_pool_id=pool.id,
+        status=True
     )
     db.session.add(exam_session)
     db.session.commit()
