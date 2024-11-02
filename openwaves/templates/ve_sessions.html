@@ -47,7 +47,7 @@
                     {% endif %}
                     <td>
                     {% if not test_session.start_time %}
-                        <button class="button is-small is-danger delete-session-button" data-id="{{ session.id }}">Delete</button>
+                        <button class="button is-small is-danger delete-session-button" data-id="{{ test_session.id }}">Delete</button>
                     {% endif %}
                     {% if test_session.start_time and test_session.status == false %}
                         <a href="{{ url_for('main_ve.ve_session_results', session_id=test_session.id) }}" class="button is-small is-light-button-color">Results</a>

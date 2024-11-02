@@ -668,3 +668,35 @@ def ve_session_results(session_id):
         exam_results=formatted_results,
         session=session
     )
+
+@main_ve.route('/ve/delete_session/<int:session_id>', methods=['DELETE'])
+@login_required
+def delete_session(session_id):
+    """
+    Route to delete an exam session by session ID.
+    """
+    # Check if the current user has role 2
+    if current_user.role != 2:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Retrieve the session from the database
+    session = db.session.get(ExamSession, session_id)
+    if session is None:
+        return jsonify({"error": "Session not found."}), 404
+
+    # Check for exams
+    exams = Exam.query.filter_by(session_id=session_id).all()
+    if exams:
+        return jsonify({"error": "There are exams in this session."}), 400
+
+    # Delete the session from the database
+    try:
+        db.session.delete(session)
+        db.session.commit()
+        return jsonify({"success": True}), 200
+    except Exception as e: # pylint: disable=W0718
+        # Log the error and send a failure response
+        db.session.rollback()
+        print(f"Error deleting session: {e}")
+        return jsonify({"error": "Failed to delete the session. Please try again later."}), 500

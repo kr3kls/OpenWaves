@@ -99,6 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (action === 'delete' && !confirm('Are you sure you want to delete this session?')) return;
     
+                // Set the request body only for non-DELETE requests
+                const body = method === 'DELETE' ? null : JSON.stringify({ action });
+
                 makeRequest(endpoint, method, { action }, csrfToken)
                     .then(data => {
                         if (data && data.success) {
