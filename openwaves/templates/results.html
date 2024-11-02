@@ -40,7 +40,11 @@
         </div>
 
         <!-- Finished Button -->
-        <a href="{{ url_for('main.sessions') }}" class="button is-dark mt-4">Finished</a>
+        {% if ve %}
+            <a href="{{ url_for('main_ve.ve_session_results', session_id=exam.session_id) }}" class="button is-dark mt-4">Finished</a>
+        {% else %}
+            <a href="{{ url_for('main.sessions') }}" class="button is-dark mt-4">Finished</a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -542,7 +542,7 @@ def ve_exam_results():
         return redirect(url_for(PAGE_SESSIONS))
 
     # Get the HC user
-    hc_user = db.sesson.get(User, hc_id)
+    hc_user = db.session.get(User, hc_id)
     if not hc_user:
         flash('Invalid HC ID.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
@@ -581,7 +581,8 @@ def ve_exam_results():
         questions=question_dict,
         exam_name=exam_name,
         exam_score_string=exam_score_string,
-        hc=hc_user
+        hc=hc_user,
+        ve=True
     )
 
 @main_ve.route('/ve/force_close_session/<int:session_id>', methods=['POST'])
@@ -603,3 +604,67 @@ def force_close_session(session_id):
     db.session.commit()
 
     return jsonify({"success": True}), 200
+
+@main_ve.route('/ve/session/results/<int:session_id>', methods=['GET'])
+@login_required
+def ve_session_results(session_id):
+    """
+    Route to load all exam results for a given session.
+    """
+    # Check if the current user has the necessary role
+    if current_user.role != 2:
+        flash("Access denied.", "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Retrieve the session
+    session = db.session.get(ExamSession, session_id)
+    if session is None:
+        flash("Session not found.", "danger")
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Query all exams associated with the session
+    exams = db.session.query(
+        Exam.id.label('exam_id'),
+        Exam.user_id,
+        Exam.element,
+        User.first_name,
+        User.last_name
+    ).join(User, User.id == Exam.user_id).filter(Exam.session_id == session_id).all()
+
+    # Prepare the formatted results list to include scores and pass/fail status
+    formatted_results = []
+    for exam in exams:
+        # Retrieve the exam answers for this exam to calculate the score
+        answers = ExamAnswer.query.filter_by(exam_id=exam.exam_id).all()
+
+        # Calculate the number of correct answers
+        correct_count = sum(1 for answer in answers if answer.answer == answer.correct_answer)
+
+        # Determine the pass/fail threshold based on the element
+        if exam.element in [2, 3]:
+            pass_threshold = 26
+        elif exam.element == 4:
+            pass_threshold = 37
+        else:
+            pass_threshold = 0  # Fallback in case of unexpected element
+
+        # Determine pass/fail status
+        passed = correct_count >= pass_threshold
+
+        # Add the exam result data to the formatted list
+        formatted_results.append({
+            "last_name": exam.last_name,
+            "first_name": exam.first_name,
+            "element": exam.element,
+            "correct": correct_count,
+            "passed": passed,
+            "session_id": session_id,
+            "hc_id": exam.user_id
+        })
+
+    # Render the template with the formatted exam results
+    return render_template(
+        'session_results.html',
+        exam_results=formatted_results,
+        session=session
+    )
