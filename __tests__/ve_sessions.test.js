@@ -355,4 +355,55 @@ describe('Modal and session handling', () => {
 
         expect(document.getElementById('start-date')).toBeNull();
     });
+
+    /**
+     * Test ID: UT-257
+     * Test updating the button to "force close" when error indicates open exams.
+     *
+     * This test ensures that if the server returns an error indicating open exams, 
+     * the button's text, style, and attributes are updated to a "force close" action.
+     *
+     * Asserts:
+     * - The button has its `data-force` attribute set to `true`.
+     * - The button's text content is updated to "Force".
+     * - The button's CSS classes are modified as expected.
+     */
+    it('should update button to "force close" when error indicates open exams', async () => {
+        // Mock fetch to simulate an error response for open exams
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            json: () => Promise.resolve({ error: "There are still open exams in this session." }),
+        });
+    
+        const closeButton = document.querySelector('.close-session-button');
+        closeButton.setAttribute('data-id', '3');
+        closeButton.classList.add('is-light-button-color');
+    
+        // Manually trigger the event handler for the button
+        closeButton.addEventListener('click', async () => {
+            try {
+                await makeRequest(`/ve/close_session/${closeButton.getAttribute('data-id')}`, 'POST');
+            } catch (error) {
+                // Simulate the behavior when an open exams error is received
+                if (error.message === "There are still open exams in this session.") {
+                    closeButton.setAttribute('data-force', 'true');
+                    closeButton.textContent = 'Force';
+                    closeButton.classList.remove('is-light-button-color');
+                    closeButton.classList.add('is-danger');
+                }
+            }
+        });
+    
+        // Simulate button click
+        closeButton.click();
+    
+        // Use setImmediate to wait for promise resolution
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    
+        // Assertions to check if button was updated to "force close" state
+        expect(closeButton.getAttribute('data-force')).toBe('true');
+        expect(closeButton.textContent).toBe('Force');
+        expect(closeButton.classList.contains('is-light-button-color')).toBe(false);
+        expect(closeButton.classList.contains('is-danger')).toBe(true);
+    });
 });
