@@ -96,6 +96,6 @@
         Image credit: DALL-E
     </footer>
 
-    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/navbar.js') }}" nonce="{{ g.csp_nonce }}"></script>
 </body>
 </html>
