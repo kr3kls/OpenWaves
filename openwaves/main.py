@@ -468,6 +468,12 @@ def take_exam(exam_id):
         flash('Invalid exam ID. Please try again.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
 
+    # Ensure session is open
+    exam_session = db.session.get(ExamSession, exam.session_id)
+    if not exam_session.status:
+        flash('Exam session is closed.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
     # Retrieve answers for the exam
     exam_answers = \
         ExamAnswer.query.filter_by(exam_id=exam.id).order_by(ExamAnswer.question_id).all()
