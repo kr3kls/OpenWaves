@@ -6,7 +6,7 @@ from datetime import datetime
 import pytest
 from flask import url_for
 from openwaves import db
-from openwaves.imports import User, Pool, ExamSession
+from openwaves.imports import User, Pool, ExamSession, Exam
 from openwaves.tests.test_auth import login
 
 #############################
@@ -634,6 +634,155 @@ def test_force_close_session_already_closed(client, ve_user):
     assert response.json.get('success') is True
     assert updated_session.status is False
     assert updated_session.end_time == datetime(2024, 10, 1, 15, 0)
+
+@pytest.mark.usefixtures("app")
+def test_delete_session_unauthorized_role(client, user_to_toggle):
+    """Test ID: UT-259
+    Test the delete_session route with an unauthorized user role.
+
+    Asserts:
+        - The response redirects to the logout page.
+    """
+    # Create a mock session with required fields
+    pool = Pool(name="Tech Pool",
+                element=2,
+                start_date=datetime(2024, 1, 1),
+                end_date=datetime(2024, 12, 31))
+    db.session.add(pool)
+    db.session.commit()
+
+    session = ExamSession(
+        session_date=datetime(2024, 10, 1),
+        tech_pool_id=pool.id,
+        gen_pool_id=pool.id,
+        extra_pool_id=pool.id,
+        status=False
+    )
+    db.session.add(session)
+    db.session.commit()
+
+    # Log in as unauthorized user
+    response = login(client, user_to_toggle.username, 'password')
+    assert response.status_code == 200
+
+    # Simulate DELETE request
+    response = client.delete(
+        url_for('main_ve.delete_session', session_id=session.id),
+        follow_redirects=True
+    )
+
+    # Validate response: should redirect to logout
+    assert response.status_code == 200
+    assert b"Access denied." in response.data
+
+@pytest.mark.usefixtures("app")
+def test_delete_session_not_found(client, ve_user):
+    """Test ID: UT-260
+    Test the delete_session route with a non-existent session ID.
+
+    Asserts:
+        - The response returns a 404 status with an error message.
+    """
+    # Log in as authorized VE user
+    response = login(client, ve_user.username, 'vepassword')
+    assert response.status_code == 200
+
+    # Simulate DELETE request for a non-existent session
+    response = client.delete(
+        url_for('main_ve.delete_session', session_id=999),
+        follow_redirects=True
+    )
+
+    # Validate response
+    assert response.status_code == 404
+    assert response.json.get("error") == "Session not found."
+
+@pytest.mark.usefixtures("app")
+def test_delete_session_with_exams(client, ve_user):
+    """Test ID: UT-261
+    Test the delete_session route when the session contains exams.
+
+    Asserts:
+        - The response returns a 400 status with an error message.
+    """
+    # Set up mock pool and session
+    pool = Pool(name="Tech Pool",
+                element=2,
+                start_date=datetime(2024, 1, 1),
+                end_date=datetime(2024, 12, 31))
+    db.session.add(pool)
+    db.session.commit()
+
+    session = ExamSession(
+        session_date=datetime(2024, 10, 1),
+        tech_pool_id=pool.id,
+        gen_pool_id=pool.id,
+        extra_pool_id=pool.id,
+        status=False
+    )
+    db.session.add(session)
+    db.session.commit()
+
+    # Add an exam to the session
+    exam = Exam(user_id=ve_user.id, session_id=session.id, element=2, pool_id=pool.id, open=False)
+    db.session.add(exam)
+    db.session.commit()
+
+    # Log in as VE user
+    response = login(client, ve_user.username, 'vepassword')
+    assert response.status_code == 200
+
+    # Attempt to delete the session with an exam
+    response = client.delete(
+        url_for('main_ve.delete_session', session_id=session.id),
+        follow_redirects=True
+    )
+
+    # Validate response
+    assert response.status_code == 400
+    assert response.json.get("error") == "There are exams in this session."
+
+@pytest.mark.usefixtures("app")
+def test_delete_session_successful(client, ve_user):
+    """Test ID: UT-262
+    Test the delete_session route for successful deletion.
+
+    Asserts:
+        - The session is deleted.
+        - The response returns a success message with a 200 status.
+    """
+    # Set up mock pool and session without exams
+    pool = Pool(name="Tech Pool",
+                element=2,
+                start_date=datetime(2024, 1, 1),
+                end_date=datetime(2024, 12, 31))
+    db.session.add(pool)
+    db.session.commit()
+
+    session = ExamSession(
+        session_date=datetime(2024, 10, 1),
+        tech_pool_id=pool.id,
+        gen_pool_id=pool.id,
+        extra_pool_id=pool.id,
+        status=False
+    )
+    db.session.add(session)
+    db.session.commit()
+
+    # Log in as VE user
+    response = login(client, ve_user.username, 'vepassword')
+    assert response.status_code == 200
+
+    # Attempt to delete the session
+    response = client.delete(
+        url_for('main_ve.delete_session', session_id=session.id),
+        follow_redirects=True
+    )
+
+    # Validate response and confirm deletion
+    assert response.status_code == 200
+    assert response.json.get("success") is True
+    assert db.session.get(ExamSession, session.id) is None
 
 #############################
 #                           #
