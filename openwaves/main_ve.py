@@ -598,6 +598,10 @@ def force_close_session(session_id):
     if session is None:
         return jsonify({"error": "Session not found."}), 404
 
+    # If the session is already closed, return success without modifying end_time
+    if not session.status:
+        return jsonify({"success": True}), 200
+
     # Set the end time to the current time and mark the session as closed
     session.end_time = datetime.now()
     session.status = False

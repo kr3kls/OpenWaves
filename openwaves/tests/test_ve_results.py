@@ -162,3 +162,4 @@ def test_ve_exam_results_unauthorized_hc_access(client, ve_user):
     # Validate redirection with error message
     assert response.status_code == 200
     assert b'Invalid HC ID.' in response.data
+

@@ -2,8 +2,8 @@
 
     This file contains the tests for the sessions code in the main.py file.
 """
-
 from datetime import datetime
+import pytest
 from flask import url_for
 from openwaves import db
 from openwaves.imports import User, Pool, ExamSession
@@ -491,6 +491,149 @@ def test_ve_sessions_pool_categorization(client, ve_user):
     assert f"{tech_pool.name} 2023-2026" in response.data.decode('utf-8')
     assert f"{general_pool.name} 2023-2026" in response.data.decode('utf-8')
     assert f"{extra_pool.name} 2023-2026" in response.data.decode('utf-8')
+
+@pytest.mark.usefixtures("app")
+def test_force_close_session_authorized_request(client, ve_user):
+    """Test ID: UT-250
+    Test the force_close_session route with an authorized VE user.
+
+    Asserts:
+        - The session is closed successfully.
+        - The response returns a success message with a 200 status.
+    """
+    # Create a mock pool
+    pool = Pool(
+        name="Tech Pool",
+        element=2,
+        start_date=datetime(2024, 1, 1),
+        end_date=datetime(2024, 12, 31)
+    )
+    db.session.add(pool)
+    db.session.commit()
+
+    # Create a mock exam session with required pool IDs
+    exam_session = ExamSession(
+        session_date=datetime(2024, 10, 1),
+        tech_pool_id=pool.id,
+        gen_pool_id=pool.id,
+        extra_pool_id=pool.id,
+        status=True  # Open session
+    )
+    db.session.add(exam_session)
+    db.session.commit()
+
+    # Log in as VE user
+    response = login(client, ve_user.username, 'vepassword')
+    assert response.status_code == 200
+
+    # Simulate a POST request to force close the session
+    response = client.post(
+        url_for('main_ve.force_close_session', session_id=exam_session.id),
+        follow_redirects=True
+    )
+
+    # Fetch the updated session from the database
+    updated_session = db.session.get(ExamSession, exam_session.id)
+
+    # Validate response and session status
+    assert response.status_code == 200
+    assert response.json.get('success') is True
+    assert updated_session.status is False
+    assert updated_session.end_time is not None
+
+@pytest.mark.usefixtures("app")
+def test_force_close_session_unauthorized_role(client, user_to_toggle):
+    """Test ID: UT-251
+    Test the force_close_session route with an unauthorized user role.
+
+    Asserts:
+        - The response redirects to the logout page with an access denied message.
+    """
+    # Log in as a non-VE user
+    response = login(client, user_to_toggle.username, 'password')
+    assert response.status_code == 200
+
+    # Attempt to force close a session
+    response = client.post(
+        url_for('main_ve.force_close_session', session_id=1),
+        follow_redirects=True
+    )
+
+    # Validate redirection to the logout page with access denied message
+    assert response.status_code == 200
+    assert b'Access denied.' in response.data
+
+@pytest.mark.usefixtures("app")
+def test_force_close_session_non_existent_session(client, ve_user):
+    """Test ID: UT-252
+    Test the force_close_session route with a non-existent session ID.
+
+    Asserts:
+        - The response returns a 404 status with a session not found error message.
+    """
+    # Log in as VE user
+    response = login(client, ve_user.username, 'vepassword')
+    assert response.status_code == 200
+
+    # Attempt to force close a non-existent session
+    response = client.post(
+        url_for('main_ve.force_close_session', session_id=999),
+        follow_redirects=True
+    )
+
+    # Validate response status and error message
+    assert response.status_code == 404
+    assert response.json.get("error") == "Session not found."
+
+@pytest.mark.usefixtures("app")
+def test_force_close_session_already_closed(client, ve_user):
+    """Test ID: UT-253
+    Test the force_close_session route when the session is already closed.
+
+    Asserts:
+        - The session end time remains unchanged.
+        - The response returns a success message with a 200 status.
+    """
+    # Create a mock pool (required for tech_pool_id, gen_pool_id, extra_pool_id)
+    pool = Pool(
+        name="Tech Pool",
+        element=2,
+        start_date=datetime(2024, 1, 1),
+        end_date=datetime(2024, 12, 31)
+    )
+    db.session.add(pool)
+    db.session.commit()
+
+    # Create a closed session with required pool IDs
+    closed_session = ExamSession(
+        session_date=datetime(2024, 10, 1),
+        end_time=datetime(2024, 10, 1, 15, 0),
+        tech_pool_id=pool.id,
+        gen_pool_id=pool.id,
+        extra_pool_id=pool.id,
+        status=False
+    )
+    db.session.add(closed_session)
+    db.session.commit()
+
+    # Log in as VE user
+    response = login(client, ve_user.username, 'vepassword')
+    assert response.status_code == 200
+
+    # Simulate a POST request to force close the session
+    response = client.post(
+        url_for('main_ve.force_close_session', session_id=closed_session.id),
+        follow_redirects=True
+    )
+
+    # Fetch the updated session from the database
+    updated_session = db.session.get(ExamSession, closed_session.id)
+
+    # Validate response and confirm end time remains unchanged
+    assert response.status_code == 200
+    assert response.json.get('success') is True
+    assert updated_session.status is False
+    assert updated_session.end_time == datetime(2024, 10, 1, 15, 0)
 
 #############################
 #                           #
