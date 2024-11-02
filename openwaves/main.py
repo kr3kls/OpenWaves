@@ -155,8 +155,7 @@ def sessions():
             session_info['extra_registered'] |= registration.extra
 
         # Close exams that ended before submission
-        if exam:
-            if session.end_time and exam.open:
+        if exam and session.end_time and exam.open:
                 exam.open = False
                 db.session.commit()
 
