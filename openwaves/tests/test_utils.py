@@ -2,12 +2,12 @@
 
     This file contains the tests for the code in the utils.py file.
 """
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 import pytest
 from openwaves import db
-from openwaves.models import User, ExamRegistration, ExamDiagram
+from openwaves.models import User, ExamRegistration, ExamDiagram, Question
 from openwaves.utils import update_user_password, get_exam_name, is_already_registered, \
-    remove_exam_registration, requires_diagram, get_exam_score
+    remove_exam_registration, requires_diagram, get_exam_score, generate_exam
 
 class MockExamAnswer: # pylint: disable=R0903
     """Mock class for simulating ExamAnswer objects in unit tests.
@@ -446,3 +446,141 @@ def test_get_exam_score_no_answers():
     assert result_tech == 'Score: 0/35 (Fail)'
     assert result_general == 'Score: 0/35 (Fail)'
     assert result_extra == 'Score: 0/50 (Fail)'
+
+@pytest.mark.usefixtures("app")
+def test_generate_exam_success():
+    """Test ID: UT-238
+    Positive test: Verify successful generation of an exam with the required number of questions.
+
+    Asserts:
+        - The function returns a non-None exam object.
+        - The exam contains the expected number of questions based on the pool element.
+    """
+    pool_id = 1
+    pool = MagicMock(id=pool_id, element=2)
+    tli_codes = ["ABC", "DEF", "GHI", "JKL", "MNO", "PQR", "STU", "VWX", "YZA", "BCD", "EFG",
+                 "HIJ", "KLM", "NOP", "QRS", "TUV", "WXY", "ZAB", "CDE", "FGH", "IJK", "LMN",
+                 "OPQ", "RST", "UVW", "XYZ", "BCD", "EFG", "HIJ", "KLM", "NOP", "QRS", "TUV",
+                 "WXY", "ZAB"]
+
+    # Mock TLI and Question objects
+    tlis = [MagicMock(id=i, pool_id=pool_id, tli=code, quantity=5) \
+            for i, code in enumerate(tli_codes, start=1)]
+    questions = []
+    for i, code in enumerate(tli_codes, start=1):
+        for j in range(5):
+            question = MagicMock(spec_set=Question)
+            question.id = i
+            question.pool_id = pool_id
+            question.number = f"{code}{str(j+1).zfill(2)}"
+            question.correct_answer = 1
+            question.question = f"Sample question for {code}"
+            question.option_a = "Option A"
+            question.option_b = "Option B"
+            question.option_c = "Option C"
+            question.option_d = "Option D"
+            question.refs = "Sample reference"
+            questions.append(question)
+
+    with patch("openwaves.db.session.get", return_value=pool):
+        with patch("openwaves.models.TLI.query") as mock_tli_query:
+            mock_tli_query.filter_by.return_value.all.return_value = tlis
+            with patch("openwaves.models.Question.query") as mock_filter_question:
+                mock_filter_question.filter_by.return_value.all.return_value = questions
+
+                exam = generate_exam(pool_id)
+                assert exam is not None
+                assert len(exam) == 35
+
+def test_generate_exam_no_pool():
+    """Test ID: UT-239
+    Negative test: Verify that the function handles a non-existent pool ID.
+
+    Asserts:
+        - The function returns None when the specified pool ID does not exist.
+    """
+    pool_id = 999
+    with patch("openwaves.db.session.get", return_value=None):
+        exam = generate_exam(pool_id)
+        assert exam is None
+
+@pytest.mark.usefixtures("app")
+def test_generate_exam_no_tlis():
+    """Test ID: UT-240
+    Negative test: Verify that the function handles cases where no TLIs are associated with
+    the pool.
+
+    Asserts:
+        - The function returns None when no TLIs are found for the given pool.
+    """
+    pool_id = 1
+    pool = MagicMock(id=pool_id, element=3)
+    with patch("openwaves.db.session.get", return_value=pool):
+        with patch("openwaves.models.TLI.query") as mock_tli_query:
+            mock_tli_query.filter_by.return_value.all.return_value = []
+
+            exam = generate_exam(pool_id)
+            assert exam is None
+
+@pytest.mark.usefixtures("app")
+def test_generate_exam_no_questions_for_tlis():
+    """Test ID: UT-241
+    Negative test: Verify that the function handles cases where there are no questions for the
+    TLIs in the pool.
+
+    Asserts:
+        - The function returns None when there are TLIs, but no associated questions.
+    """
+    pool_id = 1
+    pool = MagicMock(id=pool_id, element=3)
+    tli_codes = ["ABC", "DEF"]
+    tlis = [MagicMock(tli=code) for code in tli_codes]
+
+    with patch("openwaves.db.session.get", return_value=pool):
+        with patch("openwaves.models.TLI.query") as mock_tli_query:
+            with patch("openwaves.models.Question.query") as mock_filter_question:
+                mock_tli_query.filter_by.return_value.all.return_value = tlis
+                mock_filter_question.filter_by.return_value.all.return_value = []
+
+                exam = generate_exam(pool_id)
+                assert exam is None
+
+@pytest.mark.usefixtures("app")
+def test_generate_exam_incomplete_exam():
+    """Test ID: UT-242
+    Negative test: Verify that the function handles cases where there are insufficient questions
+    to create a complete exam.
+
+    Asserts:
+        - The function returns None when there are fewer questions than required for the
+          specified pool element.
+    """
+    pool_id = 1
+    pool = MagicMock(id=pool_id, element=4)
+
+    tlis = [MagicMock(id=1, pool_id=pool_id, tli="ABC", quantity=5)]
+    questions = [MagicMock(spec_set=Question, number="ABC01")]
+
+    with patch("openwaves.db.session.get", return_value=pool):
+        with patch("openwaves.models.TLI.query") as mock_tli_query:
+            with patch("openwaves.models.Question.query") as mock_filter_question:
+                mock_tli_query.filter_by.return_value.all.return_value = tlis
+                mock_filter_question.filter_by.return_value.all.return_value = questions
+
+                exam = generate_exam(pool_id)
+                assert exam is None
+
+@pytest.mark.usefixtures("app")
+def test_generate_exam_non_standard_element():
+    """Test ID: UT-243
+    Edge test: Verify that the function handles unsupported element types for the pool.
+
+    Asserts:
+        - The function returns None when the pool element is of an unsupported type.
+    """
+    pool_id = 1
+    pool = MagicMock(id=pool_id, element=99)
+
+    with patch("openwaves.db.session.get", return_value=pool):
+        exam = generate_exam(pool_id)
+        assert exam is None

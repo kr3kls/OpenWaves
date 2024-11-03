@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-8 is-offset-2">
+    <div class="box">
+        <h3 class="title has-text-centered has-text-dark">Exam Results</h3>
+        <div class="table-container has-text-centered">
+            <table class="table is-striped is-hoverable is-fullwidth">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <thead>
+                <tr>
+                    <th>Last Name</th>
+                    <th>First Name</th>
+                    <th>Element</th>
+                    <th>Correct</th>
+                    <th>Pass/Fail</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if exam_results|length > 0 %}
+                {% for result in exam_results %}
+                <tr class="clickable-row" 
+                    data-session-id="{{ result.session_id }}" 
+                    data-exam-element="{{ result.element }}" 
+                    data-hc-id="{{ result.hc_id }}">
+                    <td>{{ result.last_name }}</td>
+                    <td>{{ result.first_name }}</td>
+                    <td>{{ result.element }}</td>
+                    <td>{{ result.correct }}</td>
+                    <td>
+                        {% if result.passed %}
+                            <span class="tag is-success">Pass</span>
+                        {% else %}
+                            <span class="tag is-danger">Fail</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5">No exam results found.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/ve_results.js') }}" nonce="{{ g.csp_nonce }}"></script>
+{% endblock %}

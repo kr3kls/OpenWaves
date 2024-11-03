@@ -185,8 +185,7 @@ class ExamRegistration(db.Model):
     tech: bool = db.Column(db.Boolean, default=False)
     gen: bool = db.Column(db.Boolean, default=False)
     extra: bool = db.Column(db.Boolean, default=False)
-    valid: bool = db.Column(db.Boolean, default=True) # default to true until additional function is built
-
+    valid: bool = db.Column(db.Boolean, default=True)
     def __repr__(self):
         """Return a string representation of the registration.
 

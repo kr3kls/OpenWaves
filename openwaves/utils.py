@@ -2,9 +2,9 @@
 
     Utility functions for user password management.
 """
-
+import secrets
 from werkzeug.security import generate_password_hash
-from openwaves.models import Pool, ExamDiagram
+from openwaves.models import Pool, ExamDiagram, Question, TLI
 from . import db
 from .config import Config
 
@@ -95,3 +95,46 @@ def get_exam_score(exam_answers, element):
     else:
         str_score += ' (Fail)'
     return str_score
+
+# Helper function to algorithmically generate an exam
+def generate_exam(pool_id):
+    """Generate an exam from the given question pool."""
+    # Retrieve the pool and check if it exists
+    pool = db.session.get(Pool, pool_id)
+    if not pool:
+        return None
+
+    # Retrieve all TLIs associated with the given pool
+    tlis = TLI.query.filter_by(pool_id=pool_id).all()
+    if not tlis:
+        return None
+
+    # Extract TLI codes
+    tli_codes = [tli.tli for tli in tlis]
+
+    # Retrieve all questions matching the TLIs in a single query
+    questions = Question.query.filter_by(pool_id=pool_id).all()
+
+    # Create a mapping of questions by TLI
+    questions_by_tli = {tli_code: [] for tli_code in tli_codes}
+    for question in questions:
+        # Assume TLI code is the first 3 characters of the question number
+        question_tli_code = question.number[:3]
+        if question_tli_code in questions_by_tli:
+            questions_by_tli[question_tli_code].append(question)
+
+    # Select one question from each TLI
+    exam = []
+    for tli_code in tli_codes:
+        tli_questions = questions_by_tli.get(tli_code)
+        if tli_questions:
+            selected_question = secrets.choice(tli_questions)
+            exam.append(selected_question)
+
+    # Ensure we have a complete exam
+    required_length = 35 if pool.element in [2, 3] else 50 if pool.element == 4 else 0
+    if len(exam) < required_length:
+        return None
+
+    # Return the final exam object
+    return exam

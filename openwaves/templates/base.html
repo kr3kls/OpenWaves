@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Flask Auth Example</title>
+    <title>OpenWaves</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/openwaves.css') }}">
 </head>
@@ -37,13 +37,13 @@
                         </a>
                     {% endif %}
                     {% if current_user.is_authenticated and current_user.role == 2 %}
-                        <a href="{{ url_for('main.ve_sessions') }}" class="navbar-item">
+                        <a href="{{ url_for('main_ve.ve_sessions') }}" class="navbar-item">
                             Exam Sessions
                         </a>
-                        <a href="{{ url_for('main.pools') }}" class="navbar-item">
+                        <a href="{{ url_for('main_ve.pools') }}" class="navbar-item">
                             Question Pools
                         </a>
-                        <a href="{{ url_for('main.ve_profile') }}" class="navbar-item">
+                        <a href="{{ url_for('main_ve.ve_profile') }}" class="navbar-item">
                             VE Profile
                         </a>
                         <a href="{{ url_for('auth.ve_management') }}" class="navbar-item">
@@ -96,6 +96,6 @@
         Image credit: DALL-E
     </footer>
 
-    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/navbar.js') }}" nonce="{{ g.csp_nonce }}"></script>
 </body>
 </html>

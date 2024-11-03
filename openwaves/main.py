@@ -10,7 +10,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from .imports import db, Question, ExamSession, ExamRegistration, ExamAnswer, Exam, get_exam_name, \
-    is_already_registered, remove_exam_registration, requires_diagram, get_exam_score
+    is_already_registered, remove_exam_registration, requires_diagram, get_exam_score, generate_exam
 
 PAGE_LOGOUT = 'auth.logout'
 PAGE_SESSIONS = 'main.sessions'
@@ -154,8 +154,13 @@ def sessions():
             session_info['gen_registered'] |= registration.gen
             session_info['extra_registered'] |= registration.extra
 
+        # Close exams that ended before submission
+        if exam and session.end_time and exam.open:
+                exam.open = False
+                db.session.commit()
+
         # Update exam completion status for each element
-        if exam:
+        if exam and not exam.open:
             if exam.element == 2:
                 session_info['tech_exam_completed'] |= True
             elif exam.element == 3:
@@ -165,8 +170,6 @@ def sessions():
 
     # Convert the dictionary to a list for use in the template
     sessions_with_registrations = list(session_dict.values())
-
-    print(sessions_with_registrations)
     current_date = datetime.now().date()
 
     return render_template(
@@ -405,6 +408,13 @@ def launch_exam(): # pylint: disable=R0911
         return redirect(url_for(PAGE_SESSIONS))
 
     try:
+        # Get the questions for the exam
+        questions = generate_exam(pool_id)
+
+        if not questions:
+            flash('No questions found for the exam. Please try again later.', 'danger')
+            return redirect(url_for(PAGE_SESSIONS))
+
         # Create a new exam session
         new_exam = Exam(
             user_id=current_user.id,
@@ -416,10 +426,7 @@ def launch_exam(): # pylint: disable=R0911
         db.session.add(new_exam)
         db.session.commit()
 
-        # Add the questions to the exam - TODO: Change this to the algorithm
-        score_max = 35 if int(exam_element) in [2, 3] else 50 if int(exam_element) == 4 else None
-        questions = Question.query.filter_by(pool_id=pool_id).limit(score_max).all()
-
+        # Enumerate the questions and create exam answers
         for q_index, question in enumerate(questions):
             new_answer = ExamAnswer(
                 exam_id=new_exam.id,
@@ -459,6 +466,12 @@ def take_exam(exam_id):
     exam = db.session.get(Exam, exam_id)
     if not exam or not exam.open:
         flash('Invalid exam ID. Please try again.', 'danger')
+        return redirect(url_for(PAGE_SESSIONS))
+
+    # Ensure session is open
+    exam_session = db.session.get(ExamSession, exam.session_id)
+    if not exam_session.status:
+        flash('Exam session is closed.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
 
     # Retrieve answers for the exam
@@ -584,6 +597,11 @@ def exam_results():
     """
     Route to review the completed exam.
     """
+    # Ensure the user has role 1
+    if current_user.role != 1:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
     # Handle both GET and POST methods
     if request.method == 'POST':
         session_id = request.form.get('session_id')
@@ -598,12 +616,20 @@ def exam_results():
         return redirect(url_for(PAGE_SESSIONS))
 
     # Get the exam and related answers
-    exam = Exam.query.filter_by(session_id=session_id,element=exam_element).first()
+    exam = Exam.query.filter_by(user_id=current_user.id,
+                                session_id=session_id,
+                                element=exam_element
+                                ).first()
     if not exam:
         flash('Invalid exam ID.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
 
-    # Close exams that were not finished
+    # Ensure the user has permission to review the exam
+    if current_user.id != exam.user_id:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Close exams that were not finished and the session is closed
     exam_session = db.session.get(ExamSession, exam.session_id)
     if exam.open and exam_session.session_date.date() < datetime.now().date():
         exam.open = False
@@ -613,12 +639,6 @@ def exam_results():
     if exam.open:
         flash('Exam is still in progress.', 'danger')
         return redirect(url_for(PAGE_SESSIONS))
-
-    # Ensure the user has permission to review the exam
-    # Any role 2 is ok, but only the role 1 user who took the exam can review it
-    if current_user.role == 1 and current_user.id != exam.user_id:
-        flash(MSG_ACCESS_DENIED, "danger")
-        return redirect(url_for(PAGE_LOGOUT))
 
     # Get the exam answers
     exam_answers = \
@@ -642,5 +662,6 @@ def exam_results():
         exam_answers=exam_answers,
         questions=question_dict,
         exam_name=exam_name,
-        exam_score_string=exam_score_string
+        exam_score_string=exam_score_string,
+        hc=current_user
     )

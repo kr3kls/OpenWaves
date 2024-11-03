@@ -164,3 +164,4 @@ cython_debug/
 /node_modules
 /coverage
 /openwaves/static/images/diagrams
+run.py
