@@ -32,13 +32,17 @@ describe('makeRequest', () => {
             <input name="csrf_token" value="dummy-csrf-token" />
             <button id="create-session-button"></button>
             <div id="create-session-modal" class="modal">
-            <button class="delete"></button></div>
+                <button class="delete"></button>
+            </div>
             <button id="submit-session-form"></button>
             <form id="create-session-form"></form>
             <button class="delete-session-button" data-id="1"></button>
             <button class="open-session-button" data-id="2"></button>
             <button class="close-session-button" data-id="3"></button>
             <input id="start-date" />
+            <div class="is-flex is-justify-content-flex-start is-relative mt-4">
+                <button class="button is-danger" id="purge-button">Purge</button>
+            </div>
             <div class="modal">
                 <button class="delete"></button>
                 <button class="button is-light-button-color"></button>

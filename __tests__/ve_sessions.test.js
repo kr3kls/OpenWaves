@@ -51,6 +51,9 @@ describe('Modal and session handling', () => {
             <button class="open-session-button" data-id="2"></button>
             <button class="close-session-button" data-id="3"></button>
             <input id="start-date" />
+            <div class="is-flex is-justify-content-flex-start is-relative mt-4">
+                <button class="button is-danger" id="purge-button">Purge</button>
+            </div>
             <div class="modal">
                 <button class="delete"></button>
                 <button class="button is-light-button-color"></button>
