@@ -127,6 +127,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Handle purge button submission
+    function handlePurgeButtonSubmit() {
+        const purgeButton = document.getElementById('purge-button');
+
+        purgeButton.addEventListener('click', () => {
+            if (!confirm('Are you sure you want to purge all sessions older than 15 months? This action cannot be undone.')) return;
+
+            const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+
+            makeRequest('/ve/purge_sessions', 'DELETE', null, csrfToken)
+                .then(data => {
+                    if (data && data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error purging sessions: ' + (data && data.error ? data.error : 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || 'An error occurred. Please try again.');
+                });
+        });        
+    }
+
     // Helper to determine the endpoint based on action and force state
     function getEndpoint(action, sessionId, isForceClose) {
         if (action === 'close' && isForceClose) {
@@ -145,4 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
     handleSessionAction('.delete-session-button', 'delete', 'DELETE');
     handleSessionAction('.open-session-button', 'open');
     handleSessionAction('.close-session-button', 'close');
+
+    // Initialize purge button submit
+    handlePurgeButtonSubmit();
 });
