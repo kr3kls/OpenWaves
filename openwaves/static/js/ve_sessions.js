@@ -10,7 +10,10 @@ function makeRequest(url, method, body = null, csrfToken = null) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(`Server responded with status: ${response.status}`);
+            return response.json().then(data => {
+                const errorMessage = data.error || `Server responded with status: ${response.status}`;
+                throw new Error(errorMessage);
+            });
         }
         return response.json();
     });
@@ -90,10 +93,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const sessionId = button.getAttribute('data-id');
                 const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
                 const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
-    
+                const isForceClose = button.getAttribute('data-force') === 'true';
+
+                const endpoint = getEndpoint(action, sessionId, isForceClose);
+
                 if (action === 'delete' && !confirm('Are you sure you want to delete this session?')) return;
     
-                makeRequest(`/ve/${action}_session/${sessionId}`, method, { action }, csrfToken)
+                // Set the request body only for non-DELETE requests
+                const body = method === 'DELETE' ? null : JSON.stringify({ action });
+
+                makeRequest(endpoint, method, { action }, csrfToken)
                     .then(data => {
                         if (data && data.success) {
                             location.reload();
@@ -103,12 +112,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
+                        alert(error.message || 'An error occurred. Please try again.');
+
+                        // If the error indicates an open session, update the button to "force close"
+                        if (error.message === "There are still open exams in this session.") {
+                            // Change the button to a "force close" action
+                            button.setAttribute('data-force', 'true');
+                            button.textContent = 'Force';
+                            button.classList.remove('is-light-button-color');
+                            button.classList.add('is-danger');
+                        }
                     });
             });
         });
     }
-    
+
+    // Handle purge button submission
+    function handlePurgeButtonSubmit() {
+        const purgeButton = document.getElementById('purge-button');
+
+        purgeButton.addEventListener('click', () => {
+            if (!confirm('Are you sure you want to purge all sessions older than 15 months? This action cannot be undone.')) return;
+
+            const csrfTokenInput = document.querySelector('input[name="csrf_token"]');
+            const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+
+            makeRequest('/ve/purge_sessions', 'DELETE', null, csrfToken)
+                .then(data => {
+                    if (data && data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error purging sessions: ' + (data && data.error ? data.error : 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || 'An error occurred. Please try again.');
+                });
+        });        
+    }
+
+    // Helper to determine the endpoint based on action and force state
+    function getEndpoint(action, sessionId, isForceClose) {
+        if (action === 'close' && isForceClose) {
+            return `/ve/force_close_session/${sessionId}`;
+        }
+        return `/ve/${action}_session/${sessionId}`;
+    }
 
     // Initialize all modal events
     attachModalEvents();
@@ -120,4 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
     handleSessionAction('.delete-session-button', 'delete', 'DELETE');
     handleSessionAction('.open-session-button', 'open');
     handleSessionAction('.close-session-button', 'close');
+
+    // Initialize purge button submit
+    handlePurgeButtonSubmit();
 });

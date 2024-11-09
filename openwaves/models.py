@@ -2,13 +2,15 @@
 
     This module defines the User model for the application.
 """
-
+from datetime import datetime
+from dataclasses import dataclass
 from flask_login import UserMixin
 from . import db
 
 FK_POOL_ID = 'pool.id'
 
-class User(UserMixin, db.Model):
+@dataclass
+class User(UserMixin, db.Model): # pylint: disable=R0902
     """Database model for users.
 
     Represents a user in the application, storing essential user information.
@@ -24,14 +26,14 @@ class User(UserMixin, db.Model):
         active (bool): Whether the user is active in the system (default True).
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
-    first_name = db.Column(db.String(30), nullable=False)
-    last_name = db.Column(db.String(30), nullable=False)
-    email = db.Column(db.String(120), nullable=False)
-    password = db.Column(db.String(60), nullable=False)
-    role = db.Column(db.Integer, nullable=False)
-    active = db.Column(db.Boolean, default=True)
+    id: int = db.Column(db.Integer, primary_key=True)
+    username: str = db.Column(db.String(20), unique=True, nullable=False)
+    first_name: str = db.Column(db.String(30), nullable=False)
+    last_name: str = db.Column(db.String(30), nullable=False)
+    email: str = db.Column(db.String(120), nullable=False)
+    password: str = db.Column(db.String(60), nullable=False)
+    role: int = db.Column(db.Integer, nullable=False)
+    active: bool = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         """Return a string representation of the user.
@@ -41,7 +43,8 @@ class User(UserMixin, db.Model):
         """
         return f"User('{self.username}', '{self.email}')"
 
-class Pool(db.Model): # pylint: disable=R0903
+@dataclass
+class Pool(db.Model):
     """Database model for question pools.
     
     Represents a pool of questions for an exam.
@@ -54,11 +57,11 @@ class Pool(db.Model): # pylint: disable=R0903
         end_date (datetime): The end date for the pool.
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    element = db.Column(db.Integer, nullable=False)
-    start_date = db.Column(db.DateTime, nullable=False)
-    end_date = db.Column(db.DateTime, nullable=False)
+    id: int = db.Column(db.Integer, primary_key=True)
+    name: str = db.Column(db.String(100), nullable=False)
+    element: int = db.Column(db.Integer, nullable=False)
+    start_date: datetime = db.Column(db.DateTime, nullable=False)
+    end_date: datetime = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
         """Return a string representation of the pool.
@@ -68,7 +71,8 @@ class Pool(db.Model): # pylint: disable=R0903
         """
         return f"Pool('{self.name}, start:{self.start_date}, end:{self.end_date}')"
 
-class Question(db.Model): # pylint: disable=R0903
+@dataclass
+class Question(db.Model): # pylint: disable=R0902
     """Database model for questions.
 
     Represents a question on an exam, including the question text and answer choices.
@@ -86,16 +90,16 @@ class Question(db.Model): # pylint: disable=R0903
         refs (str): References for the question.
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
-    number = db.Column(db.String(5), nullable=False)
-    correct_answer = db.Column(db.String(1), nullable=False)
-    question = db.Column(db.Text, nullable=False)
-    option_a = db.Column(db.Text, nullable=False)
-    option_b = db.Column(db.Text, nullable=False)
-    option_c = db.Column(db.Text, nullable=False)
-    option_d = db.Column(db.Text, nullable=False)
-    refs = db.Column(db.Text)
+    id: int = db.Column(db.Integer, primary_key=True)
+    pool_id: int = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    number: str = db.Column(db.String(5), nullable=False)
+    correct_answer: int = db.Column(db.Integer, nullable=False)
+    question: str = db.Column(db.Text, nullable=False)
+    option_a: str = db.Column(db.Text, nullable=False)
+    option_b: str = db.Column(db.Text, nullable=False)
+    option_c: str = db.Column(db.Text, nullable=False)
+    option_d: str = db.Column(db.Text, nullable=False)
+    refs: str = db.Column(db.Text)
 
     def __repr__(self):
         """Return a string representation of the question.
@@ -105,7 +109,8 @@ class Question(db.Model): # pylint: disable=R0903
         """
         return f"Question('{self.question}')"
 
-class TLI(db.Model): # pylint: disable=R0903
+@dataclass
+class TLI(db.Model):
     """Database model for TLI counts.
     
     Represents the number of questions for each TLI code in a pool.
@@ -116,15 +121,16 @@ class TLI(db.Model): # pylint: disable=R0903
         tli (str): The TLI code for the count.
         quantity (int): The quantity of questions for the TLI code.
     """
-    id = db.Column(db.Integer, primary_key=True)
-    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
-    tli = db.Column(db.String(3), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
+    id: int = db.Column(db.Integer, primary_key=True)
+    pool_id: int = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    tli: str = db.Column(db.String(3), nullable=False)
+    quantity: int = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
         return f"Pool: {self.pool_id}, TLI: {self.tli}, Quantity: {self.quantity}"
 
-class ExamSession(db.Model): # pylint: disable=R0903
+@dataclass
+class ExamSession(db.Model): # pylint: disable=R0902
     """Database model for exam sessions.
     
     Represents a exam session for users taking exams.
@@ -140,14 +146,14 @@ class ExamSession(db.Model): # pylint: disable=R0903
         status (bool): Whether the exam session is active (default False).
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    session_date = db.Column(db.DateTime, nullable=False)
-    start_time = db.Column(db.DateTime, nullable=True)
-    end_time = db.Column(db.DateTime, nullable=True)
-    tech_pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
-    gen_pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
-    extra_pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
-    status = db.Column(db.Boolean, default=False)
+    id: int = db.Column(db.Integer, primary_key=True)
+    session_date: datetime = db.Column(db.DateTime, nullable=False)
+    start_time: datetime = db.Column(db.DateTime, nullable=True)
+    end_time: datetime = db.Column(db.DateTime, nullable=True)
+    tech_pool_id: int = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    gen_pool_id: int = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    extra_pool_id: int = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    status: bool = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         """Return a string representation of the exam session.
@@ -157,7 +163,8 @@ class ExamSession(db.Model): # pylint: disable=R0903
         """
         return f"ExamSession('{self.session_date}')"
 
-class ExamRegistration(db.Model): # pylint: disable=R0903
+@dataclass
+class ExamRegistration(db.Model):
     """Database model for exam registrations.
     
     Represents a exam session registration for users taking exams.
@@ -172,14 +179,13 @@ class ExamRegistration(db.Model): # pylint: disable=R0903
         valid (bool): Whether the VEs have approved the registration.
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('exam_session.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    tech = db.Column(db.Boolean, default=False)
-    gen = db.Column(db.Boolean, default=False)
-    extra = db.Column(db.Boolean, default=False)
-    valid = db.Column(db.Boolean, default=True) # default to true until additional function is built
-
+    id: int = db.Column(db.Integer, primary_key=True)
+    session_id: int = db.Column(db.Integer, db.ForeignKey('exam_session.id'), nullable=False)
+    user_id: int = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    tech: bool = db.Column(db.Boolean, default=False)
+    gen: bool = db.Column(db.Boolean, default=False)
+    extra: bool = db.Column(db.Boolean, default=False)
+    valid: bool = db.Column(db.Boolean, default=True)
     def __repr__(self):
         """Return a string representation of the registration.
 
@@ -188,7 +194,8 @@ class ExamRegistration(db.Model): # pylint: disable=R0903
         """
         return f"ExamRegistration('{self.user_id}', '{self.session_id}')"
 
-class ExamDiagram(db.Model): # pylint: disable=R0903
+@dataclass
+class ExamDiagram(db.Model):
     """Database model for exam diagrams.
     
     Represents a diagram for an exam question.
@@ -200,10 +207,10 @@ class ExamDiagram(db.Model): # pylint: disable=R0903
         path (str): The path to the diagram file.
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    path = db.Column(db.String(100), nullable=False)
+    id: int = db.Column(db.Integer, primary_key=True)
+    pool_id: int = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    name: str = db.Column(db.String(100), nullable=False)
+    path: str = db.Column(db.String(100), nullable=False)
 
     def __repr__(self):
         """Return a string representation of the diagram.
@@ -213,7 +220,8 @@ class ExamDiagram(db.Model): # pylint: disable=R0903
         """
         return f"ExamDiagram('{self.path}')"
 
-class Exam(db.Model): # pylint: disable=R0903
+@dataclass
+class Exam(db.Model):
     """Database model for exams.
     
     Represents an exam that is part of a session, associated with a user and a question pool.
@@ -227,12 +235,12 @@ class Exam(db.Model): # pylint: disable=R0903
         open (bool): Indicates whether the exam is open (default is True).
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    pool_id = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
-    session_id = db.Column(db.Integer, db.ForeignKey('exam_session.id'), nullable=False)
-    element = db.Column(db.Integer, nullable=False)
-    open = db.Column(db.Boolean, default=True)
+    id: int = db.Column(db.Integer, primary_key=True)
+    user_id: int = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pool_id: int = db.Column(db.Integer, db.ForeignKey(FK_POOL_ID), nullable=False)
+    session_id: int = db.Column(db.Integer, db.ForeignKey('exam_session.id'), nullable=False)
+    element: int = db.Column(db.Integer, nullable=False)
+    open: bool = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
         """Return a string representation of the exam.
@@ -243,7 +251,8 @@ class Exam(db.Model): # pylint: disable=R0903
         return f"Exam('{self.id}', user_id: '{self.user_id}', pool: '{self.pool_id}', " \
             + f"session: '{self.session_id}')"
 
-class ExamAnswer(db.Model): # pylint: disable=R0903
+@dataclass
+class ExamAnswer(db.Model):
     """Database model for exam answers.
     
     Represents an answer to an exam question.
@@ -257,12 +266,12 @@ class ExamAnswer(db.Model): # pylint: disable=R0903
         answer (int, optional): The answer provided by the user.
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
-    question_number = db.Column(db.Integer(), nullable=False)
-    correct_answer = db.Column(db.Integer(), nullable=False)
-    answer = db.Column(db.Integer(), nullable=True)
+    id: int = db.Column(db.Integer, primary_key=True)
+    exam_id: int = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
+    question_id: int = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
+    question_number: int = db.Column(db.Integer(), nullable=False)
+    correct_answer: int = db.Column(db.Integer(), nullable=False)
+    answer: int = db.Column(db.Integer(), nullable=True)
 
     def __repr__(self):
         """Return a string representation of the answer.

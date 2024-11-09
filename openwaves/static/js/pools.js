@@ -189,9 +189,16 @@ if (!window.poolsEventListenersInitialized) {
         // Toggle expandable pool rows
         document.querySelectorAll('.pool-row').forEach(row => {
             row.addEventListener('click', function(event) {
+                // Check if any modal is active, and if so, prevent toggling
+                const isAnyModalActive = document.querySelector('.modal.is-active');
+                if (isAnyModalActive) {
+                    return; // Don't toggle rows if a modal is open
+                }
+
+                // Proceed to toggle the expandable row if no modal is active
                 const poolId = event.currentTarget.getAttribute('data-id');
                 const expandableRow = document.querySelector(`.expandable-row[data-id='${poolId}']`);
-
+                
                 if (expandableRow) {
                     expandableRow.classList.toggle('show');
                 } else {
@@ -207,6 +214,9 @@ if (!window.poolsEventListenersInitialized) {
                 const modal = document.getElementById(`upload-modal-${poolId}`);
                 if (modal) {
                     modal.classList.add('is-active');
+                    modal.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                    });
                 }
             });
         });

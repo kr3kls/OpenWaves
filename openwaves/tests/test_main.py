@@ -266,7 +266,7 @@ def test_pools_page_role_not_allowed(client):
     """
     login(client, 'TESTUSER', 'testpassword')
 
-    response = client.get(url_for('main.pools'), follow_redirects=True)
+    response = client.get(url_for('main_ve.pools'), follow_redirects=True)
 
     assert response.status_code == 200
     assert b'Access denied' in response.data

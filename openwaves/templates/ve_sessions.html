@@ -15,6 +15,7 @@
                     <th>General Pool ID</th>
                     <th>Extra Pool ID</th>
                     <th>Status</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -31,7 +32,7 @@
                     </td>
                     <td>
                         {% if test_session.status and test_session.end_time is none %}
-                            <button class="button is-small is-light-button-color close-session-button" data-id="{{ test_session.id }}">Close</button>
+                            <button class="button is-small is-light-button-color close-session-button" data-id="{{ test_session.id }}" data-force="false">Close</button>
                         {% else %}
                             {{ test_session.end_time.strftime('%I:%M %p') if test_session.end_time else '' }}
                         {% endif %}
@@ -44,11 +45,14 @@
                     {% else %}
                     <td>Closed</td>
                     {% endif %}
-                    {% if not test_session.start_time %}
                     <td>
-                        <button class="button is-small is-danger delete-session-button" data-id="{{ session.id }}">Delete</button>
-                    </td>
+                    {% if not test_session.start_time %}
+                        <button class="button is-small is-danger delete-session-button" data-id="{{ test_session.id }}">Delete</button>
                     {% endif %}
+                    {% if test_session.start_time and test_session.status == false %}
+                        <a href="{{ url_for('main_ve.ve_session_results', session_id=test_session.id) }}" class="button is-small is-light-button-color">Results</a>
+                    {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
             {% else %}
@@ -63,6 +67,11 @@
         <!-- Button to create a new session -->
         <div class="has-text-centered">
             <button class="button is-button-color" id="create-session-button">Create New Session</button>
+        </div>
+
+        <!-- Purge Button positioned at the bottom left -->
+        <div class="is-flex is-justify-content-flex-start is-relative mt-4">
+            <button class="button is-danger" id="purge-button">Purge</button>
         </div>
 
         <!-- Modal for creating a new test session -->

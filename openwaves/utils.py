@@ -2,9 +2,9 @@
 
     Utility functions for user password management.
 """
-
+import secrets
 from werkzeug.security import generate_password_hash
-from openwaves.models import Pool, ExamDiagram
+from openwaves.models import Pool, ExamDiagram, Question, TLI
 from . import db
 from .config import Config
 
@@ -69,3 +69,72 @@ def load_question_pools():
 def allowed_file(filename):
     """Check if a given filename has an allowed extension."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in Config.ALLOWED_EXTENSIONS
+
+# Helper function to check if a question requires a diagram
+def requires_diagram(question):
+    """Check if a question requires a diagram."""
+    diagrams = ExamDiagram.query.filter_by(pool_id=question.pool_id).all()
+    for diagram in diagrams:
+        if diagram.name in question.question:
+            return diagram
+    return None
+
+# Helper function to get the exam score
+def get_exam_score(exam_answers, element):
+    """Calculate the exam score based on the given questions."""
+    score = 0
+    score_max = 35 if element in [2, 3] else 50 if element == 4 else None
+    for answer in exam_answers:
+        if answer.answer == answer.correct_answer:
+            score += 1
+    str_score = f'Score: {score}/{score_max}'
+    if score_max == 35 and score >= 26:
+        str_score += ' (Pass)'
+    elif score_max == 50 and score >= 37:
+        str_score += ' (Pass)'
+    else:
+        str_score += ' (Fail)'
+    return str_score
+
+# Helper function to algorithmically generate an exam
+def generate_exam(pool_id):
+    """Generate an exam from the given question pool."""
+    # Retrieve the pool and check if it exists
+    pool = db.session.get(Pool, pool_id)
+    if not pool:
+        return None
+
+    # Retrieve all TLIs associated with the given pool
+    tlis = TLI.query.filter_by(pool_id=pool_id).all()
+    if not tlis:
+        return None
+
+    # Extract TLI codes
+    tli_codes = [tli.tli for tli in tlis]
+
+    # Retrieve all questions matching the TLIs in a single query
+    questions = Question.query.filter_by(pool_id=pool_id).all()
+
+    # Create a mapping of questions by TLI
+    questions_by_tli = {tli_code: [] for tli_code in tli_codes}
+    for question in questions:
+        # Assume TLI code is the first 3 characters of the question number
+        question_tli_code = question.number[:3]
+        if question_tli_code in questions_by_tli:
+            questions_by_tli[question_tli_code].append(question)
+
+    # Select one question from each TLI
+    exam = []
+    for tli_code in tli_codes:
+        tli_questions = questions_by_tli.get(tli_code)
+        if tli_questions:
+            selected_question = secrets.choice(tli_questions)
+            exam.append(selected_question)
+
+    # Ensure we have a complete exam
+    required_length = 35 if pool.element in [2, 3] else 50 if pool.element == 4 else 0
+    if len(exam) < required_length:
+        return None
+
+    # Return the final exam object
+    return exam
