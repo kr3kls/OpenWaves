@@ -51,6 +51,9 @@ describe('Modal and session handling', () => {
             <button class="open-session-button" data-id="2"></button>
             <button class="close-session-button" data-id="3"></button>
             <input id="start-date" />
+            <div class="is-flex is-justify-content-flex-start is-relative mt-4">
+                <button class="button is-danger" id="purge-button">Purge</button>
+            </div>
             <div class="modal">
                 <button class="delete"></button>
                 <button class="button is-light-button-color"></button>
@@ -405,5 +408,107 @@ describe('Modal and session handling', () => {
         expect(closeButton.textContent).toBe('Force');
         expect(closeButton.classList.contains('is-light-button-color')).toBe(false);
         expect(closeButton.classList.contains('is-danger')).toBe(true);
+    });
+
+    /**
+     * Test ID: UT-259
+     * Test confirming the purge action.
+     *
+     * This test ensures that the purge process proceeds if the user confirms the action.
+     *
+     * Asserts:
+     * - The fetch function is called with the correct URL, method, and headers.
+     * - The window.location.reload function is called after a successful response.
+     */
+    it('should confirm and call fetch to purge sessions if user confirms', async () => {
+        const purgeButton = document.getElementById('purge-button');
+        window.confirm = jest.fn(() => true); // Mock confirmation dialog to return true
+    
+        // Simulate button click
+        purgeButton.click();
+    
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    
+        expect(fetch).toHaveBeenCalledWith('/ve/purge_sessions', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': 'dummy-csrf-token',
+            },
+            body: null, // Include body: null here to match the actual call
+        });
+        expect(window.location.reload).toHaveBeenCalled();
+    });    
+
+    /**
+     * Test ID: UT-260
+     * Test declining the purge action.
+     *
+     * This test ensures that the purge process is not initiated if the user declines the confirmation.
+     *
+     * Asserts:
+     * - The fetch function is not called if the user denies the confirmation dialog.
+     */
+    it('should not call fetch if user declines the confirmation dialog for purge', () => {
+        const purgeButton = document.getElementById('purge-button');
+        window.confirm = jest.fn(() => false); // Mock confirmation dialog to return false
+
+        // Simulate button click
+        purgeButton.click();
+
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    /**
+     * Test ID: UT-261
+     * Test handling purge error response.
+     *
+     * This test ensures that an appropriate error message is displayed if the server responds with an error during purge.
+     *
+     * Asserts:
+     * - An alert is displayed with the correct error message.
+     */
+    it('should handle purge error response', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: false,
+            json: () => Promise.resolve({ success: false, error: 'Purge error' }),
+        });
+    
+        const purgeButton = document.getElementById('purge-button');
+        window.confirm = jest.fn(() => true); // Mock confirmation dialog to return true
+    
+        // Simulate button click
+        purgeButton.click();
+    
+        await new Promise((resolve) => setTimeout(resolve, 0));
+    
+        // Adjust expectation to match the actual alert message
+        expect(window.alert).toHaveBeenCalledWith('Purge error');
+    });    
+
+    /**
+     * Test ID: UT-262
+     * Test handling undefined data in purge response.
+     *
+     * This test ensures that a generic error message is displayed if the response data is undefined during purge.
+     *
+     * Asserts:
+     * - An alert is displayed with a generic error message.
+     */
+    it('should handle undefined data in purge response', async () => {
+        fetch.mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve(undefined),
+        });
+
+        const purgeButton = document.getElementById('purge-button');
+        window.confirm = jest.fn(() => true); // Mock confirmation dialog to return true
+
+        // Simulate button click
+        purgeButton.click();
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(window.alert).toHaveBeenCalledWith('Error purging sessions: Unknown error');
     });
 });

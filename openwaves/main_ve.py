@@ -13,7 +13,7 @@ from flask_login import login_required, current_user
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import secure_filename
 from .imports import db, Pool, Question, TLI, ExamSession, ExamDiagram, Exam, ExamAnswer, User, \
-    load_question_pools, allowed_file, get_exam_name, get_exam_score
+    ExamRegistration, load_question_pools, allowed_file, get_exam_name, get_exam_score
 
 main_ve = Blueprint('main_ve', __name__)
 
@@ -704,3 +704,71 @@ def delete_session(session_id):
         db.session.rollback()
         print(f"Error deleting session: {e}")
         return jsonify({"error": "Failed to delete the session. Please try again later."}), 500
+
+@main_ve.route('/ve/purge_sessions', methods=['DELETE'])
+@login_required
+def purge_sessions():
+    """
+    Route to delete all exam sessions older than 15 months.
+    """
+    # Check if the current user has role 2
+    if current_user.role != 2:
+        flash(MSG_ACCESS_DENIED, "danger")
+        return redirect(url_for(PAGE_LOGOUT))
+
+    # Get the current date
+    current_date = datetime.now().date()
+
+    # Calculate the date 15 months ago
+    purge_date = current_date.replace(year=current_date.year - 1, month=current_date.month - 3)
+
+    try:
+        # Bulk delete associated ExamAnswer entries
+        db.session.query(ExamAnswer).filter(
+            ExamAnswer.exam_id.in_(
+                db.session.query(Exam.id).filter(
+                    Exam.session_id.in_(
+                        db.session.query(ExamSession.id).filter(
+                            ExamSession.session_date < purge_date
+                        )
+                    )
+                )
+            )
+        ).delete(synchronize_session=False)
+
+        # Bulk delete associated Exam entries
+        db.session.query(Exam).filter(
+            Exam.session_id.in_(
+                db.session.query(ExamSession.id).filter(
+                    ExamSession.session_date < purge_date
+                )
+            )
+        ).delete(synchronize_session=False)
+
+        # Bulk delete associated ExamRegistration entries
+        db.session.query(ExamRegistration).filter(
+            ExamRegistration.session_id.in_(
+                db.session.query(ExamSession.id).filter(
+                    ExamSession.session_date < purge_date
+                )
+            )
+        ).delete(synchronize_session=False)
+
+        # Bulk delete ExamSession entries
+        db.session.query(ExamSession).filter(
+            ExamSession.session_date < purge_date
+        ).delete(synchronize_session=False)
+
+        # Commit the changes
+        db.session.commit()
+        return jsonify({"success": True}), 200
+
+    except SQLAlchemyError as db_error:
+        db.session.rollback()
+        print(f"Database error during purge: {db_error}")
+        return jsonify({"success": False, "error": "Database operation failed"}), 500
+
+    except ValueError as value_error:
+        db.session.rollback()
+        print(f"Value error during purge: {value_error}")
+        return jsonify({"success": False, "error": "Value error in date calculation"}), 400
