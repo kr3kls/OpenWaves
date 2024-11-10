@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="column is-8 is-offset-2">
+    <div class="box">
+        <h3 class="title has-text-centered has-text-dark">Exam Analytics</h3>
+
+        <!-- Pool Selection Dropdown -->
+        <form method="get" action="{{ url_for('main_ve.data_analytics') }}" class="field">
+            {% if config['WTF_CSRF_ENABLED'] %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+            <label class="label" for="pool">Select a Question Pool:</label>
+            <div class="control">
+                <div class="select is-fullwidth">
+                    <select name="pool_id" id="pool">
+                        <option value="">-- Select Pool --</option>
+                        {% for pool in pools %}
+                            <option value="{{ pool.id }}" {% if pool.id == selected_pool_id %}selected{% endif %}>
+                                {{ pool.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        {% if selected_pool_id %}
+            <h4 class="title is-5 has-text-dark has-text-centered">
+                Analytics for Pool: {{ selected_pool.name if selected_pool else 'Unknown Pool' }}
+            </h4>
+
+            {% set answer_mapping = {0: "A", 1: "B", 2: "C", 3: "D"} %}
+
+            <table class="table is-striped is-hoverable is-fullwidth">
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Miss Count</th>
+                        <th>Most Selected Wrong Answer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for question_id, data in analytics_data.items() %}
+                        <!-- Main question row -->
+                        <tr class="question-row" data-question-id="{{ question_id }}">
+                            <td>{{ data.question_text }}</td>
+                            <td>{{ data.miss_count }}</td>
+                            <td>{{ answer_mapping[data.most_selected_wrong_answer] if data.most_selected_wrong_answer is not none else 'N/A' }}</td>
+                        </tr>
+                        <!-- Expanded details row (initially hidden) -->
+                        <tr id="details-{{ question_id }}" class="details-row is-hidden">
+                            <td colspan="3">
+                                <p><strong>Question:</strong> {{ data.question_text }}</p>
+                                {% for index, text in data.answer_texts.items() %}
+                                    <p><strong>Answer {{ answer_mapping[index] }}:</strong> {{ text }} - Selected {{ data.answer_counts[index] }} times</p>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="has-text-centered">Please select a question pool to view analytics.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/analytics.js') }}" nonce="{{ g.csp_nonce }}"></script>
+{% endblock %}

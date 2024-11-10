@@ -772,3 +772,85 @@ def purge_sessions():
         db.session.rollback()
         print(f"Value error during purge: {value_error}")
         return jsonify({"success": False, "error": "Value error in date calculation"}), 400
+
+@main_ve.route('/ve/analytics', methods=['GET'])
+@login_required
+def data_analytics():
+    """Route to show data analytics for volunteer examiners."""
+    # Check if the current user has role 2
+    if current_user.role != 2:
+        flash("Access Denied", "danger")
+        return redirect(url_for('auth.logout'))
+
+    # Get all pools for dropdown selection
+    question_pools = Pool.query.all()
+
+    # Get selected pool ID from the query string, default to None if not provided
+    pool_id = request.args.get('pool_id', type=int)
+
+    # Initialize analytics data dictionary
+    analytics_data = {}
+
+    # Filter questions and answers by the selected pool
+    if pool_id:
+        questions_in_pool = Question.query.filter_by(pool_id=pool_id).all()
+        question_ids = [q.id for q in questions_in_pool]
+        incorrect_answers = ExamAnswer.query.filter(
+            ExamAnswer.answer != ExamAnswer.correct_answer,
+            ExamAnswer.question_id.in_(question_ids)
+        ).all()
+    else:
+        questions_in_pool = []
+        incorrect_answers = []
+
+    # Aggregate data for each question
+    for answer in incorrect_answers:
+        question_id = answer.question_id
+        selected_answer = answer.answer
+
+        # Initialize data for the question if not already present
+        if question_id not in analytics_data:
+            question = Question.query.get(question_id)
+            analytics_data[question_id] = {
+                "miss_count": 0,
+                "incorrect_selections": {},
+                "question_text": question.question,
+                "answer_texts": {
+                    0: question.option_a,  # Text for answer A
+                    1: question.option_b,  # Text for answer B
+                    2: question.option_c,  # Text for answer C
+                    3: question.option_d   # Text for answer D
+                },
+                "answer_counts": [0, 0, 0, 0]  # A, B, C, D counts
+            }
+
+        # Increment miss count for the question
+        analytics_data[question_id]["miss_count"] += 1
+
+        # Track selected wrong answers
+        if selected_answer in analytics_data[question_id]["incorrect_selections"]:
+            analytics_data[question_id]["incorrect_selections"][selected_answer] += 1
+        else:
+            analytics_data[question_id]["incorrect_selections"][selected_answer] = 1
+
+        # Increment the specific answer count for A (0), B (1), C (2), D (3)
+        analytics_data[question_id]["answer_counts"][selected_answer] += 1
+
+    # Determine most selected wrong answer for each question
+    for question_id, data in analytics_data.items():
+        data["most_selected_wrong_answer"] = max(
+            data["incorrect_selections"],
+            key=data["incorrect_selections"].get,
+            default=None
+        )
+
+    # Sort questions by miss count in descending order and select top 5
+    top_missed_questions = dict(sorted(analytics_data.items(),
+                                       key=lambda item: item[1]["miss_count"],
+                                       reverse=True)[:5])
+
+    # Render the data to a template, passing the selected pool and all pools
+    return render_template('ve_analytics.html',
+                           analytics_data=top_missed_questions,
+                           pools=question_pools,
+                           selected_pool_id=pool_id)
