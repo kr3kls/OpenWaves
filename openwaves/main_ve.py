@@ -207,6 +207,11 @@ def delete_pool(pool_id):
     if not pool:
         return jsonify({"error": "Pool not found."}), 404
 
+    # Check for exams
+    exams = Exam.query.filter_by(pool_id=pool_id).first()
+    if exams:
+        return jsonify({"error": "There are exams using this pool."}), 400
+
     # Delete all questions associated with the pool
     Question.query.filter_by(pool_id=pool_id).delete()
     TLI.query.filter_by(pool_id=pool_id).delete()
