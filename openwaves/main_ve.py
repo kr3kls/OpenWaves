@@ -796,6 +796,15 @@ def data_analytics():
     # Initialize analytics data dictionary
     analytics_data = {}
 
+    # Check if the pool exists before proceeding
+    pool = db.session.get(Pool, pool_id) if pool_id else None
+    if pool_id and not pool:
+        flash("No analytics data available for the selected pool.", "info")
+        return render_template('ve_analytics.html',
+                               analytics_data={},
+                               pools=question_pools,
+                               selected_pool_id=pool_id)
+
     # Filter questions and answers by the selected pool
     if pool_id:
         questions_in_pool = Question.query.filter_by(pool_id=pool_id).all()
@@ -804,57 +813,44 @@ def data_analytics():
             ExamAnswer.answer != ExamAnswer.correct_answer,
             ExamAnswer.question_id.in_(question_ids)
         ).all()
-    else:
-        questions_in_pool = []
-        incorrect_answers = []
 
-    # Aggregate data for each question
-    for answer in incorrect_answers:
-        question_id = answer.question_id
-        selected_answer = answer.answer
+        # Initialize analytics data for each question
+        for answer in incorrect_answers:
+            question_id = answer.question_id
+            selected_answer = answer.answer
+            if question_id not in analytics_data:
+                question = db.session.get(Question, question_id)
+                analytics_data[question_id] = {
+                    "miss_count": 0,
+                    "incorrect_selections": {},
+                    "question_text": question.question,
+                    "answer_texts": {
+                        0: question.option_a, 
+                        1: question.option_b,  
+                        2: question.option_c,  
+                        3: question.option_d   
+                    },
+                    "answer_counts": [0, 0, 0, 0]  
+                }
+            analytics_data[question_id]["miss_count"] += 1
+            if selected_answer in analytics_data[question_id]["incorrect_selections"]:
+                analytics_data[question_id]["incorrect_selections"][selected_answer] += 1
+            else:
+                analytics_data[question_id]["incorrect_selections"][selected_answer] = 1
+            analytics_data[question_id]["answer_counts"][selected_answer] += 1
 
-        # Initialize data for the question if not already present
-        if question_id not in analytics_data:
-            question = Question.query.get(question_id)
-            analytics_data[question_id] = {
-                "miss_count": 0,
-                "incorrect_selections": {},
-                "question_text": question.question,
-                "answer_texts": {
-                    0: question.option_a,  # Text for answer A
-                    1: question.option_b,  # Text for answer B
-                    2: question.option_c,  # Text for answer C
-                    3: question.option_d   # Text for answer D
-                },
-                "answer_counts": [0, 0, 0, 0]  # A, B, C, D counts
-            }
-
-        # Increment miss count for the question
-        analytics_data[question_id]["miss_count"] += 1
-
-        # Track selected wrong answers
-        if selected_answer in analytics_data[question_id]["incorrect_selections"]:
-            analytics_data[question_id]["incorrect_selections"][selected_answer] += 1
-        else:
-            analytics_data[question_id]["incorrect_selections"][selected_answer] = 1
-
-        # Increment the specific answer count for A (0), B (1), C (2), D (3)
-        analytics_data[question_id]["answer_counts"][selected_answer] += 1
-
-    # Determine most selected wrong answer for each question
-    for question_id, data in analytics_data.items():
-        data["most_selected_wrong_answer"] = max(
-            data["incorrect_selections"],
-            key=data["incorrect_selections"].get,
-            default=None
-        )
+        for question_id, data in analytics_data.items():
+            data["most_selected_wrong_answer"] = max(
+                data["incorrect_selections"],
+                key=data["incorrect_selections"].get,
+                default=None
+            )
 
     # Sort questions by miss count in descending order and select top 5
     top_missed_questions = dict(sorted(analytics_data.items(),
                                        key=lambda item: item[1]["miss_count"],
                                        reverse=True)[:5])
 
-    # Render the data to a template, passing the selected pool and all pools
     return render_template('ve_analytics.html',
                            analytics_data=top_missed_questions,
                            pools=question_pools,

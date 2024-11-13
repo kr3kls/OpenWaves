@@ -27,7 +27,7 @@
 
         {% if selected_pool_id %}
             <h4 class="title is-5 has-text-dark has-text-centered">
-                Analytics for Pool: {{ selected_pool.name if selected_pool else 'Unknown Pool' }}
+                Analytics for Pool: {{ selected_pool_name }}
             </h4>
 
             {% set answer_mapping = {0: "A", 1: "B", 2: "C", 3: "D"} %}
@@ -41,23 +41,29 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for question_id, data in analytics_data.items() %}
-                        <!-- Main question row -->
-                        <tr class="question-row" data-question-id="{{ question_id }}">
-                            <td>{{ data.question_text }}</td>
-                            <td>{{ data.miss_count }}</td>
-                            <td>{{ answer_mapping[data.most_selected_wrong_answer] if data.most_selected_wrong_answer is not none else 'N/A' }}</td>
+                    {% if analytics_data.items()|length > 0 %}
+                        {% for question_id, data in analytics_data.items() %}
+                            <!-- Main question row -->
+                            <tr class="question-row" data-question-id="{{ question_id }}">
+                                <td>{{ data.question_text }}</td>
+                                <td>{{ data.miss_count }}</td>
+                                <td>{{ answer_mapping[data.most_selected_wrong_answer] if data.most_selected_wrong_answer is not none else 'N/A' }}</td>
+                            </tr>
+                            <!-- Expanded details row (initially hidden) -->
+                            <tr id="details-{{ question_id }}" class="details-row is-hidden">
+                                <td colspan="3">
+                                    <p><strong>Question:</strong> {{ data.question_text }}</p>
+                                    {% for index, text in data.answer_texts.items() %}
+                                        <p><strong>Answer {{ answer_mapping[index] }}:</strong> {{ text }} - Selected {{ data.answer_counts[index] }} times</p>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3">No analytics data found for this pool.</td>
                         </tr>
-                        <!-- Expanded details row (initially hidden) -->
-                        <tr id="details-{{ question_id }}" class="details-row is-hidden">
-                            <td colspan="3">
-                                <p><strong>Question:</strong> {{ data.question_text }}</p>
-                                {% for index, text in data.answer_texts.items() %}
-                                    <p><strong>Answer {{ answer_mapping[index] }}:</strong> {{ text }} - Selected {{ data.answer_counts[index] }} times</p>
-                                {% endfor %}
-                            </td>
-                        </tr>
-                    {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         {% else %}
