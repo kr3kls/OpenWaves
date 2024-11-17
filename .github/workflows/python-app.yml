@@ -3,11 +3,11 @@ name: Python Flask CI
 on:
   push:
     branches:
-      - week11
+      - week12
   pull_request:
     branches:
       - main
-      - Sprint3
+      - Sprint4
 
 jobs:
   sonarcloud:
