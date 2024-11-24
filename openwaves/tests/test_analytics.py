@@ -424,7 +424,7 @@ def test_data_analytics_multiple_pools(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_sorting_consistency(client, ve_user):
-    """Test ID: UT-283
+    """Test ID: UT-282
     Test the data_analytics sorting by miss count for consistent top 5 selection.
 
     Asserts:
