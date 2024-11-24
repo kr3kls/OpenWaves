@@ -3,7 +3,7 @@ name: Python Flask CI
 on:
   push:
     branches:
-      - week12
+      - week13
   pull_request:
     branches:
       - main
