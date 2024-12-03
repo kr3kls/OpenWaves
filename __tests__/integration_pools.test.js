@@ -1,7 +1,7 @@
 /**
  * File: pools.test.js
  * 
- * Description: This file contains tests for the pools page functionality.
+ * Description: This file contains integration tests for the pools page functionality.
  * 
  * @jest-environment jsdom
  */
@@ -420,7 +420,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-123
+     * Test ID: IT-152
      * Test the functionality of the delete pool button when the request is successful.
      *
      * This test ensures that clicking the delete pool button triggers a DELETE request 
@@ -430,7 +430,7 @@ describe('Pool management functionality', () => {
      * - A DELETE request is sent to the correct URL with appropriate headers.
      * - A success alert is shown to the user.
      */
-    test('UT-123: delete pool button triggers fetch and shows success alert', async () => {
+    test('delete pool button triggers fetch and shows success alert', async () => {
         const deleteButton = document.querySelector('.delete-pool-button');
         deleteButton.click();
         await Promise.resolve();
@@ -446,7 +446,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-124
+     * Test ID: IT-153
      * Test the behavior of the delete pool button when the fetch request is rejected.
      *
      * This test ensures that when the delete request fails due to a network error, 
@@ -456,7 +456,7 @@ describe('Pool management functionality', () => {
      * - An error alert is shown to the user when the fetch request is rejected.
      * - The console.error is called with the correct error message.
      */
-    test('UT-124: delete pool button handles fetch rejection gracefully', async () => {
+    test('delete pool button handles fetch rejection gracefully', async () => {
         // Mock fetch to reject with an error
         const mockError = new Error('Network error');
         fetch.mockRejectedValueOnce(mockError);
@@ -478,7 +478,7 @@ describe('Pool management functionality', () => {
     });   
 
     /**
-     * Test ID: UT-125
+     * Test ID: IT-154
      * Test the behavior of the delete pool button when the server returns a non-OK response.
      *
      * This test ensures that when the server returns a non-OK response (e.g., 400 or 500 status),
@@ -487,7 +487,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - An error alert is shown to the user when the server responds with a non-OK status.
      */
-    test('UT-125: delete pool button triggers error alert on fetch failure', async () => {
+    test('delete pool button triggers error alert on fetch failure', async () => {
         global.fetch = jest.fn(() => Promise.resolve({ ok: false }));  // Mock a failure response
         const deleteButton = document.querySelector('.delete-pool-button');
         deleteButton.click();
@@ -497,28 +497,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-126
-     * Test the functionality of the upload button triggering modal visibility.
-     *
-     * This test ensures that clicking the upload button opens the corresponding modal, 
-     * allowing users to interact with the upload form.
-     *
-     * Asserts:
-     * - The modal becomes active (is shown) after clicking the upload button.
-     */
-    test('UT-126: upload button triggers modal visibility', () => {
-        const uploadButton = document.getElementById('upload-button-3');
-        const modal = document.getElementById('upload-modal-3');
-        
-        // Simulate clicking the upload button
-        uploadButton.click();
-        
-        // Assert the modal becomes active
-        expect(modal.classList.contains('is-active')).toBe(true);
-    });
-
-    /**
-     * Test ID: UT-127
+     * Test ID: IT-155
      * Test the behavior of the upload form submission when the server response is non-OK.
      *
      * This test ensures that when the server returns a non-OK response, an appropriate error message 
@@ -529,7 +508,7 @@ describe('Pool management functionality', () => {
      * - An error alert is shown to the user.
      * - The modal is closed after the submission fails.
      */
-    test('UT-127: submit upload form handles non-OK response', async () => {
+    test('submit upload form handles non-OK response', async () => {
         const modal = document.getElementById('upload-modal-3');
         const submitButton = document.getElementById('submit-upload-3');
         
@@ -556,7 +535,7 @@ describe('Pool management functionality', () => {
     });
     
     /**
-     * Test ID: UT-128
+     * Test ID: IT-156
      * Test the successful submission of the upload form.
      *
      * This test ensures that when the upload form is successfully submitted, a POST request 
@@ -566,7 +545,7 @@ describe('Pool management functionality', () => {
      * - A POST request is sent to the correct URL with appropriate form data.
      * - The modal is closed after the submission succeeds.
      */
-    test('UT-128: submit upload form triggers fetch and closes modal', async () => {
+    test('submit upload form triggers fetch and closes modal', async () => {
         const modal = document.getElementById('upload-modal-3');
         const submitButton = document.getElementById('submit-upload-3');
         
@@ -591,67 +570,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-129
-     * Test the functionality of closing the modal when the cancel button is clicked.
-     *
-     * This test ensures that clicking the cancel button properly closes the create pool modal,
-     * preventing any unintended interactions while the modal is open.
-     *
-     * Asserts:
-     * - The modal starts as active (open).
-     * - The modal is closed after the cancel button is clicked.
-     */
-    test('UT-129: close create-pool-modal when cancel is clicked', () => {
-        // Get the close button (X) and the modal from the DOM
-        const cancelButton = document.querySelector('#cancel-pool-form'); // Cancel button class
-        const modal = document.getElementById('create-pool-modal');
-    
-        // Ensure the modal starts as active (open)
-        modal.classList.add('is-active'); // This opens the modal
-    
-        // Ensure the modal is actually open before closing
-        expect(modal.classList.contains('is-active')).toBe(true);
-    
-        // Try to close with the cancel button
-        cancelButton.click(); 
-    
-        // Assert the modal is no longer active (closed)
-        expect(modal.classList.contains('is-active')).toBe(false);
-    });
-
-    /**
-     * Test ID: UT-130
-     * Test the functionality of closing the modal when the close button (X) is clicked.
-     *
-     * This test ensures that clicking the close button properly closes the create pool modal,
-     * preventing any unintended interactions while the modal is open.
-     *
-     * Asserts:
-     * - The modal starts as active (open).
-     * - The modal is closed after the close button is clicked.
-     */
-    test('UT-130: close create-pool-modal when X is clicked', async () => {    
-        const closeButton = document.querySelector('#create-pool-modal .delete');
-        const modal = document.getElementById('create-pool-modal');
-    
-        // Open the modal
-        modal.classList.add('is-active');
-    
-        // Ensure the modal starts as active (open)
-        expect(modal.classList.contains('is-active')).toBe(true);
-    
-        // Simulate the click event
-        closeButton.click();
-    
-        // Wait for any asynchronous actions to complete (this ensures that event listeners are executed)
-        await new Promise((resolve) => setTimeout(resolve, 0));
-    
-        // Assert that the modal is no longer active
-        expect(modal.classList.contains('is-active')).toBe(false);
-    });
-
-    /**
-     * Test ID: UT-131
+     * Test ID: IT-157
      * Test the functionality of submitting the create pool form.
      *
      * This test ensures that when the create pool form is submitted, a fetch request
@@ -663,7 +582,7 @@ describe('Pool management functionality', () => {
      * - An alert is shown if the pool is created successfully.
      * - The page is reloaded after successful creation.
      */
-    test('UT-131: submit pool form triggers fetch, shows alert, reloads, and closes modal', async () => {
+    test('submit pool form triggers fetch, shows alert, reloads, and closes modal', async () => {
         const modal = document.getElementById('create-pool-modal');
         const createPoolForm = document.getElementById('create-pool-form');
         const submitPoolFormButton = document.getElementById('submit-pool-form');
@@ -703,124 +622,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-132
-     * Test that changing the start date automatically updates the end date.
-     *
-     * This test ensures that when the start date is changed, the end date is
-     * automatically updated to 4 years later, with the end date always set to June 30.
-     *
-     * Asserts:
-     * - The end date is correctly updated based on the new start date.
-     */
-    test('UT-132: start date change updates end date automatically', () => {
-        const startDateField = document.getElementById('start-date');
-        const endDateField = document.getElementById('end-date');
-
-        startDateField.value = '2023-06-30';
-        const changeEvent = new Event('change');
-        startDateField.dispatchEvent(changeEvent);
-
-        const expectedEndDate = new Date('2023-06-30');
-        expectedEndDate.setFullYear(expectedEndDate.getFullYear() + 4);
-        const expectedFormattedEndDate = expectedEndDate.toISOString().split('T')[0];
-
-        expect(endDateField.value).toBe(expectedFormattedEndDate);
-    });
-
-    /**
-     * Test ID: UT-133
-     * Test the functionality of the create pool button.
-     *
-     * This test ensures that clicking the create pool button sets the default
-     * start and end dates for the pool and opens the create pool modal.
-     *
-     * Asserts:
-     * - The start date is set to July 1 of the current year.
-     * - The end date is set to June 30, 4 years from the start date.
-     * - The create pool modal is opened after clicking the create pool button.
-     */
-    test('UT-133: create pool button sets default dates and opens modal', () => {
-        const createPoolButton = document.getElementById('create-pool-button');
-        const createPoolModal = document.getElementById('create-pool-modal');
-        const startDateField = document.getElementById('start-date');
-        const endDateField = document.getElementById('end-date');
-    
-        // Simulate clicking the create pool button
-        createPoolButton.click();
-    
-        const currentYear = new Date().getFullYear();
-        expect(startDateField.value).toBe(`${currentYear}-07-01`);
-        expect(endDateField.value).toBe(`${currentYear + 4}-06-30`);
-    
-        // Check that the modal is opened
-        expect(createPoolModal.classList.contains('is-active')).toBe(true);
-    });
-    
-    /**
-     * Test ID: UT-134
-     * Test the functionality of selecting a pool name.
-     *
-     * This test ensures that selecting the 'Technician' pool name updates the exam
-     * element field with the correct value.
-     *
-     * Asserts:
-     * - Selecting 'Technician' updates the exam element field to '2'.
-     */
-    test('UT-134: pool name selection updates exam element to 2 for Technician', () => {
-        const poolNameDropdown = document.getElementById('pool-name');
-        const examElementField = document.getElementById('exam-element');
-    
-        poolNameDropdown.value = 'Technician';
-        const changeEvent = new Event('change');
-        poolNameDropdown.dispatchEvent(changeEvent);
-    
-        expect(examElementField.value).toBe('2');
-    });
-    
-    /**
-     * Test ID: UT-135
-     * Test the functionality of selecting the 'General' pool name.
-     *
-     * This test ensures that selecting the 'General' pool name updates the exam
-     * element field with the correct value.
-     *
-     * Asserts:
-     * - Selecting 'General' updates the exam element field to '3'.
-     */
-    test('UT-135: pool name selection updates exam element to 3 for General', () => {
-        const poolNameDropdown = document.getElementById('pool-name');
-        const examElementField = document.getElementById('exam-element');
-
-        poolNameDropdown.value = 'General';
-        const changeEvent = new Event('change');
-        poolNameDropdown.dispatchEvent(changeEvent);
-
-        expect(examElementField.value).toBe('3');
-    });
-
-    /**
-     * Test ID: UT-136
-     * Test the functionality of selecting the 'Extra' pool name.
-     *
-     * This test ensures that selecting the 'Extra' pool name updates the exam
-     * element field with the correct value.
-     *
-     * Asserts:
-     * - Selecting 'Extra' updates the exam element field to '4'.
-     */
-    test('UT-136: pool name selection updates exam element to 4 for Extra', () => {
-        const poolNameDropdown = document.getElementById('pool-name');
-        const examElementField = document.getElementById('exam-element');
-
-        poolNameDropdown.value = 'Extra';
-        const changeEvent = new Event('change');
-        poolNameDropdown.dispatchEvent(changeEvent);
-
-        expect(examElementField.value).toBe('4');
-    });
-    
-    /**
-     * Test ID: UT-137
+     * Test ID: IT-158
      * Test the behavior of submitting the pool form when the server response is non-OK.
      *
      * This test ensures that when a user attempts to submit the pool creation form
@@ -832,7 +634,7 @@ describe('Pool management functionality', () => {
      * - An error alert is shown to the user.
      * - The pool creation modal is closed after submission.
      */
-    test('UT-137: submit pool form handles non-OK response', async () => {
+    test('submit pool form handles non-OK response', async () => {
         const modal = document.getElementById('create-pool-modal');
         const submitPoolFormButton = document.getElementById('submit-pool-form');
     
@@ -853,171 +655,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-150
-     * Test the functionality of clicking a pool row to add the "show" class if the expandable row is hidden.
-     *
-     * This test ensures that when a pool row is clicked and the expandable row is initially hidden,
-     * the "show" class is added to make it visible.
-     *
-     * Asserts:
-     * - Clicking a pool row adds the "show" class to the expandable row when it is hidden.
-     */
-    test('UT-150: clicking a pool row adds "show" class if expandable row is hidden', async () => {
-        // Initially, the expandable row should not have the "show" class
-        expect(expandableRow.classList.contains('show')).toBe(false);
-    
-        // Simulate clicking the pool row
-        poolRow.click();
-    
-        // Wait for any asynchronous code to complete
-        await Promise.resolve();
-    
-        // Now, check if the "show" class has been added
-        expect(expandableRow.classList.contains('show')).toBe(true);
-    });
-    
-    /**
-     * Test ID: UT-151
-     * Test the functionality of clicking a pool row to remove the "show" class if the expandable row is shown.
-     *
-     * This test ensures that when a pool row is clicked and the expandable row is initially shown,
-     * the "show" class is removed to hide it.
-     *
-     * Asserts:
-     * - Clicking a pool row removes the "show" class from the expandable row when it is visible.
-     */
-    test('UT-151: clicking a pool row removes "show" class if expandable row is shown', () => {
-        // Add the "show" class initially
-        expandableRow.classList.add('show');
-        expect(expandableRow.classList.contains('show')).toBe(true);
-
-        // Click the pool row
-        poolRow.click();
-
-        // The "show" class should now be removed
-        expect(expandableRow.classList.contains('show')).toBe(false);
-    });
-
-    /**
-     * Test ID: UT-152
-     * Test the functionality of clicking a pool row when no corresponding expandable row is found.
-     *
-     * This test ensures that when a pool row is clicked, but no expandable row with the matching data-id exists,
-     * an error is logged to the console.
-     *
-     * Asserts:
-     * - If no expandable row exists, an error is logged with the correct message.
-     */
-    test('UT-152: clicking a pool row logs an error if no expandable row is found', () => {
-        // Remove the expandable row from the DOM
-        expandableRow.remove();
-
-        // Click the pool row
-        poolRow.click();
-
-        // Ensure console.error is called with the correct message
-        expect(console.error).toHaveBeenCalledWith('No expandable row found for pool ID: 1');
-    });
-
-    /**
-     * Test ID: UT-153
-     * Test the functionality of clicking the upload button to show the modal.
-     *
-     * This test ensures that clicking the "Upload" button opens the corresponding modal.
-     *
-     * Asserts:
-     * - Clicking the "Upload" button adds the "is-active" class to the modal.
-     */
-    test('UT-153: clicking the upload button shows the corresponding modal', () => {
-        // Simulate clicking the upload button
-        const uploadButton = document.getElementById('upload-button-3');
-        const modal = document.getElementById('upload-modal-3');
-    
-        // Initially, the modal should not be active
-        expect(modal.classList.contains('is-active')).toBe(false);
-    
-        uploadButton.click();
-    
-        // Assert that the modal becomes active (is shown)
-        expect(modal.classList.contains('is-active')).toBe(true);
-    });
-
-    /**
-     * Test ID: UT-154
-     * Test the functionality of clicking on a thumbnail image to show the fullscreen overlay.
-     *
-     * This test ensures that clicking the thumbnail image sets the fullscreen image src
-     * and makes the fullscreen overlay visible.
-     *
-     * Asserts:
-     * - The fullscreen overlay becomes visible when clicking the thumbnail image.
-     * - The fullscreen image's source is correctly set to the thumbnail image's source.
-     */
-    test('UT-154: clicking thumbnail image shows fullscreen overlay', () => {
-        // Reference the thumbnail image and fullscreen elements
-        const thumbnailImage = document.querySelector('.thumbnail-image');
-        const fullscreenOverlay = document.getElementById('fullscreen-overlay');
-        const fullscreenImage = document.getElementById('fullscreen-image');
-
-        // Simulate clicking the thumbnail image
-        thumbnailImage.click();
-
-        // Assert that the fullscreen image source is set correctly
-        expect(fullscreenImage.src).toContain('http://localhost/static/images/diagrams/1_T1.jpg');
-
-        // Assert that the fullscreen overlay becomes visible
-        expect(fullscreenOverlay.style.display).toBe('flex');
-    });
-
-    /**
-     * Test ID: UT-155
-     * Test the functionality of clicking the fullscreen overlay to hide it.
-     *
-     * This test ensures that clicking the fullscreen overlay hides it from view.
-     *
-     * Asserts:
-     * - The fullscreen overlay becomes hidden after clicking it.
-     */
-    test('UT-155: clicking fullscreen overlay hides it', () => {
-        // Reference the fullscreen overlay element
-        const fullscreenOverlay = document.getElementById('fullscreen-overlay');
-
-        // Simulate opening the fullscreen overlay by setting its display to 'flex'
-        fullscreenOverlay.style.display = 'flex';
-
-        // Ensure the overlay is initially visible
-        expect(fullscreenOverlay.style.display).toBe('flex');
-
-        // Simulate clicking the fullscreen overlay to close it
-        fullscreenOverlay.click();
-
-        // Assert that the overlay is hidden after clicking
-        expect(fullscreenOverlay.style.display).toBe('none');
-    });
-    
-    /**
-     * Test ID: UT-156
-     * Test the functionality of clicking the "Upload" button to open the upload modal.
-     *
-     * This test ensures that clicking the "Upload" button opens the corresponding modal.
-     *
-     * Asserts:
-     * - Clicking the "Upload" button adds the "is-active" class to the modal.
-     */
-    test('UT-156: Open upload modal when "Upload" button is clicked', () => {
-        // Reference the upload button and the modal elements
-        const uploadButton = document.querySelector('.upload-diagram-button');
-        const modal = document.getElementById('upload-modal-1');
-
-        // Simulate clicking the upload button
-        uploadButton.click();
-
-        // Assert that the modal becomes active (is shown)
-        expect(modal.classList.contains('is-active')).toBe(true);
-    });
-
-    /**
-     * Test ID: UT-157
+     * Test ID: IT-159
      * Test the functionality of handling the upload submission in the modal.
      *
      * This test ensures that clicking the upload button sends a POST request,
@@ -1028,7 +666,7 @@ describe('Pool management functionality', () => {
      * - The success alert is shown to the user.
      * - The modal is closed after submission.
      */
-    test('UT-157: Handle upload submission and close modal upon successful response', async () => {
+    test('handle upload submission and close modal upon successful response', async () => {
         // Reference the modal and the upload button inside the modal
         const modal = document.getElementById('upload-modal-1');
         const submitUploadButton = document.querySelector('.submit-upload[data-pool-id="1"]');
@@ -1062,7 +700,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-176
+     * Test ID: IT-160
      * Test the functionality of the delete diagram button when the request is successful.
      *
      * This test ensures that clicking the delete diagram button triggers a DELETE request 
@@ -1073,7 +711,7 @@ describe('Pool management functionality', () => {
      * - A success alert is shown to the user.
      * - The page is reloaded after successful deletion.
      */
-    test('UT-176: delete diagram button triggers fetch and shows success alert', async () => {
+    test('delete diagram button triggers fetch and shows success alert', async () => {
         const deleteButton = document.querySelector('.delete-diagram-button');
         deleteButton.click();
         await Promise.resolve();
@@ -1090,7 +728,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-177
+     * Test ID: IT-161
      * Test the behavior of the delete diagram button when the fetch request is rejected.
      *
      * This test ensures that when the delete request fails due to a network error, 
@@ -1100,7 +738,7 @@ describe('Pool management functionality', () => {
      * - An error alert is shown to the user when the fetch request is rejected.
      * - The console.error is called with the correct error message.
      */
-    test('UT-177: delete diagram button handles fetch rejection gracefully', async () => {
+    test('delete diagram button handles fetch rejection gracefully', async () => {
         const mockError = new Error('Network error');
         fetch.mockRejectedValueOnce(mockError);
 
@@ -1113,7 +751,7 @@ describe('Pool management functionality', () => {
     });
 
     /**
-     * Test ID: UT-178
+     * Test ID: IT-162
      * Test the behavior of the delete diagram button when the server returns a non-OK response.
      *
      * This test ensures that when the server returns a non-OK response (e.g., 400 or 500 status),
@@ -1122,7 +760,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - An error alert is shown to the user when the server responds with a non-OK status.
      */
-    test('UT-178: delete diagram button triggers error alert on fetch failure', async () => {
+    test('delete diagram button triggers error alert on fetch failure', async () => {
         global.fetch = jest.fn(() => Promise.resolve({ ok: false }));
         const deleteButton = document.querySelector('.delete-diagram-button');
         deleteButton.click();

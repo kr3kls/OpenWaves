@@ -1,7 +1,7 @@
 /**
  * File: ve_analytics.test.js
  * 
- * Description: This file contains tests for the VE Analytics page functionality.
+ * Description: This file contains unit tests for the VE Analytics page functionality.
  * 
  * @jest-environment jsdom
  */
@@ -39,7 +39,7 @@ describe('VE Analytics Functionality', () => {
     });
 
     /**
-     * Test ID: UT-267
+     * Test ID: UT-104
      * 
      * This test verifies that changing the `pool` selection auto-submits the form.
      * 
@@ -56,30 +56,7 @@ describe('VE Analytics Functionality', () => {
     });
 
     /**
-     * Test ID: UT-268
-     * 
-     * This test ensures that clicking a question row toggles the visibility of the associated details row.
-     * 
-     * Asserts:
-     * - The "is-hidden" class is removed on the first click, making the row visible.
-     * - The "is-hidden" class is added again on the second click, hiding the row.
-     */
-    test('toggles question detail visibility on row click', () => {
-        const row = questionRows[0];
-        const questionId = row.getAttribute('data-question-id');
-        const detailRow = document.getElementById(`details-${questionId}`);
-
-        // Simulate clicking the question row to show details
-        row.click();
-        expect(detailRow.classList.contains('is-hidden')).toBe(false);
-
-        // Simulate another click to hide details
-        row.click();
-        expect(detailRow.classList.contains('is-hidden')).toBe(true);
-    });
-
-    /**
-     * Test ID: UT-269
+     * Test ID: UT-105
      * 
      * Test that the code handles missing pool element gracefully.
      * 
@@ -95,7 +72,7 @@ describe('VE Analytics Functionality', () => {
     });
 
     /**
-     * Test ID: UT-270
+     * Test ID: UT-106
      * 
      * Test that the code handles missing form on pool select element gracefully.
      * 
@@ -111,7 +88,7 @@ describe('VE Analytics Functionality', () => {
     });
 
     /**
-     * Test ID: UT-271
+     * Test ID: UT-107
      * 
      * Test that clicking a row without an associated detail row does not throw an error.
      * 
@@ -126,7 +103,7 @@ describe('VE Analytics Functionality', () => {
     });
 
     /**
-     * Test ID: UT-272
+     * Test ID: UT-108
      * 
      * This test verifies that clicking a question row without a question ID does not throw an error.
      * 

@@ -1,6 +1,6 @@
 """File: test_auth.py
 
-    This file contains the tests for the code in the auth.py file.
+    This file contains the unit tests for the code in the auth.py file.
 """
 
 from werkzeug.security import check_password_hash

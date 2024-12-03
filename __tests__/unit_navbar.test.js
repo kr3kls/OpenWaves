@@ -1,7 +1,7 @@
 /**
  * File: navbar.test.js
  * 
- * Description: This file contains tests for the navbar functionality.
+ * Description: This file contains unit tests for the navbar functionality.
  * 
  * @jest-environment jsdom
  */
@@ -28,7 +28,7 @@ describe('Navbar functionality', () => {
     });
 
     /**
-     * Test ID: UT-113
+     * Test ID: UT-72
      * 
      * This test ensures that clicking the `navbar-burger` element toggles the "is-active" class
      * on both the `navbar-burger` and `navbar-menu` elements, thereby showing or hiding the menu.
@@ -54,7 +54,7 @@ describe('Navbar functionality', () => {
     });
 
     /**
-     * Test ID: UT-114
+     * Test ID: UT-73
      * 
      * This test ensures that pressing the "Enter" key when focused on the `navbar-burger` element
      * toggles the "is-active" class on both the `navbar-burger` and `navbar-menu` elements, 
@@ -82,7 +82,7 @@ describe('Navbar functionality', () => {
     });
 
     /**
-     * Test ID: UT-115
+     * Test ID: UT-74
      * 
      * This test ensures that pressing the "Space" key when focused on the `navbar-burger` element
      * toggles the "is-active" class on both the `navbar-burger` and `navbar-menu` elements, 
@@ -110,7 +110,7 @@ describe('Navbar functionality', () => {
     });
 
     /**
-     * Test ID: UT-116
+     * Test ID: UT-75
      * 
      * Test that pressing irrelevant keys does not trigger the `toggleMenu` function.
      * 
@@ -132,7 +132,7 @@ describe('Navbar functionality', () => {
     });
 
     /**
-     * Test ID: UT-117
+     * Test ID: UT-76
      * 
      * Test that multiple `navbar-burger` elements toggle their respective menus independently.
      * 
@@ -184,7 +184,7 @@ describe('Navbar functionality', () => {
     });
 
     /**
-     * Test ID: UT-118
+     * Test ID: UT-77
      * 
      * Test that `toggleMenu` handles a missing `data-target` attribute gracefully.
      * 
@@ -226,7 +226,7 @@ describe('Navbar functionality', () => {
     });    
 
     /**
-     * Test ID: UT-119
+     * Test ID: UT-78
      * Test the `toggleMenu` function when the target element does not exist.
      *
      * This test ensures that the `toggleMenu` function handles cases where the target element
@@ -267,7 +267,7 @@ describe('Navbar functionality', () => {
     });    
 
     /**
-     * Test ID: UT-120
+     * Test ID: UT-79
      * Test the `initializeNavbar` function when there are no `navbar-burger` elements in the DOM.
      *
      * This test ensures that the `initializeNavbar` function gracefully handles the absence of 
@@ -298,7 +298,7 @@ describe('Navbar functionality', () => {
     });
 
     /**
-     * Test ID: UT-121
+     * Test ID: UT-80
      * Test the `toggleMenu` function's behavior on the `aria-expanded` attribute of `navbar-burger`.
      *
      * This test ensures that the `toggleMenu` function toggles the `aria-expanded` attribute
@@ -323,7 +323,7 @@ describe('Navbar functionality', () => {
     });
 
     /**
-     * Test ID: UT-122
+     * Test ID: UT-81
      * Test the attachment of event listeners to `navbar-burger` elements.
      *
      * This test ensures that the `initializeNavbar` function correctly attaches 

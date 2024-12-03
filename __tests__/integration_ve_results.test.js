@@ -1,7 +1,7 @@
 /**
  * File: ve_results.test.js
  * 
- * Description: This file contains tests for the ve_results functionality.
+ * Description: This file contains integration tests for the ve_results functionality.
  * 
  * @jest-environment jsdom
  */
@@ -45,7 +45,7 @@ describe('ve_results functionality', () => {
     });
 
     /**
-     * Test ID: UT-258
+     * Test ID: IT-174
      * Test creating and submitting a form with the correct data when a row is clicked.
      *
      * This test ensures that clicking a row with the class 'clickable-row' creates and
