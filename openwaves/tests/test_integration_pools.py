@@ -1,6 +1,6 @@
 """File: test_pools.py
 
-    This file contains the tests for the pools code in the main.py file.
+    This file contains the integration tests for the pools code in the main.py file.
 """
 import os
 from datetime import datetime
@@ -9,7 +9,7 @@ from unittest.mock import patch
 from sqlalchemy.exc import SQLAlchemyError
 from openwaves import db
 from openwaves.imports import Pool, Question, TLI, ExamDiagram
-from openwaves.tests.test_auth import login
+from openwaves.tests.test_unit_auth import login
 
 def create_test_diagram(pool_id, path, session):
     """Helper function to create and add a diagram to the test database."""
@@ -18,37 +18,8 @@ def create_test_diagram(pool_id, path, session):
     session.commit()
     return diagram.id
 
-def test_create_pool_success(client, ve_user):
-    """Test ID: UT-49
-    Functional test: Verifies that a VE user can successfully create a new question pool.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - The response status code is 200.
-        - The response contains a JSON success message.
-        - The newly created pool is present in the database with the correct element number.
-    """
-    login(client, ve_user.username, 'vepassword')
-    response = client.post('/ve/create_pool', data={
-        'pool_name': 'Test Pool',
-        'exam_element': '2',
-        'start_date': '2023-01-01',
-        'end_date': '2026-12-31'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert response.is_json
-    assert response.get_json()['success'] is True
-    # Verify the pool was created in the database
-    with client.application.app_context():
-        pool = Pool.query.filter_by(name='Test Pool').first()
-        assert pool is not None
-        assert pool.element == 2
-
 def test_create_pool_missing_fields(client, ve_user):
-    """Test ID: UT-50
+    """Test ID: IT-40
     Negative test: Verifies that creating a question pool with missing fields returns an error.
 
     Args:
@@ -71,7 +42,7 @@ def test_create_pool_missing_fields(client, ve_user):
     assert 'All fields are required.' in response.get_json()['error']
 
 def test_upload_questions_success(client, ve_user):
-    """Test ID: UT-53
+    """Test ID: IT-41
     Functional test: Verifies that a VE user can successfully upload questions to a pool.
 
     Args:
@@ -119,7 +90,7 @@ T1A02,B,What is 2+2?,1,4,3,5,Reference2
         assert tli_count == 1  # Both questions have TLI starting with 'T1'
 
 def test_upload_questions_no_file(client, ve_user):
-    """Test ID: UT-54
+    """Test ID: IT-42
     Negative test: Verifies that uploading questions without a file returns an error.
 
     Args:
@@ -138,7 +109,7 @@ def test_upload_questions_no_file(client, ve_user):
     assert 'No file provided.' in response.get_json()['error']
 
 def test_upload_questions_invalid_file_type(client, ve_user):
-    """Test ID: UT-55
+    """Test ID: IT-43
     Negative test: Ensures that uploading a non-CSV file type returns an error.
 
     Args:
@@ -177,7 +148,7 @@ def test_upload_questions_invalid_file_type(client, ve_user):
     assert b'Invalid file type. Only CSV files are allowed.' in response.data
 
 def test_delete_pool_success(client, ve_user):
-    """Test ID: UT-57
+    """Test ID: IT-44
     Functional test: Verifies that a VE user can successfully delete a question pool.
 
     Args:
@@ -211,7 +182,7 @@ def test_delete_pool_success(client, ve_user):
         assert pool is None
 
 def test_delete_pool_not_found(client, ve_user):
-    """Test ID: UT-58
+    """Test ID: IT-45
     Negative test: Ensures that deleting a non-existent pool returns an error.
 
     Args:
@@ -229,7 +200,7 @@ def test_delete_pool_not_found(client, ve_user):
     assert 'Pool not found.' in response.get_json()['error']
 
 def test_upload_diagram_missing_file(client, app, ve_user):
-    """Test ID: UT-165
+    """Test ID: IT-46
     Test upload diagram with no file in request.
 
     This test ensures that when the file is missing in the request,
@@ -265,7 +236,7 @@ def test_upload_diagram_missing_file(client, app, ve_user):
     assert b'No file part' in response.data
 
 def test_upload_diagram_empty_filename(client, app, ve_user):
-    """Test ID: UT-166
+    """Test ID: IT-47
     Test upload diagram with an empty filename.
 
     This test ensures that when a file with an empty filename is provided,
@@ -293,7 +264,7 @@ def test_upload_diagram_empty_filename(client, app, ve_user):
         assert b'No selected file' in response.data
 
 def test_upload_diagram_invalid_file_type(client, app, ve_user):
-    """Test ID: UT-167
+    """Test ID: IT-48
     Test upload diagram with an invalid file type.
 
     This test ensures that when an invalid file type is uploaded,
@@ -321,7 +292,7 @@ def test_upload_diagram_invalid_file_type(client, app, ve_user):
 
 @patch('os.path.exists', return_value=False)
 def test_upload_diagram_directory_does_not_exist(mock_exists, client, app, ve_user): # pylint: disable=W0613
-    """Test ID: UT-168
+    """Test ID: IT-49
     Test upload diagram when the directory does not exist.
 
     This test ensures that when the directory for storing uploads does not exist,
@@ -351,7 +322,7 @@ def test_upload_diagram_directory_does_not_exist(mock_exists, client, app, ve_us
 @patch('os.path.exists', return_value=True)
 @patch('werkzeug.datastructures.FileStorage.save')
 def test_upload_diagram_successful(mock_save, mock_exists, client, app, ve_user): # pylint: disable=W0613
-    """Test ID: UT-169
+    """Test ID: IT-50
     Test successful upload of a diagram.
 
     This test ensures that when all conditions are met, the diagram is successfully uploaded,
@@ -383,7 +354,7 @@ def test_upload_diagram_successful(mock_save, mock_exists, client, app, ve_user)
 @patch('os.path.exists', return_value=True)
 @patch('werkzeug.datastructures.FileStorage.save', side_effect=SQLAlchemyError)
 def test_upload_diagram_database_error(mock_save, mock_exists, client, app, ve_user): # pylint: disable=W0613
-    """Test ID: UT-170
+    """Test ID: IT-51
     Test upload diagram with a database error.
 
     This test ensures that when there is a database error during the diagram save,
@@ -415,7 +386,7 @@ def test_upload_diagram_database_error(mock_save, mock_exists, client, app, ve_u
 @patch('os.path.exists', return_value=True)
 @patch('os.remove')
 def test_delete_diagram_success(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
-    """Test ID: UT-172
+    """Test ID: IT-52
     Test successful diagram deletion.
 
     This test ensures that when the diagram exists, it is successfully deleted from the server 
@@ -464,7 +435,7 @@ def test_delete_diagram_success(mock_remove, mock_exists, client, app, ve_user):
         assert diagram is None
 
 def test_delete_diagram_not_found(client, ve_user):
-    """Test ID: UT-173
+    """Test ID: IT-53
     Test diagram deletion when diagram is not found.
 
     This test ensures that if the diagram does not exist, an appropriate error message is returned.
@@ -489,7 +460,7 @@ def test_delete_diagram_not_found(client, ve_user):
 
 @patch('os.path.exists', return_value=False)
 def test_delete_diagram_file_not_found(mock_exists, client, app, ve_user): # pylint: disable=W0613
-    """Test ID: UT-174
+    """Test ID: IT-54
     Test diagram deletion when the diagram file does not exist on the server.
 
     This test ensures that when the diagram file is missing on the server, 
@@ -531,7 +502,7 @@ def test_delete_diagram_file_not_found(mock_exists, client, app, ve_user): # pyl
 @patch('os.path.exists', return_value=True)
 @patch('os.remove')
 def test_delete_pool_diagram_file_exists(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
-    """Test ID: UT-179
+    """Test ID: IT-55
     Test diagram deletion when the file exists on the server.
 
     This test ensures that when the diagram file exists on the server,
@@ -579,7 +550,7 @@ def test_delete_pool_diagram_file_exists(mock_remove, mock_exists, client, app, 
 @patch('os.path.exists', return_value=False)
 @patch('os.remove')
 def test_delete_pool_diagram_file_not_found(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
-    """Test ID: UT-180
+    """Test ID: IT-56
     Test diagram deletion when the file does not exist on the server.
 
     This test ensures that if the diagram file is missing on the server,
@@ -627,7 +598,7 @@ def test_delete_pool_diagram_file_not_found(mock_remove, mock_exists, client, ap
 @patch('os.path.exists', return_value=True)
 @patch('os.remove')
 def test_delete_pool_multiple_diagrams(mock_remove, mock_exists, client, app, ve_user): # pylint: disable=W0613
-    """Test ID: UT-181
+    """Test ID: IT-57
     Test multiple diagrams are deleted when deleting a pool.
 
     This test ensures that all diagrams associated with a pool are deleted
@@ -677,7 +648,7 @@ def test_delete_pool_multiple_diagrams(mock_remove, mock_exists, client, app, ve
         assert len(remaining_diagrams) == 0
 
 def test_delete_pool_no_diagrams(client, app, ve_user):
-    """Test ID: UT-182
+    """Test ID: IT-58
     Test pool deletion when there are no diagrams associated with the pool.
 
     This test ensures that the pool is deleted successfully, even if no diagrams are linked.
@@ -711,3 +682,32 @@ def test_delete_pool_no_diagrams(client, app, ve_user):
     with app.app_context():
         deleted_pool = db.session.get(Pool, pool.id)
         assert deleted_pool is None
+
+def test_create_pool_success(client, ve_user):
+    """Test ID: IT-59
+    Functional test: Verifies that a VE user can successfully create a new question pool.
+
+    Args:
+        client: The test client instance.
+        ve_user: The VE user fixture.
+
+    Asserts:
+        - The response status code is 200.
+        - The response contains a JSON success message.
+        - The newly created pool is present in the database with the correct element number.
+    """
+    login(client, ve_user.username, 'vepassword')
+    response = client.post('/ve/create_pool', data={
+        'pool_name': 'Test Pool',
+        'exam_element': '2',
+        'start_date': '2023-01-01',
+        'end_date': '2026-12-31'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert response.is_json
+    assert response.get_json()['success'] is True
+    # Verify the pool was created in the database
+    with client.application.app_context():
+        pool = Pool.query.filter_by(name='Test Pool').first()
+        assert pool is not None
+        assert pool.element == 2

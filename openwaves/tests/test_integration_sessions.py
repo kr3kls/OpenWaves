@@ -1,13 +1,13 @@
 """File: test_sessions.py
 
-    This file contains the tests for the sessions code in the main.py file.
+    This file contains the integration tests for the sessions code in the main.py file.
 """
 from datetime import datetime
 import pytest
 from flask import url_for
 from openwaves import db
 from openwaves.imports import User, Pool, ExamSession, Exam
-from openwaves.tests.test_auth import login
+from openwaves.tests.test_unit_auth import login
 
 #############################
 #                           #
@@ -15,25 +15,8 @@ from openwaves.tests.test_auth import login
 #                           #
 #############################
 
-def test_sessions_page_access(client, ve_user):
-    """Test ID: UT-61
-    Functional test: Verifies that a VE user can access the sessions page.
-
-    Args:
-        client: The test client instance.
-        ve_user: The VE user fixture.
-
-    Asserts:
-        - Response status code is 200.
-        - Response data contains "Test Sessions".
-    """
-    login(client, ve_user.username, 'vepassword')
-    response = client.get('/ve/sessions')
-    assert response.status_code == 200
-    assert b'Exam Sessions' in response.data
-
 def test_sessions_page_access_as_regular_user(client):
-    """Test ID: UT-62
+    """Test ID: IT-60
     Negative test: Ensures that a regular user cannot access the sessions page.
 
     Args:
@@ -46,22 +29,8 @@ def test_sessions_page_access_as_regular_user(client):
     response = client.get('/ve/sessions', follow_redirects=True)
     assert b'Access denied.' in response.data
 
-def test_sessions_page_access_not_logged_in(client):
-    """Test ID: UT-63
-    Negative test: Ensures that unauthenticated users cannot access the sessions page.
-
-    Args:
-        client: The test client instance.
-
-    Asserts:
-        - The response data contains a message asking the user to log in.
-        - The status code indicates a redirect to the login page.
-    """
-    response = client.get('/ve/sessions', follow_redirects=True)
-    assert b'Please log in to access this page.' in response.data
-
 def test_create_session_success(client, ve_user):
-    """Test ID: UT-64
+    """Test ID: IT-61
     Functional test: Confirms that a VE user can successfully create a new test session.
 
     Args:
@@ -130,7 +99,7 @@ def test_create_session_success(client, ve_user):
         assert session.extra_pool_id == extra_pool.id
 
 def test_create_session_missing_fields(client, ve_user):
-    """Test ID: UT-65
+    """Test ID: IT-62
     Negative test: Verifies that creating a session with missing fields returns an error.
 
     Args:
@@ -153,7 +122,7 @@ def test_create_session_missing_fields(client, ve_user):
     assert 'All fields are required.' in response.get_json()['error']
 
 def test_create_session_access_as_regular_user(client):
-    """Test ID: UT-66
+    """Test ID: IT-63
     Negative test: Ensures that a regular user cannot create a test session.
 
     Args:
@@ -176,7 +145,7 @@ def test_create_session_access_as_regular_user(client):
     assert '/auth/logout' in response.headers['Location']
 
 def test_create_session_not_logged_in(client):
-    """Test ID: UT-67
+    """Test ID: IT-64
     Negative test: Ensures that unauthenticated users cannot create a test session.
 
     Args:
@@ -195,7 +164,7 @@ def test_create_session_not_logged_in(client):
     assert b'Please log in to access this page.' in response.data
 
 def test_open_session_success(client, ve_user):
-    """Test ID: UT-68
+    """Test ID: IT-65
     Functional test: Verifies that a VE user can open a test session.
 
     Args:
@@ -266,7 +235,7 @@ def test_open_session_success(client, ve_user):
         assert session.start_time is not None
 
 def test_open_session_not_found(client, ve_user):
-    """Test ID: UT-69
+    """Test ID: IT-66
     Negative test: Ensures that trying to open a non-existent session returns a 404 error.
 
     Args:
@@ -289,7 +258,7 @@ def test_open_session_not_found(client, ve_user):
     assert json_data['error'] == "Session not found."
 
 def test_close_session_success(client, ve_user):
-    """Test ID: UT-70
+    """Test ID: IT-67
     Functional test: Verifies that a VE user can successfully close a test session.
 
     Args:
@@ -369,7 +338,7 @@ def test_close_session_success(client, ve_user):
         assert closed_session.end_time is not None, "The session end_time was not set."
 
 def test_close_session_not_found(client, ve_user):
-    """Test ID: UT-71
+    """Test ID: IT-68
     Negative test: Ensures that trying to close a non-existent session returns a 404 error.
 
     Args:
@@ -392,7 +361,7 @@ def test_close_session_not_found(client, ve_user):
     assert json_data['error'] == "Session not found."
 
 def test_open_session_access_as_regular_user(client):
-    """Test ID: UT-72
+    """Test ID: IT-69
     Negative test: Ensures that a regular user cannot open a test session.
 
     Args:
@@ -406,7 +375,7 @@ def test_open_session_access_as_regular_user(client):
     assert b'Access denied.' in response.data
 
 def test_close_session_access_as_regular_user(client):
-    """Test ID: UT-73
+    """Test ID: IT-70
     Negative test: Ensures that a regular user cannot close a test session.
 
     Args:
@@ -420,7 +389,7 @@ def test_close_session_access_as_regular_user(client):
     assert b'Access denied.' in response.data
 
 def test_open_session_not_logged_in(client):
-    """Test ID: UT-74
+    """Test ID: IT-71
     Negative test: Ensures that an unauthenticated user cannot open a test session.
 
     Args:
@@ -433,7 +402,7 @@ def test_open_session_not_logged_in(client):
     assert b'Please log in to access this page.' in response.data
 
 def test_close_session_not_logged_in(client):
-    """Test ID: UT-74
+    """Test ID: IT-72
     Negative test: Ensures that an unauthenticated user cannot open a test session.
 
     Args:
@@ -446,7 +415,7 @@ def test_close_session_not_logged_in(client):
     assert b'Please log in to access this page.' in response.data
 
 def test_ve_sessions_pool_categorization(client, ve_user):
-    """Test ID: UT-164
+    """Test ID: IT-73
     Test categorization of question pools by element in the VE sessions route.
 
     This test ensures that the question pools are properly categorized into tech, general,
@@ -494,7 +463,7 @@ def test_ve_sessions_pool_categorization(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_force_close_session_authorized_request(client, ve_user):
-    """Test ID: UT-250
+    """Test ID: IT-74
     Test the force_close_session route with an authorized VE user.
 
     Asserts:
@@ -543,7 +512,7 @@ def test_force_close_session_authorized_request(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_force_close_session_unauthorized_role(client, user_to_toggle):
-    """Test ID: UT-251
+    """Test ID: IT-75
     Test the force_close_session route with an unauthorized user role.
 
     Asserts:
@@ -565,7 +534,7 @@ def test_force_close_session_unauthorized_role(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_force_close_session_non_existent_session(client, ve_user):
-    """Test ID: UT-252
+    """Test ID: IT-76
     Test the force_close_session route with a non-existent session ID.
 
     Asserts:
@@ -587,7 +556,7 @@ def test_force_close_session_non_existent_session(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_force_close_session_already_closed(client, ve_user):
-    """Test ID: UT-253
+    """Test ID: IT-77
     Test the force_close_session route when the session is already closed.
 
     Asserts:
@@ -637,7 +606,7 @@ def test_force_close_session_already_closed(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_delete_session_unauthorized_role(client, user_to_toggle):
-    """Test ID: UT-232
+    """Test ID: IT-78
     Test the delete_session route with an unauthorized user role.
 
     Asserts:
@@ -677,7 +646,7 @@ def test_delete_session_unauthorized_role(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_delete_session_not_found(client, ve_user):
-    """Test ID: UT-233
+    """Test ID: IT-79
     Test the delete_session route with a non-existent session ID.
 
     Asserts:
@@ -699,7 +668,7 @@ def test_delete_session_not_found(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_delete_session_with_exams(client, ve_user):
-    """Test ID: UT-234
+    """Test ID: IT-80
     Test the delete_session route when the session contains exams.
 
     Asserts:
@@ -744,7 +713,7 @@ def test_delete_session_with_exams(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_delete_session_successful(client, ve_user):
-    """Test ID: UT-235
+    """Test ID: IT-81
     Test the delete_session route for successful deletion.
 
     Asserts:
@@ -784,6 +753,23 @@ def test_delete_session_successful(client, ve_user):
     assert response.json.get("success") is True
     assert db.session.get(ExamSession, session.id) is None
 
+def test_sessions_page_access(client, ve_user):
+    """Test ID: IT-82
+    Functional test: Verifies that a VE user can access the sessions page.
+
+    Args:
+        client: The test client instance.
+        ve_user: The VE user fixture.
+
+    Asserts:
+        - Response status code is 200.
+        - Response data contains "Test Sessions".
+    """
+    login(client, ve_user.username, 'vepassword')
+    response = client.get('/ve/sessions')
+    assert response.status_code == 200
+    assert b'Exam Sessions' in response.data
+
 #############################
 #                           #
 #     HC Sessions Tests     #
@@ -791,7 +777,7 @@ def test_delete_session_successful(client, ve_user):
 #############################
 
 def test_sessions_route_as_user(client, app):
-    """Test ID: UT-91
+    """Test ID: IT-83
     Test the sessions route for a logged-in user with role 1 (HAM Candidate).
 
     This test ensures that a user with role 1 can access the sessions page and 
@@ -837,7 +823,7 @@ def test_sessions_route_as_user(client, app):
         assert bytes(exam_session.session_date.strftime('%m/%d/%Y'), 'utf-8') in response.data
 
 def test_sessions_route_as_ve(client, ve_user):
-    """Test ID: UT-99
+    """Test ID: IT-84
     Negative test: Verifies that a VE user cannot access the sessions page.
 
     Args:
@@ -855,7 +841,7 @@ def test_sessions_route_as_ve(client, ve_user):
     assert b"You have been logged out." in response.data
 
 def test_sessions_route_as_unauthorized_user(client):
-    """Test ID: UT-92
+    """Test ID: IT-85
     Test the sessions route for an unauthorized user (not logged in or wrong role).
 
     This test ensures that a user who is not logged in or does not have role 1 

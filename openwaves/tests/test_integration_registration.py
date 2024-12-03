@@ -1,41 +1,15 @@
 """File: test_registration.py
 
-    This file contains the tests for the registration code in the main.py file.
+    This file contains the integration tests for the registration code in the main.py file.
 """
 
 from datetime import datetime
 from flask import url_for
-from openwaves.tests.test_auth import login
+from openwaves.tests.test_unit_auth import login
 from openwaves.imports import db, User, ExamSession, Pool, ExamRegistration
 
-def test_cancel_registration_missing_session_id(client):
-    """Test ID: UT-100
-    Negative test: Ensures that an invalid cancellation request is handled when the session ID is
-    missing.
-
-    Args:
-        client: The test client instance.
-
-    Asserts:
-        - Response status code is 302 (redirection).
-        - The response redirects to the sessions page.
-        - The appropriate error message is flashed when session ID is missing.
-    """
-    login(client, 'TESTUSER', 'testpassword')
-
-    response = client.post(
-        url_for('main.cancel_registration'),
-        data={'exam_element': '2'}  # Missing session_id
-    )
-
-    assert response.status_code == 302
-    assert response.location.endswith(url_for('main.sessions'))  # PAGE_SESSIONS
-    with client.session_transaction() as session:
-        assert 'Invalid cancellation request. Missing required information.' \
-            in session['_flashes'][0][1]
-
 def test_cancel_registration_missing_exam_element(client):
-    """Test ID: UT-101
+    """Test ID: IT-86
     Negative test: Ensures that an invalid cancellation request is handled when the exam element is
     missing.
 
@@ -61,7 +35,7 @@ def test_cancel_registration_missing_exam_element(client):
             in session['_flashes'][0][1]
 
 def test_cancel_registration_invalid_exam_element(client):
-    """Test ID: UT-102
+    """Test ID: IT-87
     Negative test: Ensures that an invalid cancellation request is handled when the exam element is
     invalid.
 
@@ -87,7 +61,7 @@ def test_cancel_registration_invalid_exam_element(client):
             in session['_flashes'][0][1]
 
 def test_cancel_registration_role_not_allowed(client, ve_user):
-    """Test ID: UT-109
+    """Test ID: IT-88
     Negative test: Ensure that users with the VE role cannot access the cancel registration page.
 
     Args:
@@ -110,7 +84,7 @@ def test_cancel_registration_role_not_allowed(client, ve_user):
     assert b'Access denied' in response.data
 
 def test_cancel_registration_invalid_exam_session_id(client):
-    """Test ID: UT-110
+    """Test ID: IT-89
     Negative test: Ensures that an invalid cancellation request is handled when the session id is
     invalid.
 
@@ -136,7 +110,7 @@ def test_cancel_registration_invalid_exam_session_id(client):
             in session['_flashes'][0][1]
 
 def test_register_route_success(client, app):
-    """Test ID: UT-93
+    """Test ID: IT-90
     Test successful registration for an exam session.
 
     This test ensures that a user with role 1 can successfully register for an exam element.
@@ -192,7 +166,7 @@ def test_register_route_success(client, app):
         assert registration.tech is True
 
 def test_register_route_already_registered(client, app):
-    """Test ID: UT-94
+    """Test ID: IT-91
     Test registration when the user is already registered for the exam element.
 
     This test ensures that attempting to register again for the same exam element 
@@ -250,7 +224,7 @@ def test_register_route_already_registered(client, app):
         assert b'You are already registered for the Tech exam.' in response.data
 
 def test_register_route_missing_data(client, app):
-    """Test ID: UT-95
+    """Test ID: IT-92
     Test registration with missing form data.
 
     This test ensures that attempting to register without providing required form data 
@@ -277,7 +251,7 @@ def test_register_route_missing_data(client, app):
         assert b'Invalid registration request. Missing required information.' in response.data
 
 def test_cancel_registration_success(client, app):
-    """Test ID: UT-96
+    """Test ID: IT-93
     Test successful cancellation of an exam registration.
 
     This test ensures that a user with role 1 can successfully cancel their registration 
@@ -342,7 +316,7 @@ def test_cancel_registration_success(client, app):
         assert updated_registration.tech is False
 
 def test_cancel_registration_not_registered(client, app):
-    """Test ID: UT-97
+    """Test ID: IT-94
     Test cancellation when the user is not registered for the exam element.
 
     This test ensures that attempting to cancel a registration for an exam element 
@@ -390,7 +364,7 @@ def test_cancel_registration_not_registered(client, app):
         assert b'You are not registered for the Tech exam.' in response.data
 
 def test_register_route_invalid_role(client, app):
-    """Test ID: UT-98
+    """Test ID: IT-95
     Test registration with a user who does not have role 1.
 
     This test ensures that a user with a role other than 1 cannot register for an exam.
@@ -428,7 +402,7 @@ def test_register_route_invalid_role(client, app):
         assert b'Please log in to access this page.' in response.data
 
 def test_register_route_invalid_exam_session_id(client, app):
-    """Test ID: UT-158
+    """Test ID: IT-96
     Test registration with an invalid exam session ID.
 
     This test ensures that attempting to register for an exam with an invalid session ID 
@@ -457,7 +431,7 @@ def test_register_route_invalid_exam_session_id(client, app):
         assert b'Exam session not found.' in response.data
 
 def test_register_route_exam_session_not_found(client, app):
-    """Test ID: UT-159
+    """Test ID: IT-97
     Test registration when the exam session cannot be found.
 
     This test ensures that when an exam session cannot be found in the database, 
@@ -496,7 +470,7 @@ def test_register_route_exam_session_not_found(client, app):
         assert b'Exam session not found.' in response.data
 
 def test_register_update_existing_registration_tech(client, app):
-    """Test ID: UT-160
+    """Test ID: IT-98
     Test updating an existing registration for the Tech exam.
 
     This test ensures that when a user is already registered for a session, updating the 
@@ -563,7 +537,7 @@ def test_register_update_existing_registration_tech(client, app):
         assert updated_registration.tech is True
 
 def test_register_update_existing_registration_general(client, app):
-    """Test ID: UT-161
+    """Test ID: IT-99
     Test updating an existing registration for the General exam.
 
     This test ensures that when a user is already registered for a session, updating the 
@@ -630,7 +604,7 @@ def test_register_update_existing_registration_general(client, app):
         assert updated_registration.gen is True
 
 def test_register_update_existing_registration_extra(client, app):
-    """Test ID: UT-162
+    """Test ID: IT-100
     Test updating an existing registration for the Extra exam.
 
     This test ensures that when a user is already registered for a session, updating the 
@@ -697,7 +671,7 @@ def test_register_update_existing_registration_extra(client, app):
         assert updated_registration.extra is True
 
 def test_register_route_invalid_role_redirect(client, ve_user):
-    """Test ID: UT-163
+    """Test ID: IT-101
     Test registration with a user who does not have role 1 (HAM Candidate).
 
     This test ensures that a user with a role other than 1 is redirected to the logout page
@@ -726,3 +700,29 @@ def test_register_route_invalid_role_redirect(client, ve_user):
 
     # Assert the 'Access denied' message is flashed
     assert b'Access denied' in response.data
+
+def test_cancel_registration_missing_session_id(client):
+    """Test ID: IT-102
+    Negative test: Ensures that an invalid cancellation request is handled when the session ID is
+    missing.
+
+    Args:
+        client: The test client instance.
+
+    Asserts:
+        - Response status code is 302 (redirection).
+        - The response redirects to the sessions page.
+        - The appropriate error message is flashed when session ID is missing.
+    """
+    login(client, 'TESTUSER', 'testpassword')
+
+    response = client.post(
+        url_for('main.cancel_registration'),
+        data={'exam_element': '2'}  # Missing session_id
+    )
+
+    assert response.status_code == 302
+    assert response.location.endswith(url_for('main.sessions'))  # PAGE_SESSIONS
+    with client.session_transaction() as session:
+        assert 'Invalid cancellation request. Missing required information.' \
+            in session['_flashes'][0][1]

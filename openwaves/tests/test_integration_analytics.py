@@ -1,66 +1,16 @@
 """File: test_analytics.py
 
-    This file contains the tests for the analytics code in the main_ve.py file.
+    This file contains the integration tests for the analytics code in the main_ve.py file.
 """
 from datetime import datetime
 import pytest
 from flask import url_for
 from openwaves.imports import db, Pool, Question, ExamAnswer, Exam
-from openwaves.tests.test_auth import login
-
-@pytest.mark.usefixtures("app")
-def test_data_analytics_authorized_access(client, ve_user):
-    """Test ID: UT-273
-    Test the data_analytics route with an authorized VE user having role 2.
-
-    Asserts:
-        - The response status code is 200.
-        - The page contains analytics data for the selected pool.
-    """
-    # Set up mock pool and question data
-    pool = Pool(name="General Pool",
-                element=2,
-                start_date=datetime(2024, 1, 1),
-                end_date=datetime(2024, 12, 31))
-    db.session.add(pool)
-    db.session.commit()
-
-    question = Question(
-        pool_id=pool.id,
-        number="G1A01",
-        correct_answer=1,
-        question="Sample Question",
-        option_a="A",
-        option_b="B",
-        option_c="C",
-        option_d="D"
-    )
-    db.session.add(question)
-    db.session.commit()
-
-    # Add an ExamAnswer to populate analytics data
-    answer = ExamAnswer(
-        exam_id=1,
-        question_id=question.id,
-        question_number=1,
-        correct_answer=1,
-        answer=2
-    )
-    db.session.add(answer)
-    db.session.commit()
-
-    # Log in as VE user with role 2
-    response = login(client, ve_user.username, 'vepassword')
-    assert response.status_code == 200
-
-    # Simulate a GET request to data analytics route
-    response = client.get(url_for('main_ve.data_analytics', pool_id=pool.id))
-    assert response.status_code == 200
-    assert b"Sample Question" in response.data
+from openwaves.tests.test_unit_auth import login
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_unauthorized_access(client, user_to_toggle):
-    """Test ID: UT-274
+    """Test ID: IT-142
     Test the data_analytics route with an unauthorized user (role not equal to 2).
 
     Asserts:
@@ -79,7 +29,7 @@ def test_data_analytics_unauthorized_access(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_empty_pool(client, ve_user):
-    """Test ID: UT-275
+    """Test ID: IT-143
     Test the data_analytics route with a pool that has no questions.
 
     Asserts:
@@ -109,7 +59,7 @@ def test_data_analytics_empty_pool(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_incorrect_answers_aggregation(client, ve_user):
-    """Test ID: UT-276
+    """Test ID: IT-144
     Test the data_analytics route to verify aggregation of incorrect answers.
 
     Asserts:
@@ -176,7 +126,7 @@ def test_data_analytics_incorrect_answers_aggregation(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_no_pool_selected(client, ve_user):
-    """Test ID: UT-277
+    """Test ID: IT-145
     Test the data_analytics route when no pool is selected.
 
     Asserts:
@@ -194,7 +144,7 @@ def test_data_analytics_no_pool_selected(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_invalid_pool_id(client, ve_user):
-    """Test ID: UT-278
+    """Test ID: IT-146
     Test the data_analytics route with an invalid pool ID.
 
     Asserts:
@@ -212,7 +162,7 @@ def test_data_analytics_invalid_pool_id(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_no_incorrect_answers(client, ve_user):
-    """Test ID: UT-279
+    """Test ID: IT-147
     Test the data_analytics route with questions in the pool but no incorrect answers.
 
     Asserts:
@@ -265,7 +215,7 @@ def test_data_analytics_no_incorrect_answers(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_mixed_correct_incorrect_answers(client, ve_user):
-    """Test ID: UT-280
+    """Test ID: IT-148
     Test the data_analytics route with a mix of correct and incorrect answers.
 
     Asserts:
@@ -336,7 +286,7 @@ def test_data_analytics_mixed_correct_incorrect_answers(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_multiple_pools(client, ve_user):
-    """Test ID: UT-281
+    """Test ID: IT-149
     Test the data_analytics route with multiple pools to ensure data separation.
 
     Asserts:
@@ -424,7 +374,7 @@ def test_data_analytics_multiple_pools(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_data_analytics_sorting_consistency(client, ve_user):
-    """Test ID: UT-283
+    """Test ID: IT-150
     Test the data_analytics sorting by miss count for consistent top 5 selection.
 
     Asserts:
@@ -490,3 +440,53 @@ def test_data_analytics_sorting_consistency(client, ve_user):
     top_questions = [f"Question {i}" for i in range(5, 10)]
     for question_text in top_questions:
         assert question_text.encode() in response.data
+
+@pytest.mark.usefixtures("app")
+def test_data_analytics_authorized_access(client, ve_user):
+    """Test ID: IT-151
+    Test the data_analytics route with an authorized VE user having role 2.
+
+    Asserts:
+        - The response status code is 200.
+        - The page contains analytics data for the selected pool.
+    """
+    # Set up mock pool and question data
+    pool = Pool(name="General Pool",
+                element=2,
+                start_date=datetime(2024, 1, 1),
+                end_date=datetime(2024, 12, 31))
+    db.session.add(pool)
+    db.session.commit()
+
+    question = Question(
+        pool_id=pool.id,
+        number="G1A01",
+        correct_answer=1,
+        question="Sample Question",
+        option_a="A",
+        option_b="B",
+        option_c="C",
+        option_d="D"
+    )
+    db.session.add(question)
+    db.session.commit()
+
+    # Add an ExamAnswer to populate analytics data
+    answer = ExamAnswer(
+        exam_id=1,
+        question_id=question.id,
+        question_number=1,
+        correct_answer=1,
+        answer=2
+    )
+    db.session.add(answer)
+    db.session.commit()
+
+    # Log in as VE user with role 2
+    response = login(client, ve_user.username, 'vepassword')
+    assert response.status_code == 200
+
+    # Simulate a GET request to data analytics route
+    response = client.get(url_for('main_ve.data_analytics', pool_id=pool.id))
+    assert response.status_code == 200
+    assert b"Sample Question" in response.data

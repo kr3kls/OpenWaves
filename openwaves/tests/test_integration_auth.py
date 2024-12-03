@@ -1,6 +1,6 @@
 """File: test_auth.py
 
-    This file contains the tests for the code in the auth.py file.
+    This file contains the integration tests for the code in the auth.py file.
 """
 
 import re
@@ -8,26 +8,7 @@ from flask_login import current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from openwaves import db
 from openwaves.models import User
-
-def login(client, username, password):
-    """Helper function to log in a user during testing.
-
-    Args:
-        client: The test client.
-        username (str): The username to log in with.
-        password (str): The password to log in with.
-
-    Returns:
-        Response: The response object from the login attempt.
-    """
-    return client.post('/auth/login', data={
-        'username': username,
-        'password': password
-    }, follow_redirects=True)
-
-def logout(client):
-    """Helper function to log out the current user."""
-    return client.get('/auth/logout', follow_redirects=True)
+from openwaves.tests.test_unit_auth import login, logout
 
 #######################
 #                     #
@@ -35,16 +16,8 @@ def logout(client):
 #                     #
 #######################
 
-def test_login_get(client):
-    """Test ID: UT-04
-    Test that the login page loads correctly.
-    """
-    response = client.get('/auth/login')
-    assert response.status_code == 200
-    assert b"OpenWaves Login" in response.data
-
 def test_login_post_valid(client):
-    """Test ID: UT-05
+    """Test ID: IT-04
     Test logging in with valid credentials redirects to the profile page.
     """
     response = login(client, 'testuser', 'testpassword')
@@ -53,7 +26,7 @@ def test_login_post_valid(client):
     assert b"OpenWaves Profile" in response.data
 
 def test_login_post_valid_ve(client, app):
-    """Test ID: UT-06
+    """Test ID: IT-05
     Test that a VE user can log in and is redirected to the VE account page.
 
     Args:
@@ -78,7 +51,7 @@ def test_login_post_valid_ve(client, app):
     assert b"OpenWaves VE Profile" in response.data
 
 def test_login_post_invalid_password(client):
-    """Test ID: UT-07
+    """Test ID: IT-06
     Test logging in with an invalid password shows an error message.
     """
     response = login(client, 'testuser', 'wrongpassword')
@@ -86,7 +59,7 @@ def test_login_post_invalid_password(client):
     assert b"Please check your login details and try again." in response.data
 
 def test_login_post_nonexistent_user(client):
-    """Test ID: UT-08
+    """Test ID: IT-07
     Test logging in with a nonexistent username shows an error message.
     """
     response = login(client, 'nonexistentuser', 'somepassword')
@@ -99,16 +72,8 @@ def test_login_post_nonexistent_user(client):
 #                      #
 ########################
 
-def test_signup_get(client):
-    """Test ID: UT-09
-    Test that the signup page loads correctly.
-    """
-    response = client.get('/auth/signup')
-    assert response.status_code == 200
-    assert b"FCC FRN" in response.data
-
 def test_signup_post_valid(client, app):
-    """Test ID: UT-10
+    """Test ID: IT-08
     Test that a new user can sign up successfully.
 
     Args:
@@ -131,23 +96,8 @@ def test_signup_post_valid(client, app):
         user = User.query.filter_by(username='newuser').first()
         assert user is not None
 
-def test_signup_post_password_mismatch(client):
-    """Test ID: UT-11
-    Test that signing up with mismatched passwords shows an error message.
-    """
-    response = client.post('/auth/signup', data={
-        'username': 'anotheruser',
-        'first_name': 'Another',
-        'last_name': 'User',
-        'email': 'anotheruser@example.com',
-        'password': 'password1',
-        'confirm_password': 'password2'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b"Passwords do not match" in response.data
-
 def test_signup_post_existing_username(client, app):
-    """Test ID: UT-12
+    """Test ID: IT-09
     Test that signing up with an existing username shows an error message.
 
     Args:
@@ -184,19 +134,8 @@ def test_signup_post_existing_username(client, app):
 #                         #
 ###########################
 
-def test_ve_signup_get(client):
-    """Test ID: UT-31
-    Test that the ve signup page loads correctly.
-
-    Args:
-        client: The test client.
-    """
-    response = client.get('/auth/ve_signup')
-    assert response.status_code == 200
-    assert b"Callsign" in response.data
-
 def test_ve_signup_post_valid(client, app):
-    """Test ID: UT-18
+    """Test ID: IT-10
     Test that a VE account can be created successfully.
 
     Args:
@@ -222,7 +161,7 @@ def test_ve_signup_post_valid(client, app):
         assert user.active is True
 
 def test_ve_signup_post_valid_second(client, app):
-    """Test ID: UT-19
+    """Test ID: IT-11
     Test that a second VE account can be created successfully.
 
     Args:
@@ -263,23 +202,8 @@ def test_ve_signup_post_valid_second(client, app):
         assert user is not None
         assert user.active is False # Second account should be disabled
 
-def test_ve_signup_password_mismatch(client):
-    """Test ID: UT-20
-    Test that VE signup with mismatched passwords shows an error message.
-    """
-    response = client.post('/auth/ve_signup', data={
-        'username': 'veuser2',
-        'first_name': 'New',
-        'last_name': 'User',
-        'email': 'newveuser@example.com',
-        'password': 'password1',
-        'confirm_password': 'password2'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b"Passwords do not match" in response.data
-
 def test_ve_signup_existing_username(client, app):
-    """Test ID: UT-21
+    """Test ID: IT-12
     Test that VE signup with an existing username shows an error message.
 
     Args:
@@ -317,7 +241,7 @@ def test_ve_signup_existing_username(client, app):
 ################################
 
 def test_update_profile_success(client, app):
-    """Test ID: UT-13
+    """Test ID: IT-13
     Test updating the user profile successfully.
 
     This test logs in as 'testuser' and updates the profile with valid data,
@@ -358,7 +282,7 @@ def test_update_profile_success(client, app):
         assert check_password_hash(user.password, 'newpassword')
 
 def test_update_ve_profile_success(client, app):
-    """Test ID: UT-14
+    """Test ID: IT-14
     Test updating the user profile successfully.
 
     This test logs in as 'testveuser' and updates the profile with valid data,
@@ -410,7 +334,7 @@ def test_update_ve_profile_success(client, app):
         assert check_password_hash(user.password, 'newvepassword')
 
 def test_update_profile_invalid_role(client, app):
-    """Test ID: UT-15
+    """Test ID: IT-15
     Test updating the user profile with an invalid user role.
 
     This test logs in as 'testuser' and changes the current_user role to 3. 
@@ -453,41 +377,8 @@ def test_update_profile_invalid_role(client, app):
         # Verify password did not change
         assert check_password_hash(user.password, 'testpassword')
 
-def test_update_profile_password_mismatch(client):
-    """Test ID: UT-16
-    Test updating the profile with mismatched passwords.
-
-    This test ensures that when the new password and confirm password fields
-    do not match, the profile is not updated, and the original password remains.
-
-    Args:
-        client: The test client instance.
-
-    Asserts:
-        - Response status code is 200.
-        - User's password remains unchanged in the database.
-    """
-    # Log in as testuser
-    login(client, 'testuser', 'testpassword')
-
-    # Attempt to update profile with mismatched passwords
-    response = client.post('/auth/update_profile', data={
-        'username': 'testuser',
-        'first_name': 'Test',
-        'last_name': 'User',
-        'email': 'testuser@example.com',
-        'password': 'newpassword',
-        'confirm_password': 'wrongpassword'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-
-    # Verify that the password remains unchanged
-    with client.application.app_context():
-        user = User.query.filter_by(username='testuser').first()
-        assert check_password_hash(user.password, 'testpassword')
-
 def test_update_profile_no_password_change(client):
-    """Test ID: UT-17
+    """Test ID: IT-16
     Test updating the profile without changing the password.
 
     This test verifies that when no new password is provided, the profile
@@ -526,19 +417,6 @@ def test_update_profile_no_password_change(client):
         # Verify password remains unchanged
         assert check_password_hash(user.password, 'testpassword')
 
-def test_logout(client):
-    """Test ID: UT-22
-    Test that a logged-in user can log out successfully.
-    """
-    # Log in as 'testuser'
-    login(client, 'testuser', 'testpassword')
-    response = client.get('/auth/logout', follow_redirects=True)
-    assert response.status_code == 200
-    assert b"You have been logged out." in response.data
-    # Verify that the user is logged out
-    with client.session_transaction() as session:
-        assert 'user_id' not in session
-
 ###############################
 #                             #
 #     VE Management Tests     #
@@ -546,7 +424,7 @@ def test_logout(client):
 ###############################
 
 def test_ve_management_access_as_ve_user(client, ve_user):
-    """Test ID: UT-32
+    """Test ID: IT-17
     Functional test: VE user can access VE management page.
     
     Args:
@@ -559,7 +437,7 @@ def test_ve_management_access_as_ve_user(client, ve_user):
     assert b'VE Account Management' in response.data
 
 def test_ve_management_access_as_regular_user(client):
-    """Test ID: UT-33
+    """Test ID: IT-18
     Negative test: Regular user cannot access VE management page.
     
     Args:
@@ -569,16 +447,6 @@ def test_ve_management_access_as_regular_user(client):
     response = client.get('/auth/ve_management', follow_redirects=True)
     assert b'Access denied.' in response.data
 
-def test_ve_management_access_not_logged_in(client):
-    """Test ID: UT-34
-    Negative test: Unauthenticated user cannot access VE management page.
-    
-    Args:
-        client: The test client.
-    """
-    response = client.get('/auth/ve_management', follow_redirects=True)
-    assert b'Please log in to access this page.' in response.data
-
 ################################
 #                              #
 #     Account Status Tests     #
@@ -586,7 +454,7 @@ def test_ve_management_access_not_logged_in(client):
 ################################
 
 def test_toggle_account_status_as_ve_user(client, ve_user, user_to_toggle):
-    """Test ID: UT-35
+    """Test ID: IT-19
     Functional test: VE user can toggle account status.
     
     Args:
@@ -607,7 +475,7 @@ def test_toggle_account_status_as_ve_user(client, ve_user, user_to_toggle):
         assert updated_user.active == (not original_status)
 
 def test_toggle_account_status_as_regular_user(client, user_to_toggle):
-    """Test ID: UT-36
+    """Test ID: IT-20
     Negative test: Regular user cannot toggle account status.
     
     Args:
@@ -620,7 +488,7 @@ def test_toggle_account_status_as_regular_user(client, user_to_toggle):
     assert b'Access denied.' in response.data
 
 def test_toggle_account_status_nonexistent_user(client, ve_user):
-    """Test ID: UT-37
+    """Test ID: IT-21
     Negative test: Toggling status of non-existent user.
     
     Args:
@@ -631,18 +499,6 @@ def test_toggle_account_status_nonexistent_user(client, ve_user):
     response = client.post('/auth/toggle_account_status/9999', follow_redirects=True)
     assert b'Account not found.' in response.data
 
-def test_toggle_account_status_not_logged_in(client, user_to_toggle):
-    """Test ID: UT-38
-    Negative test: Unauthenticated user cannot toggle account status.
-    
-    Args:
-        client: The test client.
-        user_to_toggle: The user fixture whose status will be toggled.
-    """
-    response = client.post(f'/auth/toggle_account_status/{user_to_toggle.id}',
-                           follow_redirects=True)
-    assert b'Please log in to access this page.' in response.data
-
 ################################
 #                              #
 #     Password Reset Tests     #
@@ -650,7 +506,7 @@ def test_toggle_account_status_not_logged_in(client, user_to_toggle):
 ################################
 
 def test_password_resets_access_as_ve_user(client, ve_user):
-    """Test ID: UT-39
+    """Test ID: IT-22
     Functional test: VE user can access password resets page.
     
      Args:
@@ -663,7 +519,7 @@ def test_password_resets_access_as_ve_user(client, ve_user):
     assert b'Password Resets' in response.data
 
 def test_password_resets_access_as_regular_user(client):
-    """Test ID: UT-40
+    """Test ID: IT-23
     Negative test: Regular user cannot access password resets page.
     
      Args:
@@ -673,18 +529,8 @@ def test_password_resets_access_as_regular_user(client):
     response = client.get('/auth/password_resets', follow_redirects=True)
     assert b'Access denied.' in response.data
 
-def test_password_resets_access_not_logged_in(client):
-    """Test ID: UT-41
-    Negative test: Unauthenticated user cannot access password resets page.
-    
-     Args:
-        client: The test client.
-    """
-    response = client.get('/auth/password_resets', follow_redirects=True)
-    assert b'Please log in to access this page.' in response.data
-
 def test_reset_password_as_ve_user(client, ve_user, user_to_toggle):
-    """Test ID: UT-42
+    """Test ID: IT-24
     Functional test: VE user can reset a user's password.
     
      Args:
@@ -707,7 +553,7 @@ def test_reset_password_as_ve_user(client, ve_user, user_to_toggle):
     assert b'OpenWaves Profile' in response.data
 
 def test_reset_password_as_regular_user(client, user_to_toggle):
-    """Test ID: UT-43
+    """Test ID: IT-25
     Negative test: Regular user cannot reset another user's password.
     
     Args:
@@ -719,7 +565,7 @@ def test_reset_password_as_regular_user(client, user_to_toggle):
     assert b'Access denied.' in response.data
 
 def test_reset_password_nonexistent_user(client, ve_user):
-    """Test ID: UT-44
+    """Test ID: IT-26
     Negative test: Resetting password of non-existent user.
     
     Args:
@@ -729,14 +575,3 @@ def test_reset_password_nonexistent_user(client, ve_user):
     login(client, ve_user.username, 'vepassword')
     response = client.post('/auth/reset_password/9999', follow_redirects=True)
     assert b'Account not found.' in response.data
-
-def test_reset_password_not_logged_in(client, user_to_toggle):
-    """Test ID: UT-45
-    Negative test: Unauthenticated user cannot reset passwords.
-    
-    Args:
-        client: The test client.
-        user_to_toggle: The user fixture whose status will be toggled.
-    """
-    response = client.post(f'/auth/reset_password/{user_to_toggle.id}', follow_redirects=True)
-    assert b'Please log in to access this page.' in response.data
