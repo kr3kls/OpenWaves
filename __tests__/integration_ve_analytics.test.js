@@ -34,7 +34,7 @@ describe('VE Analytics Functionality', () => {
         // Mock the form's submit function
         poolSelect.form.submit = jest.fn();
 
-        // Simulate DOMContentLoaded to initialize event listeners in questionDetail.js
+        // Simulate DOMContentLoaded to initialize event listeners
         document.dispatchEvent(new Event('DOMContentLoaded'));
     });
 
