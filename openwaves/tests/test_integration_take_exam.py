@@ -1,6 +1,6 @@
 """File: test_take_exam.py
 
-    This file contains the tests for the take_exam code in the main.py file.
+    This file contains the integration tests for the take_exam code in the main.py file.
 """
 
 from datetime import datetime
@@ -9,32 +9,10 @@ from flask import url_for
 from openwaves import db
 from openwaves.imports import User, ExamSession, Exam, ExamAnswer, Pool, \
                             Question
-from openwaves.tests.test_auth import login
-
-def test_take_exam_role_not_allowed(client, ve_user):
-    """Test ID: UT-194
-    Negative test: Ensure that users with the VE role cannot access the take exam page.
-
-    Args:
-        client: The test client instance.
-
-    Asserts:
-        - The response status code is 302 (redirect).
-        - The response redirects to the logout page.
-        - An 'Access denied' message is flashed.
-    """
-    login(client, ve_user.username, 'vepassword')
-
-    response = client.get(
-        url_for('main.take_exam', exam_id=1),
-        follow_redirects=True
-    )
-
-    assert response.status_code == 200
-    assert b'Access denied' in response.data
+from openwaves.tests.test_unit_auth import login
 
 def test_take_exam_invalid_exam_id(client, app):
-    """Test ID: UT-195
+    """Test ID: IT-110
     Unit test to ensure that an invalid exam ID is handled correctly
     when trying to take an exam.
 
@@ -73,7 +51,7 @@ def test_take_exam_invalid_exam_id(client, app):
 
 @pytest.mark.usefixtures("app")
 def test_take_exam_post_save_answer(client, user_to_toggle):
-    """Test ID: UT-209
+    """Test ID: IT-111
     Test the take_exam route when saving a user's answer.
 
     This test simulates a POST request to the take_exam route and verifies that
@@ -162,7 +140,7 @@ def test_take_exam_post_save_answer(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_take_exam_post_next_navigation(client, user_to_toggle):
-    """Test ID: UT-210
+    """Test ID: IT-112
     Test the take_exam route's "Next" navigation.
 
     This test simulates a POST request to navigate to the next question 
@@ -250,7 +228,7 @@ def test_take_exam_post_next_navigation(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_take_exam_post_back_navigation(client, user_to_toggle):
-    """Test ID: UT-211
+    """Test ID: IT-113
     Test the take_exam route's "Back" navigation.
 
     This test simulates a POST request to navigate to the previous question 
@@ -334,7 +312,7 @@ def test_take_exam_post_back_navigation(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_take_exam_post_review_navigation(client, user_to_toggle):
-    """Test ID: UT-212
+    """Test ID: IT-114
     Test the take_exam route's "Review" navigation.
 
     This test simulates a POST request to navigate to the review page.
@@ -417,7 +395,7 @@ def test_take_exam_post_review_navigation(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_take_exam_no_exam_found(client, user_to_toggle):
-    """Test ID: UT-213
+    """Test ID: IT-115
     Test the take_exam route when no exam is found.
 
     This test simulates a GET request to the take_exam route with an invalid exam ID.
@@ -436,7 +414,7 @@ def test_take_exam_no_exam_found(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_take_exam_get_first_question(client, user_to_toggle):
-    """Test ID: UT-214
+    """Test ID: IT-116
     Test the take_exam route when accessing the first question.
 
     This test ensures that the first question is loaded correctly 
@@ -518,7 +496,7 @@ def test_take_exam_get_first_question(client, user_to_toggle):
 
 @pytest.mark.usefixtures("app")
 def test_take_exam_get_last_question(client, user_to_toggle):
-    """Test ID: UT-215
+    """Test ID: IT-117
     Test the take_exam route when accessing the last question.
 
     This test ensures that the last question is loaded correctly when 
@@ -603,16 +581,24 @@ def test_take_exam_get_last_question(client, user_to_toggle):
     assert response.status_code == 200
     assert b'index=9' in response.data
 
-@pytest.mark.usefixtures("app")
-def test_take_exam_invalid_method(client):
-    """Test ID: UT-216
-    Test the take_exam route when an invalid method is used.
+def test_take_exam_role_not_allowed(client, ve_user):
+    """Test ID: IT-118
+    Negative test: Ensure that users with the VE role cannot access the take exam page.
 
-    This test ensures that only GET and POST methods are allowed.
+    Args:
+        client: The test client instance.
 
     Asserts:
-        - The response is a 405 Method Not Allowed error.
+        - The response status code is 302 (redirect).
+        - The response redirects to the logout page.
+        - An 'Access denied' message is flashed.
     """
-    response = client.put(url_for('main.take_exam', exam_id=1), follow_redirects=True)
+    login(client, ve_user.username, 'vepassword')
 
-    assert response.status_code == 405
+    response = client.get(
+        url_for('main.take_exam', exam_id=1),
+        follow_redirects=True
+    )
+
+    assert response.status_code == 200
+    assert b'Access denied' in response.data

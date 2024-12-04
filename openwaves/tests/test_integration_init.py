@@ -1,6 +1,6 @@
 """File: test_init.py
 
-    This file contains the tests for the code in the init.py file.
+    This file contains the integration tests for the code in the init.py file.
 """
 
 import pytest
@@ -10,7 +10,7 @@ from openwaves.models import User
 from openwaves import load_user
 
 def test_load_user_valid_id(app):
-    """Test ID: UT-01
+    """Test ID: IT-01
     Test that load_user returns the correct user for a valid user_id. This test ensures that the
     application loads users correctly.
 
@@ -44,7 +44,7 @@ def test_load_user_valid_id(app):
         assert loaded_user.username == 'testloaduser'
 
 def test_load_user_invalid_id(app):
-    """Test ID: UT-02
+    """Test ID: IT-02
     Test that load_user returns None for an invalid user_id. This test ensures that the application
     does not load a user when it shouldn't.
 
@@ -62,7 +62,7 @@ def test_load_user_invalid_id(app):
         assert loaded_user is None
 
 def test_load_user_non_integer_id(app):
-    """Test ID: UT-03
+    """Test ID: IT-03
     Test that load_user handles non-integer user_id gracefully. This test ensures that the
     application can handle erroneous data in place of userid.
 

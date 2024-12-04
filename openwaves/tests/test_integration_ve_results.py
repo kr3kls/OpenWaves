@@ -1,92 +1,18 @@
 """File: test_ve_results.py
 
-    This file contains the tests for the ve exam results code in the main_ve.py file.
+    This file contains the integration tests for the ve exam results code in the main_ve.py file.
 """
 
 from datetime import datetime
 import pytest
 from flask import url_for
 from openwaves.imports import db, ExamSession, Pool, User, Exam, ExamAnswer
-from openwaves.tests.test_auth import login
-from openwaves.tests.test_review_exam import setup_mock_exam
-
-@pytest.mark.usefixtures("app")
-def test_ve_exam_results_valid_request(client, ve_user):
-    """Test ID: UT-244
-    Test the ve_exam_results route with a valid POST request by an authorized VE user.
-
-    Asserts:
-        - The response status code is 200.
-        - The exam review page displays the correct exam details and answers.
-    """
-    # Set up a mock exam with related data
-    pool, exam_session, exam, question, exam_answer = setup_mock_exam(ve_user)  # pylint: disable=W0612
-
-    # Log in as VE user
-    response = login(client, ve_user.username, 'vepassword')
-    assert response.status_code == 200
-
-    # Simulate a POST request to view exam results
-    response = client.post(
-        url_for('main_ve.ve_exam_results'),
-        data={'session_id': exam.session_id, 'exam_element': exam.element, 'hc_id': ve_user.id},
-        follow_redirects=True
-    )
-
-    # Validate response contains exam results
-    assert response.status_code == 200
-    assert b'What is question 1?' in response.data
-    assert b'Score: 1/35' in response.data
-
-@pytest.mark.usefixtures("app")
-def test_ve_exam_results_unauthorized_role(client, user_to_toggle):
-    """Test ID: UT-245
-    Test the ve_exam_results route with an unauthorized user role.
-
-    Asserts:
-        - The response redirects to the logout page with an access denied message.
-    """
-    # Log in as a non-VE user
-    response = login(client, user_to_toggle.username, 'password')
-    assert response.status_code == 200
-
-    # Attempt to access the exam results with unauthorized role
-    response = client.post(
-        url_for('main_ve.ve_exam_results'),
-        data={'session_id': 1, 'exam_element': 2, 'hc_id': user_to_toggle.id},
-        follow_redirects=True
-    )
-
-    # Validate redirection to the logout page with access denied message
-    assert response.status_code == 200
-    assert b'Access denied.' in response.data
-
-@pytest.mark.usefixtures("app")
-def test_ve_exam_results_invalid_form_data(client, ve_user):
-    """Test ID: UT-246
-    Test the ve_exam_results route with missing or invalid form data.
-
-    Asserts:
-        - The response redirects to the sessions page with an error message.
-    """
-    # Log in as VE user
-    response = login(client, ve_user.username, 'vepassword')
-    assert response.status_code == 200
-
-    # Attempt to access results with missing form data
-    response = client.post(
-        url_for('main_ve.ve_exam_results'),
-        data={'session_id': '', 'exam_element': '', 'hc_id': ''},
-        follow_redirects=True
-    )
-
-    # Validate response redirects to sessions with an error
-    assert response.status_code == 200
-    assert b'Invalid exam request.' in response.data
+from openwaves.tests.test_unit_auth import login
+from openwaves.tests.test_integration_review_exam import setup_mock_exam
 
 @pytest.mark.usefixtures("app")
 def test_ve_exam_results_in_progress_exam(client, ve_user):
-    """Test ID: UT-247
+    """Test ID: IT-134
     Test the ve_exam_results route when trying to review an exam that is still open.
 
     Asserts:
@@ -113,60 +39,8 @@ def test_ve_exam_results_in_progress_exam(client, ve_user):
     assert b'Exam is still in progress.' in response.data
 
 @pytest.mark.usefixtures("app")
-def test_ve_exam_results_invalid_exam(client, ve_user):
-    """Test ID: UT-248
-    Test the ve_exam_results route with an invalid exam ID.
-
-    Asserts:
-        - The response redirects to the sessions page with an error message.
-    """
-    # Log in as VE user
-    response = login(client, ve_user.username, 'vepassword')
-    assert response.status_code == 200
-
-    # Attempt to review a non-existent exam
-    response = client.post(
-        url_for('main_ve.ve_exam_results'),
-        data={'session_id': 999, 'exam_element': 2, 'hc_id': ve_user.id},
-        follow_redirects=True
-    )
-
-    # Validate redirection with an error message
-    assert response.status_code == 200
-    assert b'Invalid exam ID.' in response.data
-
-@pytest.mark.usefixtures("app")
-def test_ve_exam_results_unauthorized_hc_access(client, ve_user):
-    """Test ID: UT-249
-    Test the ve_exam_results route when the VE tries to view results of another HC user.
-
-    Asserts:
-        - The response redirects to the sessions page with an error message.
-    """
-    # Set up mock exam with a different HC user
-    pool, exam_session, exam, question, exam_answer = setup_mock_exam(ve_user)  # pylint: disable=W0612
-    other_user_id = ve_user.id + 1
-    exam.user_id = other_user_id
-    db.session.commit()
-
-    # Log in as VE user
-    response = login(client, ve_user.username, 'vepassword')
-    assert response.status_code == 200
-
-    # Attempt to access results of a different HC
-    response = client.post(
-        url_for('main_ve.ve_exam_results'),
-        data={'session_id': exam.session_id, 'exam_element': exam.element, 'hc_id': other_user_id},
-        follow_redirects=True
-    )
-
-    # Validate redirection with error message
-    assert response.status_code == 200
-    assert b'Invalid HC ID.' in response.data
-
-@pytest.mark.usefixtures("app")
 def test_ve_session_results_authorized(client, ve_user):
-    """Test ID: UT-254
+    """Test ID: IT-135
     Test the ve_session_results route with an authorized VE user.
 
     Asserts:
@@ -247,73 +121,8 @@ def test_ve_session_results_authorized(client, ve_user):
     assert b'26' in response.data or b'Pass' in response.data
 
 @pytest.mark.usefixtures("app")
-def test_ve_session_results_unauthorized_role(client, user_to_toggle):
-    """Test ID: UT-255
-    Test the ve_session_results route with an unauthorized user role.
-
-    Asserts:
-        - The response redirects to the logout page.
-    """
-    # Create a mock pool (required for tech_pool_id, gen_pool_id, extra_pool_id)
-    pool = Pool(
-        name="Tech Pool",
-        element=2,
-        start_date=datetime(2024, 1, 1),
-        end_date=datetime(2024, 12, 31)
-    )
-    db.session.add(pool)
-    db.session.commit()
-
-    # Create a mock session using the pool IDs
-    session = ExamSession(
-        session_date=datetime(2024, 10, 1),
-        tech_pool_id=pool.id,
-        gen_pool_id=pool.id,
-        extra_pool_id=pool.id,
-        status=False
-    )
-    db.session.add(session)
-    db.session.commit()
-
-    # Log in as an unauthorized user
-    response = login(client, user_to_toggle.username, 'password')
-    assert response.status_code == 200
-
-    # Attempt to access the session results page
-    response = client.get(
-        url_for('main_ve.ve_session_results', session_id=session.id),
-        follow_redirects=False
-    )
-
-    # Check if the response redirects to the logout page
-    assert response.status_code == 302
-    assert url_for('auth.logout') in response.location
-
-@pytest.mark.usefixtures("app")
-def test_ve_session_results_invalid_session(client, ve_user):
-    """Test ID: UT-256
-    Test the ve_session_results route with an invalid session ID.
-
-    Asserts:
-        - The response redirects to the sessions page with an error message.
-    """
-    # Log in as the VE user
-    response = login(client, ve_user.username, 'vepassword')
-    assert response.status_code == 200
-
-    # Attempt to access a non-existent session results page
-    response = client.get(
-        url_for('main_ve.ve_session_results', session_id=999),
-        follow_redirects=True
-    )
-
-    # Validate redirection to the sessions page with an error message
-    assert response.status_code == 200
-    assert b'Session not found.' in response.data
-
-@pytest.mark.usefixtures("app")
 def test_ve_session_results_no_exams(client, ve_user):
-    """Test ID: UT-236
+    """Test ID: IT-136
     Test the ve_session_results route with a session that has no exams.
 
     Asserts:
@@ -357,7 +166,7 @@ def test_ve_session_results_no_exams(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_ve_session_results_pass_fail_logic(client, ve_user):
-    """Test ID: UT-237
+    """Test ID: IT-137
     Test the ve_session_results route to verify pass/fail logic.
 
     Asserts:
@@ -430,3 +239,31 @@ def test_ve_session_results_pass_fail_logic(client, ve_user):
     assert b'Alice' in response.data
     assert b'Smith' in response.data
     assert b'Pass' in response.data
+
+@pytest.mark.usefixtures("app")
+def test_ve_exam_results_valid_request(client, ve_user):
+    """Test ID: IT-138
+    Test the ve_exam_results route with a valid POST request by an authorized VE user.
+
+    Asserts:
+        - The response status code is 200.
+        - The exam review page displays the correct exam details and answers.
+    """
+    # Set up a mock exam with related data
+    pool, exam_session, exam, question, exam_answer = setup_mock_exam(ve_user)  # pylint: disable=W0612
+
+    # Log in as VE user
+    response = login(client, ve_user.username, 'vepassword')
+    assert response.status_code == 200
+
+    # Simulate a POST request to view exam results
+    response = client.post(
+        url_for('main_ve.ve_exam_results'),
+        data={'session_id': exam.session_id, 'exam_element': exam.element, 'hc_id': ve_user.id},
+        follow_redirects=True
+    )
+
+    # Validate response contains exam results
+    assert response.status_code == 200
+    assert b'What is question 1?' in response.data
+    assert b'Score: 1/35' in response.data

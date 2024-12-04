@@ -1,20 +1,18 @@
 """File: test_purge.py
 
-    This file contains the tests for the purge sessions code in the main_ve.py file.
+    This file contains the integration tests for the purge sessions code in the main_ve.py file.
 """
 from datetime import datetime, timedelta
-from unittest.mock import patch
 import pytest
 from flask import url_for
 import sqlalchemy
-from sqlalchemy.exc import SQLAlchemyError
 from openwaves import db
 from openwaves.imports import ExamSession, Pool
-from openwaves.tests.test_auth import login
+from openwaves.tests.test_unit_auth import login
 
 @pytest.mark.usefixtures("app")
 def test_purge_sessions_authorized_success(client, ve_user):
-    """Test ID: UT-263
+    """Test ID: IT-139
     Functional test: Verify successful purge for sessions older than 15 months.
     
     Asserts:
@@ -65,7 +63,7 @@ def test_purge_sessions_authorized_success(client, ve_user):
 
 @pytest.mark.usefixtures("app")
 def test_purge_sessions_unauthorized_role(client, user_to_toggle):
-    """Test ID: UT-264
+    """Test ID: IT-140
     Negative test: Verify access denial for non-VE user (role != 2).
 
     Asserts:
@@ -84,30 +82,8 @@ def test_purge_sessions_unauthorized_role(client, user_to_toggle):
     assert b"Access denied." in response.data
 
 @pytest.mark.usefixtures("app")
-def test_purge_sessions_database_error(client, ve_user):
-    """Test ID: UT-265
-    Negative test: Verify proper handling of SQLAlchemy error during purge.
-
-    Asserts:
-        - The response status code is 500.
-        - The response JSON indicates an error.
-    """
-    # Log in as VE user (role 2)
-    response = login(client, ve_user.username, 'vepassword')
-    assert response.status_code == 200
-
-    # Mock the delete operation to raise an SQLAlchemyError
-    with patch('openwaves.db.session.query', side_effect=SQLAlchemyError("Database error")):
-        response = client.delete(url_for('main_ve.purge_sessions'))
-
-    # Validate response
-    assert response.status_code == 500
-    assert response.json.get("success") is False
-    assert response.json.get("error") == "Database operation failed"
-
-@pytest.mark.usefixtures("app")
 def test_purge_sessions_no_old_sessions(client, ve_user):
-    """Test ID: UT-266
+    """Test ID: IT-141
     Functional test: Verify purge operation when no sessions are older than 15 months.
 
     Asserts:

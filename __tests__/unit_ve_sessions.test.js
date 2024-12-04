@@ -1,7 +1,7 @@
 /**
  * File: ve_sessions.test.js
  * 
- * Description: This file contains tests for the ve_sessions page functionality.
+ * Description: This file contains unit tests for the ve_sessions page functionality.
  * 
  * @jest-environment jsdom
  */
@@ -85,7 +85,7 @@ describe('Modal and session handling', () => {
     });
 
     /**
-     * Test ID: UT-138
+     * Test ID: UT-97
      * Test setting the default date in the start date field.
      *
      * This test ensures that the start date field is automatically populated with
@@ -100,153 +100,7 @@ describe('Modal and session handling', () => {
     });
 
     /**
-     * Test ID: UT-139
-     * Test opening the session modal when the create session button is clicked.
-     *
-     * This test ensures that clicking the 'create session' button properly opens
-     * the session creation modal.
-     *
-     * Asserts:
-     * - The session modal contains the 'is-active' class when the button is clicked.
-     */
-    it('should open the session modal when the create session button is clicked', () => {
-        createSessionButton.click();
-        expect(createSessionModal.classList.contains('is-active')).toBe(true);
-    });
-
-    /**
-     * Test ID: UT-140
-     * Test closing the session modal when a close element is clicked.
-     *
-     * This test ensures that clicking a close element in the session modal properly
-     * closes the modal.
-     *
-     * Asserts:
-     * - The modal is open before the close button is clicked.
-     * - The modal no longer contains the 'is-active' class after the close button is clicked.
-     */
-    it('should close the session modal when a close element is clicked', () => {
-        const modal = document.querySelector('.modal');
-        const closeButton = modal.querySelector('.delete');
-
-        // Open the modal first
-        modal.classList.add('is-active');
-
-        // Simulate click on the close button
-        closeButton.click();
-
-        expect(modal.classList.contains('is-active')).toBe(false);
-    });
-
-    /**
-     * Test ID: UT-141
-     * Test submitting the session form and handling a successful response.
-     *
-     * This test ensures that clicking the submit button properly sends a request to create a session
-     * and reloads the page when the request is successful.
-     *
-     * Asserts:
-     * - The fetch function is called with the correct URL and options.
-     * - The window.location.reload function is called after a successful response.
-     */
-    it('should submit the session form and handle success response', async () => {
-        // Simulate form submission
-        submitSessionForm.click();
-
-        // Use setImmediate to wait for promise resolution
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // Assert that fetch was called with the correct URL and options
-        expect(fetch).toHaveBeenCalledWith('/ve/create_session', {
-            method: 'POST',
-            body: expect.any(FormData),
-        });
-
-        // Assert that location.reload was called
-        expect(window.location.reload).toHaveBeenCalled();
-    });
-
-    /**
-     * Test ID: UT-142
-     * Test handling form submission error response.
-     *
-     * This test ensures that the appropriate error message is displayed when the server responds
-     * with a non-OK status code during session form submission.
-     *
-     * Asserts:
-     * - The window.alert function is called with the correct error message from the response.
-     */
-    it('should handle form submission error response', async () => {
-        // Mock fetch to return a failure response with status 400 and an error message
-        fetch.mockResolvedValueOnce({
-            ok: false,
-            json: () => Promise.resolve({ success: false, error: 'Test error' }),
-        });
-    
-        // Simulate form submission
-        submitSessionForm.click();
-    
-        await new Promise((resolve) => setTimeout(resolve, 0));
-    
-        // Update the expectation to match the actual alert message
-        expect(window.alert).toHaveBeenCalledWith('Test error');
-    });     
-
-    /**
-     * Test ID: UT-143
-     * Test handling undefined data response in session form submission.
-     *
-     * This test ensures that an appropriate error message is displayed when the server returns an
-     * undefined response during session form submission.
-     *
-     * Asserts:
-     * - The window.alert function is called with a generic error message if the response data is undefined.
-     */
-    it('should handle undefined data response in session form submission', async () => {
-        // Mock fetch to return undefined data
-        fetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve(undefined),
-        });
-    
-        // Simulate form submission
-        submitSessionForm.click();
-    
-        await new Promise((resolve) => setTimeout(resolve, 0));
-    
-        // Check that an alert is displayed with a generic error message
-        expect(window.alert).toHaveBeenCalledWith('Error creating session: Unknown error');
-    });
-    
-    /**
-     * Test ID: UT-144
-     * Test deleting a session by calling fetch with the correct parameters.
-     *
-     * This test ensures that clicking the delete button for a session sends a DELETE request
-     * with the appropriate parameters if the user confirms the deletion.
-     *
-     * Asserts:
-     * - The fetch function is called with the correct URL, method, headers, and body.
-     */
-    it('should call fetch with the correct parameters for delete session', async () => {
-        const deleteButton = document.querySelector('.delete-session-button');
-        window.confirm = jest.fn(() => true); // Mock confirm dialog to always return true
-        deleteButton.click();
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(fetch).toHaveBeenCalledWith('/ve/delete_session/1', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': 'dummy-csrf-token',
-            },
-            body: JSON.stringify({ action: 'delete' }),
-        });
-    });
-
-    /**
-     * Test ID: UT-145
+     * Test ID: UT-98
      * Test not calling fetch when deleting a session if the confirm dialog is denied.
      *
      * This test ensures that clicking the delete button for a session does not send a DELETE request
@@ -264,83 +118,7 @@ describe('Modal and session handling', () => {
     });
 
     /**
-     * Test ID: UT-146
-     * Test opening a session by calling fetch with the correct parameters.
-     *
-     * This test ensures that clicking the open button for a session sends a POST request
-     * with the appropriate parameters to open the session.
-     *
-     * Asserts:
-     * - The fetch function is called with the correct URL, method, headers, and body.
-     */
-    it('should call fetch with the correct parameters for opening a session', async () => {
-        const openButton = document.querySelector('.open-session-button');
-        openButton.click();
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(fetch).toHaveBeenCalledWith('/ve/open_session/2', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': 'dummy-csrf-token',
-            },
-            body: JSON.stringify({ action: 'open' }),
-        });
-    });
-
-    /**
-     * Test ID: UT-147
-     * Test closing a session by calling fetch with the correct parameters.
-     *
-     * This test ensures that clicking the close button for a session sends a POST request
-     * with the appropriate parameters to close the session.
-     *
-     * Asserts:
-     * - The fetch function is called with the correct URL, method, headers, and body.
-     */
-    it('should call fetch with the correct parameters for closing a session', async () => {
-        const closeButton = document.querySelector('.close-session-button');
-        closeButton.click();
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(fetch).toHaveBeenCalledWith('/ve/close_session/3', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': 'dummy-csrf-token',
-            },
-            body: JSON.stringify({ action: 'close' }),
-        });
-    });
-
-    /**
-     * Test ID: UT-148
-     * Test handling unsuccessful responses in session actions.
-     *
-     * This test ensures that an appropriate error message is displayed when a session action,
-     * such as opening a session, fails due to an unsuccessful response from the server.
-     *
-     * Asserts:
-     * - An alert is displayed with the appropriate error message when the response is unsuccessful.
-     */
-    it('should handle unsuccessful responses in session actions', async () => {
-        fetch.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ success: false, error: 'Session error' }),
-        });
-
-        const openButton = document.querySelector('.open-session-button');
-        openButton.click();
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(window.alert).toHaveBeenCalledWith('Error open session: Session error');
-    });
-
-    /**
-     * Test ID: UT-149
+     * Test ID: UT-99
      * Test handling the absence of the start date field.
      *
      * This test ensures that no errors occur if the start date field is not present
@@ -360,7 +138,7 @@ describe('Modal and session handling', () => {
     });
 
     /**
-     * Test ID: UT-257
+     * Test ID: UT-100
      * Test updating the button to "force close" when error indicates open exams.
      *
      * This test ensures that if the server returns an error indicating open exams, 
@@ -411,37 +189,7 @@ describe('Modal and session handling', () => {
     });
 
     /**
-     * Test ID: UT-259
-     * Test confirming the purge action.
-     *
-     * This test ensures that the purge process proceeds if the user confirms the action.
-     *
-     * Asserts:
-     * - The fetch function is called with the correct URL, method, and headers.
-     * - The window.location.reload function is called after a successful response.
-     */
-    it('should confirm and call fetch to purge sessions if user confirms', async () => {
-        const purgeButton = document.getElementById('purge-button');
-        window.confirm = jest.fn(() => true); // Mock confirmation dialog to return true
-    
-        // Simulate button click
-        purgeButton.click();
-    
-        await new Promise((resolve) => setTimeout(resolve, 0));
-    
-        expect(fetch).toHaveBeenCalledWith('/ve/purge_sessions', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': 'dummy-csrf-token',
-            },
-            body: null, // Include body: null here to match the actual call
-        });
-        expect(window.location.reload).toHaveBeenCalled();
-    });    
-
-    /**
-     * Test ID: UT-260
+     * Test ID: UT-101
      * Test declining the purge action.
      *
      * This test ensures that the purge process is not initiated if the user declines the confirmation.
@@ -460,7 +208,7 @@ describe('Modal and session handling', () => {
     });
 
     /**
-     * Test ID: UT-261
+     * Test ID: UT-102
      * Test handling purge error response.
      *
      * This test ensures that an appropriate error message is displayed if the server responds with an error during purge.
@@ -487,7 +235,7 @@ describe('Modal and session handling', () => {
     });    
 
     /**
-     * Test ID: UT-262
+     * Test ID: UT-103
      * Test handling undefined data in purge response.
      *
      * This test ensures that a generic error message is displayed if the response data is undefined during purge.
