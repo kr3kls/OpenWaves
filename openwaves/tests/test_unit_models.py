@@ -1,6 +1,6 @@
 """File: test_models.py
 
-    This file contains the tests for the code in the models.py file.
+    This file contains the unit tests for the code in the models.py file.
 """
 
 from datetime import datetime
@@ -9,7 +9,7 @@ from openwaves.models import User, Pool, Question, TLI, ExamSession, \
                             ExamRegistration, ExamDiagram, Exam, ExamAnswer
 
 def test_user_creation(app):
-    """Test ID: UT-76
+    """Test ID: UT-45
     Test that a User can be created and saved to the database.
 
     This test ensures that a new user instance is properly created, added to the 
@@ -40,7 +40,7 @@ def test_user_creation(app):
         assert retrieved_user == user
 
 def test_user_repr(app):
-    """Test ID: UT-77
+    """Test ID: UT-46
     Test the __repr__ method of the User model.
 
     This test ensures that the string representation of the User object 
@@ -66,7 +66,7 @@ def test_user_repr(app):
         assert repr(user) == expected_repr
 
 def test_pool_creation(app):
-    """Test ID: UT-78
+    """Test ID: UT-47
     Test that a Pool can be created and saved to the database.
 
     This test ensures that a new question pool instance is properly created, 
@@ -94,7 +94,7 @@ def test_pool_creation(app):
         assert retrieved_pool == pool
 
 def test_pool_repr(app):
-    """Test ID: UT-79
+    """Test ID: UT-48
     Test the __repr__ method of the Pool model.
 
     This test ensures that the string representation of the Pool object 
@@ -118,7 +118,7 @@ def test_pool_repr(app):
         assert repr(pool) == expected_repr
 
 def test_question_creation(app):
-    """Test ID: UT-80
+    """Test ID: UT-49
     Test that a Question can be created and saved to the database.
 
     This test ensures that a new question instance is properly created, 
@@ -162,7 +162,7 @@ def test_question_creation(app):
         assert retrieved_question == question
 
 def test_question_repr(app):
-    """Test ID: UT-81
+    """Test ID: UT-50
     Test the __repr__ method of the Question model.
 
     This test ensures that the string representation of the Question object 
@@ -190,7 +190,7 @@ def test_question_repr(app):
         assert repr(question) == expected_repr
 
 def test_tli_creation(app):
-    """Test ID: UT-82
+    """Test ID: UT-51
     Test that a TLI can be created and saved to the database.
 
     This test ensures that a new TLI instance is properly created, 
@@ -228,7 +228,7 @@ def test_tli_creation(app):
         assert retrieved_tli == tli
 
 def test_tli_repr(app):
-    """Test ID: UT-83
+    """Test ID: UT-52
     Test the __repr__ method of the TLI model.
 
     This test ensures that the string representation of the TLI object 
@@ -251,7 +251,7 @@ def test_tli_repr(app):
         assert repr(tli) == expected_repr
 
 def test_exam_session_creation(app):
-    """Test ID: UT-84
+    """Test ID: UT-53
     Test that an ExamSession can be created and saved to the database.
 
     This test ensures that a new exam session instance is properly created, 
@@ -303,7 +303,7 @@ def test_exam_session_creation(app):
         assert retrieved_session == exam_session
 
 def test_exam_session_repr(app):
-    """Test ID: UT-85
+    """Test ID: UT-54
     Test the __repr__ method of the ExamSession model.
 
     This test ensures that the string representation of the ExamSession object 
@@ -327,7 +327,7 @@ def test_exam_session_repr(app):
         assert repr(exam_session) == expected_repr
 
 def test_exam_registration_creation(app):
-    """Test ID: UT-86
+    """Test ID: UT-55
     Test that an ExamRegistration can be created and saved to the database.
 
     This test ensures that a new exam registration instance is properly created, 
@@ -381,7 +381,7 @@ def test_exam_registration_creation(app):
         assert retrieved_registration == registration
 
 def test_exam_registration_repr(app):
-    """Test ID: UT-87
+    """Test ID: UT-56
     Test the __repr__ method of the ExamRegistration model.
 
     This test ensures that the string representation of the ExamRegistration object 
@@ -406,7 +406,7 @@ def test_exam_registration_repr(app):
         assert repr(registration) == expected_repr
 
 def test_exam_diagram_repr(app):
-    """Test ID: UT-171
+    """Test ID: UT-57
     Test the __repr__ method of the ExamDiagram model.
 
     This test ensures that the string representation of the ExamDiagram object
@@ -428,7 +428,7 @@ def test_exam_diagram_repr(app):
         assert repr(exam_diagram) == expected_repr
 
 def test_exam_repr(app):
-    """Test ID: UT-183
+    """Test ID: UT-58
     Test the __repr__ method of the Exam model.
 
     This test ensures that the string representation of the Exam object
@@ -453,7 +453,7 @@ def test_exam_repr(app):
         assert repr(exam) == expected_repr
 
 def test_exam_answer_repr(app):
-    """Test ID: UT-184
+    """Test ID: UT-59
     Test the __repr__ method of the ExamAnswer model.
 
     This test ensures that the string representation of the ExamAnswer object

@@ -1,7 +1,7 @@
 /**
  * File: makeRequest.test.js
  *
- * Description: This file contains tests for the makeRequest functionality.
+ * Description: This file contains unit tests for the makeRequest functionality.
  *
  * @jest-environment jsdom
  */
@@ -70,7 +70,7 @@ describe('makeRequest', () => {
     });
 
     /**
-     * Test ID: UT-111
+     * Test ID: UT-70
      * 
      * This test ensures that the `makeRequest` function handles fetch errors gracefully.
      * It simulates a network error to verify that an appropriate alert message is displayed
@@ -98,7 +98,7 @@ describe('makeRequest', () => {
     });
     
     /**
-     * Test ID: UT-112
+     * Test ID: UT-71
      * 
      * This test ensures that the `makeRequest` function throws an error for non-OK responses.
      * It simulates a server response with a non-OK status (500) to verify that the function

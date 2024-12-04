@@ -207,6 +207,11 @@ def delete_pool(pool_id):
     if not pool:
         return jsonify({"error": "Pool not found."}), 404
 
+    # Check for exams
+    exams = Exam.query.filter_by(pool_id=pool_id).first()
+    if exams:
+        return jsonify({"error": "There are exams using this pool."}), 400
+
     # Delete all questions associated with the pool
     Question.query.filter_by(pool_id=pool_id).delete()
     TLI.query.filter_by(pool_id=pool_id).delete()
@@ -772,3 +777,81 @@ def purge_sessions():
         db.session.rollback()
         print(f"Value error during purge: {value_error}")
         return jsonify({"success": False, "error": "Value error in date calculation"}), 400
+
+@main_ve.route('/ve/analytics', methods=['GET'])
+@login_required
+def data_analytics():
+    """Route to show data analytics for volunteer examiners."""
+    # Check if the current user has role 2
+    if current_user.role != 2:
+        flash("Access Denied", "danger")
+        return redirect(url_for('auth.logout'))
+
+    # Get all pools for dropdown selection
+    question_pools = Pool.query.all()
+
+    # Get selected pool ID from the query string, default to None if not provided
+    pool_id = request.args.get('pool_id', type=int)
+
+    # Initialize analytics data dictionary
+    analytics_data = {}
+
+    # Check if the pool exists before proceeding
+    pool = db.session.get(Pool, pool_id) if pool_id else None
+    if pool_id and not pool:
+        flash("No analytics data available for the selected pool.", "info")
+        return render_template('ve_analytics.html',
+                               analytics_data={},
+                               pools=question_pools,
+                               selected_pool_id=pool_id)
+
+    # Filter questions and answers by the selected pool
+    if pool_id:
+        questions_in_pool = Question.query.filter_by(pool_id=pool_id).all()
+        question_ids = [q.id for q in questions_in_pool]
+        incorrect_answers = ExamAnswer.query.filter(
+            ExamAnswer.answer != ExamAnswer.correct_answer,
+            ExamAnswer.question_id.in_(question_ids)
+        ).all()
+
+        # Initialize analytics data for each question
+        for answer in incorrect_answers:
+            question_id = answer.question_id
+            selected_answer = answer.answer
+            if question_id not in analytics_data:
+                question = db.session.get(Question, question_id)
+                analytics_data[question_id] = {
+                    "miss_count": 0,
+                    "incorrect_selections": {},
+                    "question_text": question.question,
+                    "answer_texts": {
+                        0: question.option_a, 
+                        1: question.option_b,  
+                        2: question.option_c,  
+                        3: question.option_d   
+                    },
+                    "answer_counts": [0, 0, 0, 0]  
+                }
+            analytics_data[question_id]["miss_count"] += 1
+            if selected_answer in analytics_data[question_id]["incorrect_selections"]:
+                analytics_data[question_id]["incorrect_selections"][selected_answer] += 1
+            else:
+                analytics_data[question_id]["incorrect_selections"][selected_answer] = 1
+            analytics_data[question_id]["answer_counts"][selected_answer] += 1
+
+        for question_id, data in analytics_data.items():
+            data["most_selected_wrong_answer"] = max(
+                data["incorrect_selections"],
+                key=data["incorrect_selections"].get,
+                default=None
+            )
+
+    # Sort questions by miss count in descending order and select top 5
+    top_missed_questions = dict(sorted(analytics_data.items(),
+                                       key=lambda item: item[1]["miss_count"],
+                                       reverse=True)[:5])
+
+    return render_template('ve_analytics.html',
+                           analytics_data=top_missed_questions,
+                           pools=question_pools,
+                           selected_pool_id=pool_id)

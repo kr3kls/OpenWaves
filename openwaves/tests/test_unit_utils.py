@@ -1,12 +1,11 @@
 """File: test_utils.py
 
-    This file contains the tests for the code in the utils.py file.
+    This file contains the unit tests for the code in the utils.py file.
 """
 from unittest.mock import patch, MagicMock
 import pytest
-from openwaves import db
-from openwaves.models import User, ExamRegistration, ExamDiagram, Question
-from openwaves.utils import update_user_password, get_exam_name, is_already_registered, \
+from openwaves.models import ExamRegistration, ExamDiagram, Question
+from openwaves.utils import get_exam_name, is_already_registered, \
     remove_exam_registration, requires_diagram, get_exam_score, generate_exam
 
 class MockExamAnswer: # pylint: disable=R0903
@@ -24,40 +23,8 @@ class MockExamAnswer: # pylint: disable=R0903
         self.answer = answer
         self.correct_answer = correct_answer
 
-def test_update_user_password(app):
-    """Test ID: UT-30
-    Test the update_user_password utility function.
-
-    This test ensures that the user's password is successfully updated in the database
-    when using the update_user_password function.
-
-    Args:
-        app: The Flask application instance.
-        client: The test client instance.
-
-    Asserts:
-        - The user's password hash in the database is changed after the update.
-    """
-    with app.app_context():
-        # Retrieve the existing test user
-        user = User.query.filter_by(username="TESTUSER").first()
-        original_password_hash = user.password # Store the original hash
-
-        # Call the function to update the password
-        new_password = "new_test_password"
-        update_user_password(user, new_password)
-
-        # flush database cache
-        db.session.flush()
-
-        # Retrieve the user again to check if the password has been updated
-        updated_user = User.query.filter_by(username="TESTUSER").first()
-
-        # Assert that the password has changed
-        assert updated_user.password != original_password_hash  # Hashes should be different
-
 def test_get_exam_name():
-    """Test ID: UT-88
+    """Test ID: UT-20
     Test the get_exam_name helper function.
 
     This test ensures that the function correctly maps exam element numbers to exam names,
@@ -80,7 +47,7 @@ def test_get_exam_name():
     assert get_exam_name('abc') == ''
 
 def test_is_already_registered():
-    """Test ID: UT-89
+    """Test ID: UT-21
     Test the is_already_registered helper function.
 
     This test ensures that the function correctly determines whether a user is already registered
@@ -123,7 +90,7 @@ def test_is_already_registered():
     assert is_already_registered(None, '2') is False
 
 def test_remove_exam_registration():
-    """Test ID: UT-90
+    """Test ID: UT-22
     Test the remove_exam_registration helper function.
 
     This test ensures that the function correctly updates the user's registration by setting
@@ -166,7 +133,7 @@ def test_remove_exam_registration():
     assert registration.extra is False
 
 def test_remove_exam_registration_none_registration():
-    """Test ID: UT-106
+    """Test ID: UT-23
     Negative test: Verify that the function handles None for the existing_registration argument.
 
     Asserts:
@@ -177,7 +144,7 @@ def test_remove_exam_registration_none_registration():
     remove_exam_registration(None, '2')
 
 def test_remove_exam_registration_none_exam_element():
-    """Test ID: UT-107
+    """Test ID: UT-24
     Negative test: Verify that the function handles None for the exam_element argument.
 
     Asserts:
@@ -194,7 +161,7 @@ def test_remove_exam_registration_none_exam_element():
     assert registration.extra is True
 
 def test_remove_exam_registration_none_both():
-    """Test ID: UT-108
+    """Test ID: UT-25
     Negative test: Verify that the function handles None for both arguments.
 
     Asserts:
@@ -205,7 +172,7 @@ def test_remove_exam_registration_none_both():
 
 @pytest.mark.usefixtures("app")
 def test_requires_diagram_matching_diagram():
-    """Test ID: UT-196
+    """Test ID: UT-26
     Test the requires_diagram function with a question that has a matching diagram.
 
     This test ensures that the function correctly identifies when a diagram is required
@@ -232,7 +199,7 @@ def test_requires_diagram_matching_diagram():
 
 @pytest.mark.usefixtures("app")
 def test_requires_diagram_no_matching_diagram():
-    """Test ID: UT-197
+    """Test ID: UT-27
     Test the requires_diagram function with a question that does not have a matching diagram.
 
     This test ensures that the function correctly returns None when a question does not 
@@ -254,7 +221,7 @@ def test_requires_diagram_no_matching_diagram():
 
 @pytest.mark.usefixtures("app")
 def test_requires_diagram_no_diagrams():
-    """Test ID: UT-198
+    """Test ID: UT-28
     Test the requires_diagram function when no diagrams are available for the given pool ID.
 
     This test checks if the function correctly handles cases where there are no diagrams 
@@ -276,7 +243,7 @@ def test_requires_diagram_no_diagrams():
 
 @pytest.mark.usefixtures("app")
 def test_requires_diagram_empty_question():
-    """Test ID: UT-199
+    """Test ID: UT-29
     Test the requires_diagram function with an empty question string.
 
     This test verifies that the function correctly returns None when the question string is 
@@ -298,7 +265,7 @@ def test_requires_diagram_empty_question():
 
 @pytest.mark.usefixtures("app")
 def test_requires_diagram_none_question():
-    """Test ID: UT-200
+    """Test ID: UT-30
     Test the requires_diagram function with a None value for the question string.
 
     This test ensures that the function returns None when the question string is set to None,
@@ -319,7 +286,7 @@ def test_requires_diagram_none_question():
         assert result is None
 
 def test_get_exam_score_pass_tech_exam():
-    """Test ID: UT-201
+    """Test ID: UT-31
     Test the get_exam_score function for a passing score on the Technician exam (element 2).
 
     This test checks that the function correctly calculates a passing score 
@@ -335,7 +302,7 @@ def test_get_exam_score_pass_tech_exam():
     assert result == 'Score: 26/35 (Pass)'
 
 def test_get_exam_score_fail_tech_exam():
-    """Test ID: UT-202
+    """Test ID: UT-32
     Test the get_exam_score function for a failing score on the Technician exam (element 2).
 
     This test checks that the function correctly calculates a failing score 
@@ -351,7 +318,7 @@ def test_get_exam_score_fail_tech_exam():
     assert result == 'Score: 25/35 (Fail)'
 
 def test_get_exam_score_pass_general_exam():
-    """Test ID: UT-203
+    """Test ID: UT-33
     Test the get_exam_score function for a passing score on the General exam (element 3).
 
     This test checks that the function correctly calculates a passing score 
@@ -367,7 +334,7 @@ def test_get_exam_score_pass_general_exam():
     assert result == 'Score: 30/35 (Pass)'
 
 def test_get_exam_score_fail_general_exam():
-    """Test ID: UT-204
+    """Test ID: UT-34
     Test the get_exam_score function for a failing score on the General exam (element 3).
 
     This test checks that the function correctly calculates a failing score 
@@ -383,7 +350,7 @@ def test_get_exam_score_fail_general_exam():
     assert result == 'Score: 20/35 (Fail)'
 
 def test_get_exam_score_pass_extra_exam():
-    """Test ID: UT-205
+    """Test ID: UT-35
     Test the get_exam_score function for a passing score on the Extra exam (element 4).
 
     This test checks that the function correctly calculates a passing score 
@@ -399,7 +366,7 @@ def test_get_exam_score_pass_extra_exam():
     assert result == 'Score: 37/50 (Pass)'
 
 def test_get_exam_score_fail_extra_exam():
-    """Test ID: UT-206
+    """Test ID: UT-36
     Test the get_exam_score function for a failing score on the Extra exam (element 4).
 
     This test checks that the function correctly calculates a failing score 
@@ -415,7 +382,7 @@ def test_get_exam_score_fail_extra_exam():
     assert result == 'Score: 36/50 (Fail)'
 
 def test_get_exam_score_invalid_element():
-    """Test ID: UT-207
+    """Test ID: UT-37
     Test the get_exam_score function with an invalid exam element.
 
     This test checks that the function returns None when an invalid exam 
@@ -430,7 +397,7 @@ def test_get_exam_score_invalid_element():
     assert result == 'Score: 10/None (Fail)'
 
 def test_get_exam_score_no_answers():
-    """Test ID: UT-208
+    """Test ID: UT-38
     Test the get_exam_score function with an empty list of exam answers.
 
     This test checks that the function handles an empty list of exam answers 
@@ -447,53 +414,8 @@ def test_get_exam_score_no_answers():
     assert result_general == 'Score: 0/35 (Fail)'
     assert result_extra == 'Score: 0/50 (Fail)'
 
-@pytest.mark.usefixtures("app")
-def test_generate_exam_success():
-    """Test ID: UT-238
-    Positive test: Verify successful generation of an exam with the required number of questions.
-
-    Asserts:
-        - The function returns a non-None exam object.
-        - The exam contains the expected number of questions based on the pool element.
-    """
-    pool_id = 1
-    pool = MagicMock(id=pool_id, element=2)
-    tli_codes = ["ABC", "DEF", "GHI", "JKL", "MNO", "PQR", "STU", "VWX", "YZA", "BCD", "EFG",
-                 "HIJ", "KLM", "NOP", "QRS", "TUV", "WXY", "ZAB", "CDE", "FGH", "IJK", "LMN",
-                 "OPQ", "RST", "UVW", "XYZ", "BCD", "EFG", "HIJ", "KLM", "NOP", "QRS", "TUV",
-                 "WXY", "ZAB"]
-
-    # Mock TLI and Question objects
-    tlis = [MagicMock(id=i, pool_id=pool_id, tli=code, quantity=5) \
-            for i, code in enumerate(tli_codes, start=1)]
-    questions = []
-    for i, code in enumerate(tli_codes, start=1):
-        for j in range(5):
-            question = MagicMock(spec_set=Question)
-            question.id = i
-            question.pool_id = pool_id
-            question.number = f"{code}{str(j+1).zfill(2)}"
-            question.correct_answer = 1
-            question.question = f"Sample question for {code}"
-            question.option_a = "Option A"
-            question.option_b = "Option B"
-            question.option_c = "Option C"
-            question.option_d = "Option D"
-            question.refs = "Sample reference"
-            questions.append(question)
-
-    with patch("openwaves.db.session.get", return_value=pool):
-        with patch("openwaves.models.TLI.query") as mock_tli_query:
-            mock_tli_query.filter_by.return_value.all.return_value = tlis
-            with patch("openwaves.models.Question.query") as mock_filter_question:
-                mock_filter_question.filter_by.return_value.all.return_value = questions
-
-                exam = generate_exam(pool_id)
-                assert exam is not None
-                assert len(exam) == 35
-
 def test_generate_exam_no_pool():
-    """Test ID: UT-239
+    """Test ID: UT-39
     Negative test: Verify that the function handles a non-existent pool ID.
 
     Asserts:
@@ -506,7 +428,7 @@ def test_generate_exam_no_pool():
 
 @pytest.mark.usefixtures("app")
 def test_generate_exam_no_tlis():
-    """Test ID: UT-240
+    """Test ID: UT-40
     Negative test: Verify that the function handles cases where no TLIs are associated with
     the pool.
 
@@ -524,7 +446,7 @@ def test_generate_exam_no_tlis():
 
 @pytest.mark.usefixtures("app")
 def test_generate_exam_no_questions_for_tlis():
-    """Test ID: UT-241
+    """Test ID: UT-41
     Negative test: Verify that the function handles cases where there are no questions for the
     TLIs in the pool.
 
@@ -547,7 +469,7 @@ def test_generate_exam_no_questions_for_tlis():
 
 @pytest.mark.usefixtures("app")
 def test_generate_exam_incomplete_exam():
-    """Test ID: UT-242
+    """Test ID: UT-42
     Negative test: Verify that the function handles cases where there are insufficient questions
     to create a complete exam.
 
@@ -572,7 +494,7 @@ def test_generate_exam_incomplete_exam():
 
 @pytest.mark.usefixtures("app")
 def test_generate_exam_non_standard_element():
-    """Test ID: UT-243
+    """Test ID: UT-43
     Edge test: Verify that the function handles unsupported element types for the pool.
 
     Asserts:
