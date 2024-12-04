@@ -769,7 +769,7 @@ describe('Pool management functionality', () => {
      * Asserts:
      * - Clicking the "Upload" button adds the "is-active" class to the modal.
      */
-    test('UT-156: Open upload modal when "Upload" button is clicked', () => {
+    test('open upload modal when "Upload" button is clicked', () => {
         // Reference the upload button and the modal elements
         const uploadButton = document.querySelector('.upload-diagram-button');
         const modal = document.getElementById('upload-modal-1');
