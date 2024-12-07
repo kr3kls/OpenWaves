@@ -13,7 +13,7 @@
             {% endif %}
 
             <!-- Question -->
-            <h1 class="is-1 has-text-left">{{ question.correct_answer }} Question ID: {{ question.number }}, References: {{ question.refs }}</h1>
+            <h1 class="is-1 has-text-left">Question ID: {{ question.number }}, References: {{ question.refs }}</h1>
             <h2 class="title is-5 has-text-left">Q{{ current_index + 1 }}: {{ question.question }}</h2>
             <!-- Answer options -->
             <form action="{{ url_for('main.take_exam', exam_id=exam.id, index=current_index) }}" method="POST">
