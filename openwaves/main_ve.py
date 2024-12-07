@@ -825,10 +825,10 @@ def data_analytics():
                     "incorrect_selections": {},
                     "question_text": question.question,
                     "answer_texts": {
-                        0: question.option_a, 
-                        1: question.option_b,  
-                        2: question.option_c,  
-                        3: question.option_d   
+                        0: question.option_a,
+                        1: question.option_b,
+                        2: question.option_c,
+                        3: question.option_d
                     },
                     "answer_counts": [0, 0, 0, 0]  
                 }
